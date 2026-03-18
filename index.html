@@ -336,9 +336,8 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 
 <!-- ── Bodyweight row ── -->
 <div class="bw-row">
-  <label for="bw-input" class="bw-label">Bodyweight</label>
-  <input id="bw-input" type="number" min="0" step="0.1" placeholder="0" class="bw-input"
-    oninput="saveBodyweight(this.value);document.getElementById('settings-bw').value=this.value">
+  <span class="bw-label">Bodyweight</span>
+  <span id="bw-display" style="font-size:13px;color:var(--text2)">—</span>
   <span class="bw-unit" id="bw-unit-label">lbs</span>
 </div>
 
@@ -537,6 +536,13 @@ function saveBodyweight(val) {
   bwData[todayISOKey()] = parseFloat(val);
   localStorage.setItem(KEYS.bw, JSON.stringify(bwData));
   markUnsaved();
+  updateBwDisplay();
+}
+
+function updateBwDisplay() {
+  const bwData = JSON.parse(localStorage.getItem(KEYS.bw) || '{}');
+  const val = bwData[todayISOKey()];
+  document.getElementById('bw-display').textContent = val != null ? val : '—';
 }
 
 function todayISOKey() {
@@ -570,8 +576,9 @@ function setUnits(u) {
   document.querySelectorAll('#units-toggle .settings-toggle-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.val === u);
   });
-  // Update bodyweight label
+  // Update bodyweight labels everywhere
   document.getElementById('bw-unit-label').textContent = u;
+  document.querySelectorAll('.bw-unit').forEach(el => el.textContent = u);
   // Re-render day content so weight column header updates
   renderDayContent();
 }
@@ -651,10 +658,8 @@ function setTheme(t) {
     // Title
     updateAppTitle();
 
-    // Bodyweight for today
-    const bwData = JSON.parse(localStorage.getItem(KEYS.bw) || '{}');
-    const todayVal = bwData[todayISOKey()];
-    if (todayVal != null) document.getElementById('bw-input').value = todayVal;
+    // Bodyweight display
+    updateBwDisplay();
 
     renderDayTabs();
     renderDayContent();
