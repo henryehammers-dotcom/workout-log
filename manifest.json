@@ -1,7 +1,7 @@
 {
   "name": "Tallymark",
   "short_name": "Tallymark",
-  "start_url": "./index.html",
+  "start_url": "https://henryehammers-dotcom.github.io/workout-log/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#111111",
