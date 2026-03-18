@@ -55,8 +55,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .app-header{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
 .app-title{font-size:20px;font-weight:600;color:var(--text)}
 .app-header-right{display:flex;align-items:center;gap:6px}
-.unsaved-dot{font-size:11px;color:var(--text3);white-space:nowrap;display:none}
-.unsaved-dot.show{display:inline}
 .btn-settings{background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 8px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
 .btn-settings:hover{background:var(--bg3)}
 
@@ -309,7 +307,8 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
       </div>
     </div>
 
-    <div class="settings-section-label">Data</div>
+    <div class="settings-section-label" id="settings-data-section">Data</div>
+    <div id="settings-data-btns">
     <button class="settings-data-btn" onclick="saveFile()">Save file</button>
     <button class="settings-data-btn" onclick="exportJSON()">Export data as JSON</button>
     <label class="settings-data-btn" style="display:flex;align-items:center;cursor:pointer">
@@ -317,6 +316,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
       <input type="file" accept=".json" style="display:none" onchange="importJSON(this)">
     </label>
     <button class="settings-data-btn danger" onclick="confirmClearHistory()">Clear all history</button>
+    </div>
 
     <button class="settings-cta" id="settings-cta-btn" style="display:none" onclick="closeSettings()">Get started</button>
   </div>
@@ -326,7 +326,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 <div class="app-header">
   <div id="app-title" class="app-title">Workout Log</div>
   <div class="app-header-right">
-    <span class="unsaved-dot" id="unsaved-dot">● unsaved</span>
     <button class="btn-settings" onclick="openSettings(false)" title="Settings">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
@@ -502,7 +501,6 @@ let currentUnits = 'lbs';
    ════════════════════════════════════════════ */
 function markUnsaved() {
   unsavedChanges = true;
-  document.getElementById('unsaved-dot').classList.add('show');
 }
 
 function saveSchedule() {
@@ -588,6 +586,8 @@ function openSettings(isFirstLaunch) {
   welcome.style.display = isFirstLaunch ? 'block' : 'none';
   heading.style.display = isFirstLaunch ? 'none' : 'block';
   cta.style.display = isFirstLaunch ? 'block' : 'none';
+  document.getElementById('settings-data-section').style.display = isFirstLaunch ? 'none' : 'block';
+  document.getElementById('settings-data-btns').style.display = isFirstLaunch ? 'none' : 'block';
 
   // Sync fields
   const name = localStorage.getItem(KEYS.name) || '';
@@ -1384,7 +1384,6 @@ function saveFile() {
   URL.revokeObjectURL(a.href);
 
   unsavedChanges = false;
-  document.getElementById('unsaved-dot').classList.remove('show');
 }
 
 window.addEventListener('beforeunload', e => {
