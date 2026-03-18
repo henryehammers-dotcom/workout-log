@@ -1334,7 +1334,7 @@ function saveFile() {
   const sched  = JSON.stringify(schedule);
   const lib    = JSON.stringify(library);
 
-  const injection = `<script id="wl-saved-data">
+  const injection = `<` + `script id="wl-saved-data">
 (function(){
   var s=localStorage;
   if((s.getItem('${KEYS.history}')||'{}')==='{}'  ) s.setItem('${KEYS.history}', ${JSON.stringify(hist)});
