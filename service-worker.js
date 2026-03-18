@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v9';
+const CACHE = 'tallymark-v10';
 const FILES = [
   './index.html',
   './manifest.json',
