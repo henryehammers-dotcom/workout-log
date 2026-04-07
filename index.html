@@ -81,7 +81,16 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .day-label-input:focus{outline:none;border-bottom-color:var(--accent)}
 .day-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
 
-/* ── Update banner ── */
+/* ── Full-screen welcome ── */
+.welcome-wrap{display:none;position:fixed;inset:0;background:var(--bg);z-index:1100;align-items:center;justify-content:center;padding:2rem}
+.welcome-wrap.show{display:flex}
+.welcome-box{width:100%;max-width:360px}
+.welcome-icon{font-size:42px;margin-bottom:12px;text-align:center}
+.welcome-title{font-size:28px;font-weight:700;text-align:center;margin-bottom:6px;color:var(--text)}
+.welcome-sub{font-size:13px;color:var(--text3);text-align:center;line-height:1.6;margin-bottom:2rem}
+.welcome-error{font-size:12px;color:var(--red);margin-top:4px;display:none}
+
+
 .update-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--accent);color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .update-banner.show{display:block}
 
@@ -281,24 +290,43 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
   </div>
 </div>
 
+<!-- ── Full-screen welcome ── -->
+<div id="welcome-wrap" class="welcome-wrap">
+  <div class="welcome-box">
+    <div class="welcome-icon">🏋️</div>
+    <div class="welcome-title">Tallymark</div>
+    <div class="welcome-sub">Your personal workout tracker. Log sets, track progress, and build your routine.</div>
+    <div class="field-group">
+      <span class="settings-field-hint">Your name</span>
+      <input type="text" id="welcome-name" class="settings-input" placeholder="Enter your name" maxlength="40"
+        oninput="document.getElementById('welcome-error').style.display='none'"
+        onkeydown="if(event.key==='Enter')finishWelcome()">
+      <div id="welcome-error" class="welcome-error">Please enter your name to continue.</div>
+    </div>
+    <div class="field-group">
+      <span class="settings-field-hint">Theme</span>
+      <div class="settings-toggle" id="welcome-theme">
+        <div class="settings-toggle-opt active" data-val="light" onclick="setTheme('light');syncWelcomeTheme('light')">Light</div>
+        <div class="settings-toggle-opt" data-val="dark" onclick="setTheme('dark');syncWelcomeTheme('dark')">Dark</div>
+        <div class="settings-toggle-opt" data-val="matrix" onclick="setTheme('matrix');syncWelcomeTheme('matrix')">Matrix</div>
+      </div>
+    </div>
+    <button class="settings-cta" style="width:100%;margin-top:8px" onclick="finishWelcome()">Get started</button>
+  </div>
+</div>
+
 <!-- ── Settings modal ── -->
 <div id="settings-modal" class="settings-modal-wrap">
   <div class="settings-modal-box">
     <button class="settings-close" id="settings-close-btn" onclick="closeSettings()">&times;</button>
-    <div id="settings-welcome-block" class="settings-welcome" style="display:none">
-      <div style="font-size:36px;margin-bottom:8px">🏋️</div>
-      <div class="settings-welcome-title">Welcome to Tallymark!</div>
-      <div class="settings-welcome-desc">Set your name and preferences to get started. You can always change these later from Settings.</div>
-    </div>
-    <div id="welcome-name-error" style="display:none;font-size:12px;color:var(--red);margin-bottom:8px">Please enter your name to continue.</div>
     <div class="settings-title" id="settings-heading">Settings</div>
 
     <div class="settings-section-label">Profile</div>
     <div class="settings-field">
       <span class="settings-field-hint">Name</span>
       <input type="text" id="settings-name" class="settings-input" placeholder="Your name" maxlength="40"
-        oninput="applySettingsName(this.value);document.getElementById('welcome-name-error').style.display='none'"
-        onkeydown="if(event.key==='Enter'&&document.getElementById('settings-cta-btn').style.display!=='none')finishWelcome()">
+        oninput="applySettingsName(this.value)"
+        onkeydown="">
     </div>
     <div class="settings-field">
       <span class="settings-field-hint">Bodyweight</span>
@@ -334,7 +362,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
     <button class="settings-data-btn danger" onclick="confirmClearHistory()">Clear all history</button>
     </div>
 
-    <button class="settings-cta" id="settings-cta-btn" style="display:none" onclick="finishWelcome()">Get started</button>
     <div style="text-align:center;margin-top:1rem;font-size:11px;color:var(--text3)">Tallymark <span id="settings-version"></span></div>
   </div>
 </div>
@@ -473,7 +500,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -622,51 +649,52 @@ function setUnits(u) {
    SETTINGS
    ════════════════════════════════════════════ */
 function openSettings(isFirstLaunch) {
-  const welcome = document.getElementById('settings-welcome-block');
-  const heading = document.getElementById('settings-heading');
-  const cta = document.getElementById('settings-cta-btn');
-  const closeBtn = document.getElementById('settings-close-btn');
-  welcome.style.display = isFirstLaunch ? 'block' : 'none';
-  heading.style.display = isFirstLaunch ? 'none' : 'block';
-  cta.style.display = isFirstLaunch ? 'block' : 'none';
-  closeBtn.style.display = isFirstLaunch ? 'none' : 'block';
-  document.getElementById('welcome-name-error').style.display = 'none';
-  document.getElementById('settings-data-section').style.display = isFirstLaunch ? 'none' : 'block';
-  document.getElementById('settings-data-btns').style.display = isFirstLaunch ? 'none' : 'block';
-
-  // Sync fields
-  const name = localStorage.getItem(KEYS.name) || '';
-  document.getElementById('settings-name').value = name;
+  if (isFirstLaunch) {
+    // Sync current theme to welcome toggle
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    syncWelcomeTheme(theme);
+    document.getElementById('welcome-wrap').classList.add('show');
+    setTimeout(() => document.getElementById('welcome-name').focus(), 300);
+    return;
+  }
+  // Sync fields for settings modal
+  document.getElementById('settings-name').value = localStorage.getItem(KEYS.name) || '';
   const bw = getCleanBw();
   document.getElementById('settings-bw').value = bw != null ? bw : '';
-
-  // Sync units toggle
   document.querySelectorAll('#units-toggle .settings-toggle-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.val === currentUnits);
   });
-  // Sync theme toggle
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   document.querySelectorAll('#theme-toggle .settings-toggle-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.val === theme);
   });
-
+  document.getElementById('settings-data-section').style.display = 'block';
+  document.getElementById('settings-data-btns').style.display = 'block';
   document.getElementById('settings-modal').classList.add('show');
-  if (isFirstLaunch) setTimeout(() => document.getElementById('settings-name').focus(), 300);
 }
 
 function closeSettings() {
   document.getElementById('settings-modal').classList.remove('show');
-  localStorage.setItem(KEYS.welcomed, '1');
+}
+
+function syncWelcomeTheme(t) {
+  document.querySelectorAll('#welcome-theme .settings-toggle-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.val === t);
+  });
 }
 
 function finishWelcome() {
-  const name = document.getElementById('settings-name').value.trim();
+  const nameInput = document.getElementById('welcome-name');
+  const name = nameInput.value.trim();
   if (!name) {
-    document.getElementById('welcome-name-error').style.display = 'block';
-    document.getElementById('settings-name').focus();
+    document.getElementById('welcome-error').style.display = 'block';
+    nameInput.focus();
     return;
   }
-  closeSettings();
+  localStorage.setItem(KEYS.name, name);
+  localStorage.setItem(KEYS.welcomed, '1');
+  updateAppTitle();
+  document.getElementById('welcome-wrap').classList.remove('show');
 }
 
 function applySettingsName(val) {
