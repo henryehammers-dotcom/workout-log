@@ -421,7 +421,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -1449,7 +1449,7 @@ document.addEventListener('click', e => {
 <script>
 /* ── Update system ── */
 let _updateAvailable = false;
-function applyUpdate() { window.location.reload(true); }
+function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); window.location.reload(true); }
 
 function checkForUpdate() {
   if (_updateAvailable) return;
