@@ -226,12 +226,18 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .lib-search:focus{outline:none;border-color:var(--accent)}
 .lib-filter{height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 8px;font-size:14px;background:var(--bg3);color:var(--text);cursor:pointer;font-family:inherit}
 .lib-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin:12px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border)}
-.lib-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:5px;cursor:pointer;transition:all 0.15s}
-.lib-item:hover{border-color:var(--accent);background:var(--accent-dim)}
+.lib-item-wrap{position:relative;border-radius:10px;margin-bottom:5px;overflow:hidden}
+.lib-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:transform 0.2s ease,border-color 0.15s;position:relative;z-index:1;user-select:none;-webkit-user-select:none}
+.lib-item:hover{border-color:var(--accent)}
+.lib-item.swiped{transform:translateX(-130px);border-color:var(--border)}
 .lib-item-left{flex:1;min-width:0}
 .lib-item-name{font-size:13px;font-weight:500;color:var(--text)}
 .lib-item-meta{font-size:11px;color:var(--text3);margin-top:2px}
 .lib-item-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.lib-swipe-actions{position:absolute;right:0;top:0;bottom:0;width:130px;display:flex;z-index:0}
+.lib-swipe-btn{flex:1;border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.lib-swipe-edit{background:var(--blue);color:#fff}
+.lib-swipe-delete{background:var(--red);color:#fff;border-radius:0 10px 10px 0}
 .lib-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;margin-left:6px;vertical-align:middle}
 .tag-gym{background:rgba(91,155,213,0.15);color:#7ab3e0}
 .tag-dumbbell{background:rgba(76,175,130,0.15);color:#6cc49a}
@@ -464,7 +470,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -1166,6 +1172,7 @@ function hideLibAddForm() {
   if (searchRow) searchRow.style.display = 'flex';
 }
 
+
 function renderLibSheet() {
   const q = (document.getElementById('lib-search')?.value || '').toLowerCase();
   const f = document.getElementById('lib-filter')?.value || '';
@@ -1181,20 +1188,99 @@ function renderLibSheet() {
     filtered.forEach(ex => {
       const ei = g.exercises.indexOf(ex);
       const safeName = ex.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-      html += `<div class="lib-item" onclick="addFromLibrarySheet(${gi},${ei})">
-        <div class="lib-item-left">
-          <div class="lib-item-name">${ex.name}<span class="lib-tag ${TAG_CLASS[ex.type]||'tag-gym'}">${TAG_LABEL[ex.type]||ex.type}</span></div>
-          <div class="lib-item-meta">${ex.reps ? ex.reps + ' reps · ' : ''}${ex.rest} rest</div>
+      html += `<div class="lib-item-wrap" id="liw-${gi}-${ei}">
+        <div class="lib-swipe-actions">
+          <button class="lib-swipe-btn lib-swipe-edit" onclick="startLibEdit(${gi},${ei})">Edit</button>
+          <button class="lib-swipe-btn lib-swipe-delete" onclick="deleteLibEntry(${gi},${ei})">Delete</button>
         </div>
-        <div class="lib-item-actions">
-          <button class="btn btn-sm" onclick="event.stopPropagation();showExInfo('${safeName}','${ex.type}')">?</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLibEntry(${gi},${ei})">✕</button>
+        <div class="lib-item" id="li-${gi}-${ei}" onclick="addFromLibrarySheet(${gi},${ei})">
+          <div class="lib-item-left">
+            <div class="lib-item-name">${ex.name}<span class="lib-tag ${TAG_CLASS[ex.type]||'tag-gym'}">${TAG_LABEL[ex.type]||ex.type}</span></div>
+            <div class="lib-item-meta">${ex.reps ? ex.reps + ' reps \u00b7 ' : ''}${ex.rest} rest</div>
+          </div>
+          <div class="lib-item-actions">
+            <button class="btn btn-sm" onclick="event.stopPropagation();showExInfo('${safeName}','${ex.type}')">?</button>
+          </div>
         </div>
       </div>`;
     });
   });
   if (!html) html = '<div class="empty">No exercises found.</div>';
   container.innerHTML = html;
+  initLibSwipe();
+}
+
+function initLibSwipe() {
+  document.querySelectorAll('#lib-sheet-list .lib-item').forEach(item => {
+    let startX = 0, startY = 0, dx = 0, isSwiping = false, isVertical = false;
+    item.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+      dx = 0; isSwiping = false; isVertical = false;
+    }, { passive: true });
+    item.addEventListener('touchmove', e => {
+      dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (!isSwiping && !isVertical) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) isSwiping = true;
+        else if (Math.abs(dy) > 6) isVertical = true;
+      }
+      if (!isSwiping) return;
+      e.preventDefault();
+      item.style.transition = 'none';
+      item.style.transform = `translateX(${Math.max(-130, Math.min(0, dx))}px)`;
+    }, { passive: false });
+    item.addEventListener('touchend', () => {
+      if (!isSwiping) return;
+      item.style.transition = 'transform 0.2s ease';
+      if (dx < -60) {
+        document.querySelectorAll('#lib-sheet-list .lib-item.swiped').forEach(el => {
+          if (el !== item) { el.classList.remove('swiped'); el.style.transform = ''; }
+        });
+        item.style.transform = 'translateX(-130px)';
+        item.classList.add('swiped');
+      } else {
+        item.style.transform = '';
+        item.classList.remove('swiped');
+      }
+    });
+  });
+}
+
+function startLibEdit(gi, ei) {
+  const ex = library[gi].exercises[ei];
+  const wrap = document.getElementById(`liw-${gi}-${ei}`);
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--accent);border-radius:10px;padding:10px 12px">
+      <div class="lib-edit-grid" style="margin-bottom:8px">
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Name</span><input type="text" id="le-name-${gi}-${ei}" value="${ex.name.replace(/"/g,'&quot;')}" style="height:32px;font-size:14px"></div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Reps</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}" style="height:32px;font-size:14px"></div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="le-rest-${gi}-${ei}" value="${parseInt(ex.rest)||90}" min="1" style="height:32px;font-size:14px"></div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Unit</span>
+          <select id="le-unit-${gi}-${ei}" style="height:32px">
+            <option value="sec"${!ex.rest.includes('min')?' selected':''}>sec</option>
+            <option value="min"${ex.rest.includes('min')?' selected':''}>min</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" style="flex:1;padding:6px" onclick="saveLibEdit(${gi},${ei})">Save</button>
+        <button class="btn btn-sm" style="flex:1;padding:6px" onclick="renderLibSheet()">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function saveLibEdit(gi, ei) {
+  const name = document.getElementById(`le-name-${gi}-${ei}`).value.trim();
+  const reps = document.getElementById(`le-reps-${gi}-${ei}`).value.trim();
+  const rv   = parseInt(document.getElementById(`le-rest-${gi}-${ei}`).value) || 90;
+  const unit = document.getElementById(`le-unit-${gi}-${ei}`).value;
+  if (!name) return;
+  const repsEl = document.getElementById(`le-reps-${gi}-${ei}`);
+  if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
+  library[gi].exercises[ei] = { ...library[gi].exercises[ei], name, reps, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv };
+  saveLibrary();
+  renderLibSheet();
 }
 
 function addFromLibrarySheet(gi, ei) {
