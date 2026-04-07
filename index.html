@@ -421,7 +421,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v12';
+const APP_VERSION = 'v13';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -532,21 +532,13 @@ function saveHistory(h) {
 
 function saveBodyweight(val) {
   if (!val) return;
-  const bwData = JSON.parse(localStorage.getItem(KEYS.bw) || '{}');
-  bwData[todayISOKey()] = parseFloat(val);
-  localStorage.setItem(KEYS.bw, JSON.stringify(bwData));
+  localStorage.setItem(KEYS.bw, parseFloat(val));
   updateBwDisplay();
 }
 
 function updateBwDisplay() {
-  const bwData = JSON.parse(localStorage.getItem(KEYS.bw) || '{}');
-  const val = bwData[todayISOKey()];
+  const val = localStorage.getItem(KEYS.bw);
   document.getElementById('bw-display').textContent = val != null ? val : '—';
-}
-
-function todayISOKey() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 /* ════════════════════════════════════════════
@@ -579,9 +571,8 @@ function openSettings(isFirstLaunch) {
   // Sync fields
   const name = localStorage.getItem(KEYS.name) || '';
   document.getElementById('settings-name').value = name;
-  const bwData = JSON.parse(localStorage.getItem(KEYS.bw) || '{}');
-  const todayBw = bwData[todayISOKey()];
-  document.getElementById('settings-bw').value = todayBw != null ? todayBw : '';
+  const bw = localStorage.getItem(KEYS.bw);
+  document.getElementById('settings-bw').value = bw != null ? bw : '';
 
   // Sync units toggle
   document.querySelectorAll('#units-toggle .settings-toggle-opt').forEach(el => {
