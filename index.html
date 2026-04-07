@@ -284,18 +284,21 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 <!-- ── Settings modal ── -->
 <div id="settings-modal" class="settings-modal-wrap">
   <div class="settings-modal-box">
-    <button class="settings-close" onclick="closeSettings()">&times;</button>
+    <button class="settings-close" id="settings-close-btn" onclick="closeSettings()">&times;</button>
     <div id="settings-welcome-block" class="settings-welcome" style="display:none">
+      <div style="font-size:36px;margin-bottom:8px">🏋️</div>
       <div class="settings-welcome-title">Welcome to Tallymark!</div>
       <div class="settings-welcome-desc">Set your name and preferences to get started. You can always change these later from Settings.</div>
     </div>
+    <div id="welcome-name-error" style="display:none;font-size:12px;color:var(--red);margin-bottom:8px">Please enter your name to continue.</div>
     <div class="settings-title" id="settings-heading">Settings</div>
 
     <div class="settings-section-label">Profile</div>
     <div class="settings-field">
       <span class="settings-field-hint">Name</span>
       <input type="text" id="settings-name" class="settings-input" placeholder="Your name" maxlength="40"
-        oninput="applySettingsName(this.value)">
+        oninput="applySettingsName(this.value);document.getElementById('welcome-name-error').style.display='none'"
+        onkeydown="if(event.key==='Enter'&&document.getElementById('settings-cta-btn').style.display!=='none')finishWelcome()">
     </div>
     <div class="settings-field">
       <span class="settings-field-hint">Bodyweight</span>
@@ -331,7 +334,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
     <button class="settings-data-btn danger" onclick="confirmClearHistory()">Clear all history</button>
     </div>
 
-    <button class="settings-cta" id="settings-cta-btn" style="display:none" onclick="closeSettings()">Get started</button>
+    <button class="settings-cta" id="settings-cta-btn" style="display:none" onclick="finishWelcome()">Get started</button>
     <div style="text-align:center;margin-top:1rem;font-size:11px;color:var(--text3)">Tallymark <span id="settings-version"></span></div>
   </div>
 </div>
@@ -470,7 +473,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v19';
+const APP_VERSION = 'v20';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -622,9 +625,12 @@ function openSettings(isFirstLaunch) {
   const welcome = document.getElementById('settings-welcome-block');
   const heading = document.getElementById('settings-heading');
   const cta = document.getElementById('settings-cta-btn');
+  const closeBtn = document.getElementById('settings-close-btn');
   welcome.style.display = isFirstLaunch ? 'block' : 'none';
   heading.style.display = isFirstLaunch ? 'none' : 'block';
   cta.style.display = isFirstLaunch ? 'block' : 'none';
+  closeBtn.style.display = isFirstLaunch ? 'none' : 'block';
+  document.getElementById('welcome-name-error').style.display = 'none';
   document.getElementById('settings-data-section').style.display = isFirstLaunch ? 'none' : 'block';
   document.getElementById('settings-data-btns').style.display = isFirstLaunch ? 'none' : 'block';
 
@@ -645,11 +651,22 @@ function openSettings(isFirstLaunch) {
   });
 
   document.getElementById('settings-modal').classList.add('show');
+  if (isFirstLaunch) setTimeout(() => document.getElementById('settings-name').focus(), 300);
 }
 
 function closeSettings() {
   document.getElementById('settings-modal').classList.remove('show');
   localStorage.setItem(KEYS.welcomed, '1');
+}
+
+function finishWelcome() {
+  const name = document.getElementById('settings-name').value.trim();
+  if (!name) {
+    document.getElementById('welcome-name-error').style.display = 'block';
+    document.getElementById('settings-name').focus();
+    return;
+  }
+  closeSettings();
 }
 
 function applySettingsName(val) {
