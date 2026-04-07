@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v10';
+const CACHE = 'tallymark-v11';
 const FILES = [
   './index.html',
   './manifest.json',
@@ -10,14 +10,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(FILES))
   );
-  // Don't skipWaiting here — let the page control when to activate
-});
-
-// Listen for message from page to activate immediately
-self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  // No skipWaiting — let the page control activation via the update banner
 });
 
 // Activate: delete old caches and claim clients
