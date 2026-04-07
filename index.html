@@ -215,24 +215,30 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .note-badge.heavy{background:rgba(200,50,50,0.1);color:var(--red)}
 .note-badge.light{background:rgba(30,158,117,0.1);color:var(--green)}
 
-/* ── Library tab ── */
-.lib-intro{text-align:center;padding:3.5rem 1rem}
-.lib-intro p{font-size:14px;color:var(--text2);margin-bottom:2rem;line-height:1.7;max-width:400px;margin-left:auto;margin-right:auto}
-.lib-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
-.muscle-group{margin-bottom:2rem}
-.muscle-group-label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.lib-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.lib-name{font-size:14px;font-weight:500;margin-bottom:3px;color:var(--text)}
-.lib-meta{font-size:11px;color:var(--text2);margin-bottom:10px}
-.lib-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;margin-bottom:6px}
+/* ── Library sheet ── */
+.sheet-wrap{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg2);z-index:950;flex-direction:column}
+.sheet-wrap.show{display:flex}
+.sheet{background:var(--bg2);padding:1.25rem 1.25rem 0;width:100%;max-width:680px;margin:0 auto;display:flex;flex-direction:column;height:100%}
+.sheet-header{flex-shrink:0}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:2.5rem}
+.lib-search-row{display:flex;gap:8px;margin-bottom:10px}
+.lib-search{flex:1;height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:16px;background:var(--bg3);color:var(--text);font-family:inherit}
+.lib-search:focus{outline:none;border-color:var(--accent)}
+.lib-filter{height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 8px;font-size:14px;background:var(--bg3);color:var(--text);cursor:pointer;font-family:inherit}
+.lib-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin:12px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.lib-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:5px;cursor:pointer;transition:all 0.15s}
+.lib-item:hover{border-color:var(--accent);background:var(--accent-dim)}
+.lib-item-left{flex:1;min-width:0}
+.lib-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.lib-item-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.lib-item-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.lib-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;margin-left:6px;vertical-align:middle}
 .tag-gym{background:rgba(91,155,213,0.15);color:#7ab3e0}
 .tag-dumbbell{background:rgba(76,175,130,0.15);color:#6cc49a}
 .tag-bodyweight{background:rgba(232,130,74,0.15);color:#e8824a}
-.lib-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.lib-day-select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:13px;background:var(--bg3);color:var(--text);cursor:pointer}
-.lib-form-bg{background:rgba(0,0,0,0.03);border-radius:12px;padding:14px;margin-bottom:1.5rem}
+.lib-form-bg{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:1rem}
 .lib-edit-grid{display:grid;grid-template-columns:1fr 80px 70px 60px;gap:8px;margin-bottom:8px;align-items:end}
-.lib-edit-grid input,.lib-edit-grid select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:13px;background:var(--bg3);color:var(--text);width:100%}
+.lib-edit-grid input,.lib-edit-grid select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:13px;background:var(--bg2);color:var(--text);width:100%;font-family:inherit}
 
 /* ── Music player ── */
 .music-float{position:fixed;bottom:24px;left:20px;z-index:998;display:flex;align-items:center;gap:6px}
@@ -352,7 +358,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 <div class="top-tabs">
   <button class="top-tab active" onclick="switchTab('log',this)">Log</button>
   <button class="top-tab" onclick="switchTab('history',this)">History</button>
-  <button class="top-tab" onclick="switchTab('library',this)">Library</button>
 </div>
 
 <!-- ── Log tab ── -->
@@ -376,9 +381,47 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
   <div id="history-container"></div>
 </div>
 
-<!-- ── Library tab ── -->
-<div id="tab-library" style="display:none">
-  <div id="lib-container"></div>
+<!-- ── Library sheet ── -->
+<div id="lib-sheet-wrap" class="sheet-wrap">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-top:env(safe-area-inset-top,0px)">
+        <button onclick="closeLibSheet()" style="background:none;border:none;font-size:14px;color:var(--accent);cursor:pointer;font-family:inherit;padding:0">&#x2715; Close</button>
+        <div style="font-size:15px;font-weight:600;color:var(--text)" id="lib-sheet-title">Add exercise</div>
+        <div style="width:60px"></div>
+      </div>
+      <div id="lib-sheet-search-row" class="lib-search-row">
+        <input class="lib-search" id="lib-search" placeholder="Search exercises..." oninput="renderLibSheet()">
+        <select class="lib-filter" id="lib-filter" onchange="renderLibSheet()">
+          <option value="">All</option>
+          <option value="gym">Gym</option>
+          <option value="dumbbell">Dumbbells</option>
+          <option value="bodyweight">Bodyweight</option>
+        </select>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div id="lib-sheet-list"></div>
+      <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text3)">Don't see it?</span>
+        <button class="btn btn-sm" style="margin-left:8px" onclick="showLibAddForm()">+ Create new exercise</button>
+      </div>
+      <div id="lib-add-form" class="lib-form-bg" style="display:none;margin-top:12px">
+        <button onclick="hideLibAddForm()" style="background:none;border:none;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:10px;padding:0;font-family:inherit">&#8249; Back to library</button>
+        <div class="lib-edit-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Exercise name</span><input type="text" id="lf-name" placeholder="e.g. Face pull" style="height:36px;font-size:16px"></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Muscle group</span><input type="text" id="lf-group" placeholder="e.g. Back" style="height:36px;font-size:16px"></div>
+        </div>
+        <div class="lib-edit-grid" style="margin-bottom:8px">
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span><select id="lf-type" style="height:36px"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option></select></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="lf-reps" placeholder="e.g. 12-15" style="height:36px;font-size:16px"></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="lf-rest" placeholder="90" min="1" style="height:36px;font-size:16px"></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">&nbsp;</span><select id="lf-unit" style="height:36px"><option value="sec">sec</option><option value="min">min</option></select></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:8px" onclick="saveNewLibEntry()">Add to library</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Music player ── -->
@@ -421,7 +464,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v15';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -671,11 +714,10 @@ function flushInputs() {
 function switchTab(tab, el) {
   document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['log','history','library'].forEach(t => {
+  ['log','history'].forEach(t => {
     document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
   });
   if (tab === 'history') renderHistory();
-  else if (tab === 'library') renderLibrary();
   else destroyCharts();
 }
 
@@ -746,24 +788,9 @@ function renderDayContent() {
         </div>`;
       }).join('');
 
-  const addForm = `
-    <div class="add-section" id="add-section-${d}">
-      <div class="section-label">Add exercise</div>
-      <div class="add-fields">
-        <div class="field-group"><span class="field-hint">Exercise name</span><input type="text" id="add-name-${d}" placeholder="e.g. Dumbbell curl" onkeydown="if(event.key==='Enter')addExercise('${d}')"></div>
-        <div class="field-group"><span class="field-hint">Rep range</span><input type="text" id="add-reps-${d}" placeholder="e.g. 8-12"></div>
-        <div class="field-group"><span class="field-hint">Rest</span><input type="number" id="add-rest-${d}" placeholder="90" min="1"></div>
-        <div class="field-group"><span class="field-hint">&nbsp;</span><select id="add-unit-${d}"><option value="sec">sec</option><option value="min">min</option></select></div>
-      </div>
-      <button class="btn btn-primary add-submit" onclick="addExercise('${d}')">Add exercise</button>
-    </div>`;
-
-  const addBtn = day.exercises.length > 0
-    ? `<div style="margin-top:8px;text-align:center">
-        <button onclick="toggleAddSection('${d}')" class="add-toggle-btn" id="add-toggle-${d}">+</button>
-        <div id="add-section-wrap-${d}" style="display:none">${addForm}</div>
-      </div>`
-    : addForm;
+  const addBtn = `<div style="margin-top:8px;text-align:center">
+    <button class="btn btn-primary" style="width:100%;padding:10px;font-size:14px" onclick="openLibSheet('${d}')">+ Add exercise</button>
+  </div>`;
 
   container.innerHTML = top + `<div id="drag-zone">${exCards}</div>` + addBtn;
   initDrag(d);
@@ -855,55 +882,7 @@ function initDrag(d) {
 /* ════════════════════════════════════════════
    ADD / REMOVE EXERCISES & SETS
    ════════════════════════════════════════════ */
-function toggleAddSection(d) {
-  const wrap = document.getElementById('add-section-wrap-' + d);
-  const btn  = document.getElementById('add-toggle-' + d);
-  if (wrap.style.display === 'none') {
-    wrap.style.display = 'block'; btn.textContent = '×';
-    setTimeout(() => document.getElementById('add-name-' + d)?.focus(), 50);
-  } else {
-    wrap.style.display = 'none'; btn.textContent = '+';
-  }
-}
-
 function toggleRestDay() { flushInputs(); schedule[currentDay].restDay = !schedule[currentDay].restDay; saveSchedule(); renderDayTabs(); renderDayContent(); }
-
-function addExercise(d, fromLib) {
-  flushInputs();
-  if (fromLib) {
-    schedule[d].exercises.push({ name:fromLib.name, reps:fromLib.reps, rest:fromLib.rest, restSecs:fromLib.restSecs });
-    saveSchedule(); renderDayContent(); return;
-  }
-  const ne = document.getElementById('add-name-'+d), re = document.getElementById('add-reps-'+d);
-  const rte = document.getElementById('add-rest-'+d), ue = document.getElementById('add-unit-'+d);
-  const name = ne.value.trim();
-  if (!name) { ne.focus(); return; }
-  if (!validReps(re.value)) { re.style.borderColor = 'var(--red)'; setTimeout(() => re.style.borderColor = '', 1500); return; }
-  const rv = parseInt(rte.value) || 90, unit = ue.value;
-  schedule[d].exercises.push({ name, reps: re.value.trim(), rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv });
-  ne.value = ''; re.value = ''; rte.value = '';
-  saveSchedule(); renderDayContent();
-  document.getElementById('add-name-' + d)?.focus();
-}
-
-function addFromLibrary(gi, ei) {
-  const ex = library[gi].exercises[ei];
-  const day = document.getElementById('lib-sel-'+gi+'-'+ei).value;
-  const already = schedule[day].exercises.some(e => e.name === ex.name);
-  if (already) {
-    showModal('Already added', `${ex.name} is already in ${FULL_DAYS[day]}. Add it again anyway?`, () => {
-      schedule[day].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
-      saveSchedule(); closeModal();
-      if (currentDay === day) renderDayContent();
-    });
-    return;
-  }
-  schedule[day].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
-  saveSchedule();
-  if (currentDay === day) renderDayContent();
-  const btn = document.getElementById('lib-sel-'+gi+'-'+ei).nextElementSibling;
-  if (btn) { const orig = btn.textContent; btn.textContent = 'Added!'; setTimeout(() => btn.textContent = orig, 1200); }
-}
 
 function removeExercise(d, idx) {
   flushInputs();
@@ -1143,73 +1122,88 @@ function renderHistory(selected) {
 }
 
 /* ════════════════════════════════════════════
-   LIBRARY
+   LIBRARY SHEET
    ════════════════════════════════════════════ */
-function renderLibrary(force) {
-  const container = document.getElementById('lib-container');
-  const seen = localStorage.getItem(KEYS.libSeen);
-  if (!seen && !force) {
-    container.innerHTML = `<div class="lib-intro">
-      <p>A curated collection of exercises across every muscle group — gym equipment, dumbbells, and bodyweight — ready to drop into any day of your week.</p>
-      <button class="btn btn-primary" style="font-size:14px;padding:12px 28px" onclick="localStorage.setItem('${KEYS.libSeen}','1');renderLibrary(true)">Check out your workout library</button>
-    </div>`;
-    return;
-  }
-  const workoutDays = DAY_NAMES.filter(d => !schedule[d].restDay);
-  const dayOpts = workoutDays.map(d => `<option value="${d}">${FULL_DAYS[d]}</option>`).join('');
-  container.innerHTML = `
-    <div class="lib-header">
-      <span style="font-size:14px;font-weight:500">Exercise library</span>
-      <button class="btn btn-primary" style="font-size:12px" id="lib-add-toggle" onclick="toggleLibForm()">+ Add exercise</button>
-    </div>
-    <div id="lib-form" style="display:none" class="lib-form-bg">
-      <div class="lib-edit-grid" style="grid-template-columns:1fr 100px;margin-bottom:8px">
-        <div class="field-group"><span class="field-hint">Exercise name</span><input type="text" id="lf-name" placeholder="e.g. Face pull"></div>
-        <div class="field-group"><span class="field-hint">Muscle group</span><input type="text" id="lf-group" placeholder="e.g. Back"></div>
-      </div>
-      <div class="lib-edit-grid" style="margin-bottom:8px">
-        <div class="field-group"><span class="field-hint">Equipment</span><select id="lf-type"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option></select></div>
-        <div class="field-group"><span class="field-hint">Rep range</span><input type="text" id="lf-reps" placeholder="e.g. 12-15"></div>
-        <div class="field-group"><span class="field-hint">Rest</span><input type="number" id="lf-rest" placeholder="90" min="1"></div>
-        <div class="field-group"><span class="field-hint">&nbsp;</span><select id="lf-unit"><option value="sec">sec</option><option value="min">min</option></select></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" style="flex:1;padding:7px" onclick="saveNewLibEntry()">Add to library</button>
-        <button class="btn" style="flex:1;padding:7px" onclick="toggleLibForm()">Cancel</button>
-      </div>
-    </div>
-    ${library.map((g, gi) => `
-      <div class="muscle-group">
-        <div class="muscle-group-label">${g.group}</div>
-        ${g.exercises.map((ex, ei) => `
-          <div class="lib-card" id="lc-${gi}-${ei}">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
-                  <span class="lib-name">${ex.name}</span>
-                  <span class="lib-tag ${TAG_CLASS[ex.type]||'tag-gym'}">${TAG_LABEL[ex.type]||ex.type}</span>
-                </div>
-                <div class="lib-meta">${ex.reps?ex.reps+' reps · ':''}${ex.rest} rest</div>
-              </div>
-            </div>
-            <div class="lib-actions">
-              <select class="lib-day-select" id="lib-sel-${gi}-${ei}">${dayOpts}</select>
-              <button class="btn btn-primary btn-sm" onclick="addFromLibrary(${gi},${ei})">Add to day</button>
-              <button class="btn btn-sm what-is-btn" data-name="${ex.name.replace(/"/g,'&quot;')}" data-type="${ex.type}">What is this?</button>
-              <button class="btn btn-sm" onclick="startLibEdit(${gi},${ei})">Edit</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteLibEntry(${gi},${ei})">Remove</button>
-            </div>
-          </div>`).join('')}
-      </div>`).join('')}`;
-  document.querySelectorAll('.what-is-btn').forEach(btn => {
-    btn.addEventListener('click', function() { showExInfo(this.dataset.name, this.dataset.type); });
-  });
+let _libPickingDay = null;
+
+function openLibSheet(day) {
+  _libPickingDay = day;
+  document.getElementById('lib-search').value = '';
+  document.getElementById('lib-filter').value = '';
+  hideLibAddForm();
+  renderLibSheet();
+  document.getElementById('lib-sheet-wrap').classList.add('show');
+  document.querySelector('.music-float').style.display = 'none';
+  setTimeout(() => document.getElementById('lib-search').focus(), 100);
 }
 
-function toggleLibForm() {
-  const f = document.getElementById('lib-form');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-  if (f.style.display === 'block') document.getElementById('lf-name').focus();
+function closeLibSheet() {
+  document.getElementById('lib-sheet-wrap').classList.remove('show');
+  document.querySelector('.music-float').style.display = '';
+}
+
+function showLibAddForm() {
+  document.getElementById('lib-add-form').style.display = 'block';
+  document.getElementById('lib-sheet-search-row').style.display = 'none';
+  setTimeout(() => document.getElementById('lf-name').focus(), 100);
+}
+
+function hideLibAddForm() {
+  const form = document.getElementById('lib-add-form');
+  if (form) form.style.display = 'none';
+  const searchRow = document.getElementById('lib-sheet-search-row');
+  if (searchRow) searchRow.style.display = 'flex';
+}
+
+function renderLibSheet() {
+  const q = (document.getElementById('lib-search')?.value || '').toLowerCase();
+  const f = document.getElementById('lib-filter')?.value || '';
+  const container = document.getElementById('lib-sheet-list');
+  if (!container) return;
+  let html = '';
+  library.forEach((g, gi) => {
+    const filtered = g.exercises.filter(ex =>
+      (!q || ex.name.toLowerCase().includes(q)) && (!f || ex.type === f)
+    );
+    if (!filtered.length) return;
+    html += `<div class="lib-section-label">${g.group}</div>`;
+    filtered.forEach(ex => {
+      const ei = g.exercises.indexOf(ex);
+      const safeName = ex.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `<div class="lib-item" onclick="addFromLibrarySheet(${gi},${ei})">
+        <div class="lib-item-left">
+          <div class="lib-item-name">${ex.name}<span class="lib-tag ${TAG_CLASS[ex.type]||'tag-gym'}">${TAG_LABEL[ex.type]||ex.type}</span></div>
+          <div class="lib-item-meta">${ex.reps ? ex.reps + ' reps · ' : ''}${ex.rest} rest</div>
+        </div>
+        <div class="lib-item-actions">
+          <button class="btn btn-sm" onclick="event.stopPropagation();showExInfo('${safeName}','${ex.type}')">?</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLibEntry(${gi},${ei})">✕</button>
+        </div>
+      </div>`;
+    });
+  });
+  if (!html) html = '<div class="empty">No exercises found.</div>';
+  container.innerHTML = html;
+}
+
+function addFromLibrarySheet(gi, ei) {
+  const ex = library[gi].exercises[ei];
+  const d = _libPickingDay;
+  if (!d) return;
+  const already = schedule[d].exercises.some(e => e.name === ex.name);
+  if (already) {
+    showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
+      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
+      saveSchedule(); closeModal();
+      if (currentDay === d) renderDayContent();
+      closeLibSheet();
+    });
+    return;
+  }
+  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
+  saveSchedule();
+  if (currentDay === d) renderDayContent();
+  closeLibSheet();
 }
 
 function saveNewLibEntry() {
@@ -1228,47 +1222,15 @@ function saveNewLibEntry() {
   if (gi >= 0) library[gi].exercises.push({ name, reps, rest: rv+' '+unit, restSecs, type });
   else library.push({ group, exercises: [{ name, reps, rest: rv+' '+unit, restSecs, type }] });
   saveLibrary();
-  renderLibrary(true);
-}
-
-function startLibEdit(gi, ei) {
-  const ex = library[gi].exercises[ei];
-  document.getElementById(`lc-${gi}-${ei}`).innerHTML = `
-    <div class="lib-edit-grid" style="margin-bottom:8px">
-      <div class="field-group"><span class="field-hint">Name</span><input type="text" id="le-name-${gi}-${ei}" value="${ex.name}"></div>
-      <div class="field-group"><span class="field-hint">Rep range</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}"></div>
-      <div class="field-group"><span class="field-hint">Rest</span><input type="number" id="le-rest-${gi}-${ei}" value="${parseInt(ex.rest)||90}" min="1"></div>
-      <div class="field-group"><span class="field-hint">Unit</span>
-        <select id="le-unit-${gi}-${ei}">
-          <option value="sec"${!ex.rest.includes('min')?' selected':''}>sec</option>
-          <option value="min"${ex.rest.includes('min')?' selected':''}>min</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-primary btn-sm" style="flex:1;padding:6px" onclick="saveLibEdit(${gi},${ei})">Save</button>
-      <button class="btn btn-sm" style="flex:1;padding:6px" onclick="renderLibrary(true)">Cancel</button>
-    </div>`;
-}
-
-function saveLibEdit(gi, ei) {
-  const name = document.getElementById(`le-name-${gi}-${ei}`).value.trim();
-  const reps = document.getElementById(`le-reps-${gi}-${ei}`).value.trim();
-  const rv   = parseInt(document.getElementById(`le-rest-${gi}-${ei}`).value) || 90;
-  const unit = document.getElementById(`le-unit-${gi}-${ei}`).value;
-  if (!name) return;
-  const repsEl = document.getElementById(`le-reps-${gi}-${ei}`);
-  if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
-  library[gi].exercises[ei] = { ...library[gi].exercises[ei], name, reps, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv };
-  saveLibrary();
-  renderLibrary(true);
+  hideLibAddForm();
+  renderLibSheet();
 }
 
 function deleteLibEntry(gi, ei) {
   showModal('Remove exercise?', `Remove "${library[gi].exercises[ei].name}" from the library?`, () => {
     library[gi].exercises.splice(ei, 1);
     if (library[gi].exercises.length === 0) library.splice(gi, 1);
-    saveLibrary(); closeModal(); renderLibrary(true);
+    saveLibrary(); closeModal(); renderLibSheet();
   });
 }
 
@@ -1333,7 +1295,7 @@ document.addEventListener('keydown', e => {
 function saveFile() {
   const src    = document.documentElement.outerHTML;
   const hist   = localStorage.getItem(KEYS.history)  || '{}';
-  const bw     = localStorage.getItem(KEYS.bw)        || '{}';
+  const bw     = localStorage.getItem(KEYS.bw)        || '';
   const name   = localStorage.getItem(KEYS.name)      || '';
   const libS   = localStorage.getItem(KEYS.libSeen)   || '';
   const welc   = localStorage.getItem(KEYS.welcomed)  || '';
@@ -1345,7 +1307,7 @@ function saveFile() {
   const injection = `<${tag} id="wl-saved-data">(function(){`
     + `var s=localStorage;`
     + `if((s.getItem('${KEYS.history}')||'{}')==='{}'  ) s.setItem('${KEYS.history}', ${JSON.stringify(hist)});`
-    + `if((s.getItem('${KEYS.bw}')||'{}')==='{}'        ) s.setItem('${KEYS.bw}',     ${JSON.stringify(bw)});`
+    + `if(!s.getItem('${KEYS.bw}')&&${JSON.stringify(bw)}) s.setItem('${KEYS.bw}',${JSON.stringify(bw)});`
     + `if(!s.getItem('${KEYS.schedule}')                ) s.setItem('${KEYS.schedule}',${JSON.stringify(sched)});`
     + `if(!s.getItem('${KEYS.library}')                 ) s.setItem('${KEYS.library}', ${JSON.stringify(lib)});`
     + `if(!s.getItem('${KEYS.name}')&&${JSON.stringify(name)}) s.setItem('${KEYS.name}',${JSON.stringify(name)});`
@@ -1369,7 +1331,7 @@ function saveFile() {
 function exportJSON() {
   const data = {
     history:  getHistory(),
-    bw:       JSON.parse(localStorage.getItem(KEYS.bw) || '{}'),
+    bw:       localStorage.getItem(KEYS.bw) || '',
     schedule: schedule,
     library:  library,
     name:     localStorage.getItem(KEYS.name) || '',
@@ -1392,7 +1354,7 @@ function importJSON(input) {
       const data = JSON.parse(e.target.result);
       showModal('Import backup?', 'This will overwrite your current history, schedule, and library. Continue?', () => {
         if (data.history)  { localStorage.setItem(KEYS.history, JSON.stringify(data.history)); }
-        if (data.bw)       { localStorage.setItem(KEYS.bw, JSON.stringify(data.bw)); }
+        if (data.bw != null) { localStorage.setItem(KEYS.bw, typeof data.bw === 'object' ? '' : String(data.bw)); }
         if (data.schedule) { schedule = data.schedule; saveSchedule(); }
         if (data.library)  { library = data.library; saveLibrary(); }
         if (data.name)     { localStorage.setItem(KEYS.name, data.name); updateAppTitle(); }
