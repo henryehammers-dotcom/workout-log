@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v15';
+const CACHE = 'tallymark-v17';
 const FILES = [
   './index.html',
   './manifest.json',
@@ -10,7 +10,12 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(FILES))
   );
-  // No skipWaiting — let the page control activation via the update banner
+  // No auto skipWaiting — page decides when to activate
+});
+
+// Listen for page to trigger activation (when no active workout session)
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // Activate: delete old caches and claim clients

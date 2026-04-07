@@ -464,7 +464,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v15';
+const APP_VERSION = 'v17';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -573,6 +573,17 @@ function saveHistory(h) {
   } catch {}
 }
 
+function getCleanBw() {
+  let raw = localStorage.getItem(KEYS.bw);
+  if (!raw) return null;
+  // Strip any JSON encoding from the v12/v13 bug (e.g. "\"185\"" -> "185")
+  try { raw = JSON.parse(raw); } catch {}
+  // If it ended up as an object (old per-day format), discard it
+  if (typeof raw === 'object') { localStorage.removeItem(KEYS.bw); return null; }
+  const n = parseFloat(raw);
+  return isNaN(n) ? null : n;
+}
+
 function saveBodyweight(val) {
   if (!val) return;
   localStorage.setItem(KEYS.bw, parseFloat(val));
@@ -580,7 +591,7 @@ function saveBodyweight(val) {
 }
 
 function updateBwDisplay() {
-  const val = localStorage.getItem(KEYS.bw);
+  const val = getCleanBw();
   document.getElementById('bw-display').textContent = val != null ? val : '—';
 }
 
@@ -614,7 +625,7 @@ function openSettings(isFirstLaunch) {
   // Sync fields
   const name = localStorage.getItem(KEYS.name) || '';
   document.getElementById('settings-name').value = name;
-  const bw = localStorage.getItem(KEYS.bw);
+  const bw = getCleanBw();
   document.getElementById('settings-bw').value = bw != null ? bw : '';
 
   // Sync units toggle
@@ -1402,7 +1413,12 @@ document.addEventListener('click', e => {
 <script>
 /* ── Update system ── */
 let _updateAvailable = false;
-function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); window.location.reload(true); }
+
+function applyUpdate() {
+  document.getElementById('update-banner').classList.remove('show');
+  _updateAvailable = false;
+  window.location.reload(true);
+}
 
 function checkForUpdate() {
   if (_updateAvailable) return;
@@ -1423,23 +1439,16 @@ setInterval(checkForUpdate, 5 * 60 * 1000);
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js').then(reg => {
     reg.update();
-    if (reg.waiting) {
-      document.getElementById('update-banner').classList.add('show');
-    }
     reg.addEventListener('updatefound', () => {
       const nw = reg.installing;
       nw.addEventListener('statechange', () => {
         if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          document.getElementById('update-banner').classList.add('show');
+          // New worker ready — checkForUpdate will show the banner if version changed
+          checkForUpdate();
         }
       });
     });
   }).catch(() => {});
-
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) { refreshing = true; window.location.reload(); }
-  });
 }
 </script>
 </body>
