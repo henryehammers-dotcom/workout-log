@@ -485,7 +485,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v23';
+const APP_VERSION = 'v24';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -1360,14 +1360,14 @@ function addFromLibrarySheet(gi, ei) {
   const already = schedule[d].exercises.some(e => e.name === ex.name);
   if (already) {
     showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
-      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
+      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
       saveSchedule(); closeModal();
       if (currentDay === d) renderDayContent();
       closeLibSheet();
     });
     return;
   }
-  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, rest:ex.rest, restSecs:ex.restSecs });
+  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
   saveSchedule();
   if (currentDay === d) renderDayContent();
   closeLibSheet();
