@@ -485,7 +485,7 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -809,10 +809,7 @@ function renderDayContent() {
     ? '<div class="empty">No exercises yet — add one below or pick from the Library tab.</div>'
     : day.exercises.map((ex, i) => {
         const data = getSetData(d, i);
-        if (ex.sets && data.sets.length === 1 && data.sets[0].reps === '' && data.sets[0].weight === '') {
-          while (data.sets.length < ex.sets) data.sets.push({reps:'',weight:''});
-        }
-        const meta = [ex.sets ? ex.sets + ' sets' : '', ex.reps ? ex.reps + ' reps' : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
+        const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
         const rows = data.sets.map((s, si) => `<tr>
           <td><span class="set-num">${si+1}</span></td>
           <td><input class="set-input" type="number" min="0" placeholder="—" value="${s.reps}" data-day="${d}" data-ex="${i}" data-si="${si}" data-reps="1"></td>
