@@ -157,13 +157,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .modal-box h3{font-size:15px;font-weight:500;margin-bottom:8px;color:var(--text)}
 .modal-box p{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.5}
 .modal-actions{display:flex;gap:8px;justify-content:center}
-.info-modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
-.info-modal-wrap.show{display:flex}
-.info-modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;max-width:420px;width:92%;max-height:85vh;overflow-y:auto;position:relative}
-.info-modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1}
-.info-modal-name{font-size:16px;font-weight:500;margin-bottom:4px;padding-right:24px;color:var(--text)}
-.info-modal-tag{margin-bottom:14px}
-.info-modal-desc{font-size:13px;color:var(--text2);line-height:1.7}
 
 /* ── Settings modal ── */
 .settings-modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1001;align-items:center;justify-content:center}
@@ -251,6 +244,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .tag-gym{background:rgba(91,155,213,0.15);color:#7ab3e0}
 .tag-dumbbell{background:rgba(76,175,130,0.15);color:#6cc49a}
 .tag-bodyweight{background:rgba(232,130,74,0.15);color:#e8824a}
+.tag-custom{background:rgba(150,100,200,0.15);color:#9664c8}
 .lib-form-bg{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:1rem}
 .lib-edit-grid{display:grid;grid-template-columns:1fr 80px 70px 60px;gap:8px;margin-bottom:8px;align-items:end}
 .lib-edit-grid input,.lib-edit-grid select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:13px;background:var(--bg2);color:var(--text);width:100%;font-family:inherit}
@@ -277,16 +271,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
       <button class="btn" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" id="modal-ok">Continue</button>
     </div>
-  </div>
-</div>
-
-<!-- ── Exercise info modal ── -->
-<div id="ex-info-modal" class="info-modal-wrap">
-  <div class="info-modal-box">
-    <button class="info-modal-close" onclick="closeExInfo()">&times;</button>
-    <div id="ex-info-name" class="info-modal-name"></div>
-    <div id="ex-info-tag" class="info-modal-tag"></div>
-    <div id="ex-info-desc" class="info-modal-desc"></div>
   </div>
 </div>
 
@@ -449,8 +433,9 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Muscle group</span><input type="text" id="lf-group" placeholder="e.g. Back" style="height:36px;font-size:16px"></div>
         </div>
         <div class="lib-edit-grid" style="margin-bottom:8px">
-          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span><select id="lf-type" style="height:36px"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option></select></div>
-          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="lf-reps" placeholder="e.g. 12-15" style="height:36px;font-size:16px"></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span><select id="lf-type" style="height:36px"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option><option value="custom">Custom</option></select></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Sets</span><input type="number" id="lf-sets" placeholder="3" min="1" style="height:36px;font-size:16px"></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="lf-reps" placeholder="e.g. 8-12" style="height:36px;font-size:16px"></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="lf-rest" placeholder="90" min="1" style="height:36px;font-size:16px"></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">&nbsp;</span><select id="lf-unit" style="height:36px"><option value="sec">sec</option><option value="min">min</option></select></div>
         </div>
@@ -500,12 +485,12 @@ const KEYS = {
   library:   'wl_library',
 };
 
-const APP_VERSION = 'v21';
+const APP_VERSION = 'v22';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
-const TAG_LABEL = {gym:'Gym',dumbbell:'Dumbbells',bodyweight:'Bodyweight'};
-const TAG_CLASS  = {gym:'tag-gym',dumbbell:'tag-dumbbell',bodyweight:'tag-bodyweight'};
+const TAG_LABEL = {gym:'Gym',dumbbell:'Dumbbells',bodyweight:'Bodyweight',custom:'Custom'};
+const TAG_CLASS  = {gym:'tag-gym',dumbbell:'tag-dumbbell',bodyweight:'tag-bodyweight',custom:'tag-custom'};
 
 /* ════════════════════════════════════════════
    DEFAULT DATA
@@ -824,13 +809,27 @@ function renderDayContent() {
     ? '<div class="empty">No exercises yet — add one below or pick from the Library tab.</div>'
     : day.exercises.map((ex, i) => {
         const data = getSetData(d, i);
-        const meta = [ex.reps ? ex.reps + ' reps' : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
+        if (ex.sets && data.sets.length === 1 && data.sets[0].reps === '' && data.sets[0].weight === '') {
+          while (data.sets.length < ex.sets) data.sets.push({reps:'',weight:''});
+        }
+        const meta = [ex.sets ? ex.sets + ' sets' : '', ex.reps ? ex.reps + ' reps' : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
         const rows = data.sets.map((s, si) => `<tr>
           <td><span class="set-num">${si+1}</span></td>
           <td><input class="set-input" type="number" min="0" placeholder="—" value="${s.reps}" data-day="${d}" data-ex="${i}" data-si="${si}" data-reps="1"></td>
           <td><input class="set-input" type="number" min="0" placeholder="—" value="${s.weight}" data-day="${d}" data-ex="${i}" data-si="${si}" data-weight="1"></td>
           <td><button class="del-set" onclick="removeSet('${d}',${i},${si})">×</button></td>
         </tr>`).join('');
+        if (ex.type === 'custom') {
+          return `<div class="exercise-card" data-idx="${i}">
+            <div class="exercise-header">
+              <div style="display:flex;align-items:flex-start">
+                <span class="drag-handle">⠇</span>
+                <div><div class="exercise-name">${ex.name}</div>${meta?`<div class="exercise-meta">${meta}</div>`:''}</div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="removeExercise('${d}',${i})">Remove</button>
+            </div>
+          </div>`;
+        }
         return `<div class="exercise-card" data-idx="${i}">
           <div class="exercise-header">
             <div style="display:flex;align-items:flex-start">
@@ -1244,7 +1243,6 @@ function renderLibSheet() {
             <div class="lib-item-meta">${ex.reps ? ex.reps + ' reps \u00b7 ' : ''}${ex.rest} rest</div>
           </div>
           <div class="lib-item-actions">
-            <button class="btn btn-sm" onclick="event.stopPropagation();showExInfo('${safeName}','${ex.type}')">?</button>
           </div>
         </div>
       </div>`;
@@ -1295,13 +1293,27 @@ function startLibEdit(gi, ei) {
   const ex = library[gi].exercises[ei];
   const wrap = document.getElementById(`liw-${gi}-${ei}`);
   if (!wrap) return;
+  const group = library[gi].group;
+  const isCustom = ex.type === 'custom';
   wrap.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--accent);border-radius:10px;padding:10px 12px">
-      <div class="lib-edit-grid" style="margin-bottom:8px">
+      <div class="lib-edit-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
         <div class="field-group" style="margin-bottom:0"><span class="field-hint">Name</span><input type="text" id="le-name-${gi}-${ei}" value="${ex.name.replace(/"/g,'&quot;')}" style="height:32px;font-size:14px"></div>
-        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Reps</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}" style="height:32px;font-size:14px"></div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Muscle group</span><input type="text" id="le-group-${gi}-${ei}" value="${group.replace(/"/g,'&quot;')}" style="height:32px;font-size:14px"></div>
+      </div>
+      <div class="lib-edit-grid" style="margin-bottom:8px">
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span>
+          <select id="le-type-${gi}-${ei}" style="height:32px">
+            <option value="gym"${ex.type==='gym'?' selected':''}>Gym</option>
+            <option value="dumbbell"${ex.type==='dumbbell'?' selected':''}>Dumbbells</option>
+            <option value="bodyweight"${ex.type==='bodyweight'?' selected':''}>Bodyweight</option>
+            <option value="custom"${isCustom?' selected':''}>Custom</option>
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Sets</span><input type="number" id="le-sets-${gi}-${ei}" value="${ex.sets||''}" placeholder="—" min="1" style="height:32px;font-size:14px"></div>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}" placeholder="${isCustom?'e.g. 45 sec':'e.g. 8-12'}" style="height:32px;font-size:14px"></div>
         <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="le-rest-${gi}-${ei}" value="${parseInt(ex.rest)||90}" min="1" style="height:32px;font-size:14px"></div>
-        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Unit</span>
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">&nbsp;</span>
           <select id="le-unit-${gi}-${ei}" style="height:32px">
             <option value="sec"${!ex.rest.includes('min')?' selected':''}>sec</option>
             <option value="min"${ex.rest.includes('min')?' selected':''}>min</option>
@@ -1316,14 +1328,30 @@ function startLibEdit(gi, ei) {
 }
 
 function saveLibEdit(gi, ei) {
-  const name = document.getElementById(`le-name-${gi}-${ei}`).value.trim();
-  const reps = document.getElementById(`le-reps-${gi}-${ei}`).value.trim();
-  const rv   = parseInt(document.getElementById(`le-rest-${gi}-${ei}`).value) || 90;
-  const unit = document.getElementById(`le-unit-${gi}-${ei}`).value;
+  const name  = document.getElementById(`le-name-${gi}-${ei}`).value.trim();
+  const group = document.getElementById(`le-group-${gi}-${ei}`).value.trim();
+  const type  = document.getElementById(`le-type-${gi}-${ei}`).value;
+  const sets  = parseInt(document.getElementById(`le-sets-${gi}-${ei}`).value) || 0;
+  const reps  = document.getElementById(`le-reps-${gi}-${ei}`).value.trim();
+  const rv    = parseInt(document.getElementById(`le-rest-${gi}-${ei}`).value) || 90;
+  const unit  = document.getElementById(`le-unit-${gi}-${ei}`).value;
   if (!name) return;
-  const repsEl = document.getElementById(`le-reps-${gi}-${ei}`);
-  if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
-  library[gi].exercises[ei] = { ...library[gi].exercises[ei], name, reps, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv };
+  if (type !== 'custom') {
+    const repsEl = document.getElementById(`le-reps-${gi}-${ei}`);
+    if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
+  }
+  const updated = { ...library[gi].exercises[ei], name, reps, sets, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv, type };
+  const oldGroup = library[gi].group;
+  if (group && group.toLowerCase() !== oldGroup.toLowerCase()) {
+    // Move to different group
+    library[gi].exercises.splice(ei, 1);
+    if (library[gi].exercises.length === 0) library.splice(gi, 1);
+    const newGi = library.findIndex(g => g.group.toLowerCase() === group.toLowerCase());
+    if (newGi >= 0) library[newGi].exercises.push(updated);
+    else library.push({ group, exercises: [updated] });
+  } else {
+    library[gi].exercises[ei] = updated;
+  }
   saveLibrary();
   renderLibSheet();
 }
@@ -1353,16 +1381,20 @@ function saveNewLibEntry() {
   const group = document.getElementById('lf-group').value.trim();
   const type  = document.getElementById('lf-type').value;
   const reps  = document.getElementById('lf-reps').value.trim();
+  const sets  = parseInt(document.getElementById('lf-sets').value) || 0;
   const rv    = parseInt(document.getElementById('lf-rest').value) || 90;
   const unit  = document.getElementById('lf-unit').value;
   if (!name)  { document.getElementById('lf-name').focus(); return; }
   if (!group) { document.getElementById('lf-group').focus(); return; }
-  const repsEl = document.getElementById('lf-reps');
-  if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
+  if (type !== 'custom') {
+    const repsEl = document.getElementById('lf-reps');
+    if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
+  }
   const restSecs = unit === 'min' ? rv * 60 : rv;
   const gi = library.findIndex(g => g.group.toLowerCase() === group.toLowerCase());
-  if (gi >= 0) library[gi].exercises.push({ name, reps, rest: rv+' '+unit, restSecs, type });
-  else library.push({ group, exercises: [{ name, reps, rest: rv+' '+unit, restSecs, type }] });
+  const entry = { name, reps, sets, rest: rv+' '+unit, restSecs, type };
+  if (gi >= 0) library[gi].exercises.push(entry);
+  else library.push({ group, exercises: [entry] });
   saveLibrary();
   hideLibAddForm();
   renderLibSheet();
@@ -1376,49 +1408,6 @@ function deleteLibEntry(gi, ei) {
   });
 }
 
-/* ════════════════════════════════════════════
-   EXERCISE INFO MODAL
-   ════════════════════════════════════════════ */
-const EXERCISE_INFO = {
-  "Barbell bench press":{description:"Lie flat on a bench and grip the barbell slightly wider than shoulder-width. Lower the bar to your mid-chest with control, then press it back up to full arm extension. Keep your feet flat on the floor and avoid bouncing the bar off your chest."},
-  "Dumbbell bench press":{description:"Lie on a flat bench holding a dumbbell in each hand at chest height, palms facing forward. Press both dumbbells up until your arms are fully extended, then lower them back with control. Dumbbells allow a greater range of motion than a barbell and help identify strength imbalances."},
-  "Push-up":{description:"Start in a high plank with hands slightly wider than shoulder-width and body in a straight line from head to heels. Lower your chest toward the floor by bending your elbows, then push back up. Keep your core tight throughout and don't let your hips sag."},
-  "Barbell bent-over row":{description:"Hinge at the hips to about 45 degrees with a flat back and grip the barbell just outside shoulder-width. Pull the bar up toward your lower chest while driving your elbows back, then lower with control. Squeeze your shoulder blades together at the top of each rep."},
-  "Dumbbell bent-over row":{description:"Hinge forward at the hips with a flat back and hold a dumbbell in each hand below your chest. Pull both dumbbells up toward your hips, driving your elbows back and squeezing your shoulder blades. Lower slowly and maintain the hip hinge position throughout."},
-  "Pull-up":{description:"Hang from a bar with hands slightly wider than shoulder-width, palms facing away. Pull your body up until your chin clears the bar by engaging your lats and driving your elbows down toward your hips. Lower yourself fully before the next rep."},
-  "Barbell overhead press":{description:"Stand with feet shoulder-width apart and grip the barbell at shoulder height. Press the bar straight overhead until your arms are fully extended, then lower it back to your shoulders. Keep your core braced and avoid arching your lower back."},
-  "Dumbbell lateral raise":{description:"Stand upright holding a dumbbell in each hand at your sides with a slight bend in your elbows. Raise both arms out to the sides until they're at shoulder height, then lower them slowly. Lead with your elbows, not your hands, and avoid shrugging."},
-  "Pike push-up":{description:"Start in a downward dog position with your hips raised high and body forming an inverted V. Bend your elbows to lower the top of your head toward the floor, then push back up. This targets your shoulders and mimics the overhead press movement."},
-  "Barbell curl":{description:"Stand holding a barbell with an underhand grip at hip width. Curl the bar up toward your shoulders by flexing your elbows, keeping your upper arms still. Lower it slowly under control — the eccentric phase is just as important as the curl."},
-  "Dumbbell bicep curl":{description:"Stand or sit holding a dumbbell in each hand with palms facing forward. Curl both dumbbells up to shoulder height, squeezing your biceps at the top, then lower slowly. Keep your elbows pinned to your sides throughout the movement."},
-  "Chin-up":{description:"Hang from a bar with an underhand grip slightly narrower than shoulder-width. Pull your chin over the bar by engaging your biceps and back, then lower fully. The underhand grip recruits the biceps more than a standard pull-up."},
-  "Cable tricep pushdown":{description:"Stand facing a cable machine with the rope or bar attached at the top. Grip the attachment and, keeping your elbows pinned to your sides, push it down until your arms are fully extended. The key is to isolate the triceps by not letting your elbows drift forward."},
-  "Overhead tricep extension":{description:"Stand or sit holding a dumbbell overhead with both hands, arms fully extended. Bend your elbows to lower the weight behind your head, then extend back up. Keep your elbows pointing straight up and close to your head throughout."},
-  "Diamond push-up":{description:"Get into a push-up position but place your hands together directly under your chest, forming a diamond shape with your thumbs and index fingers. Lower your chest to your hands, then push back up. This narrow hand position shifts the load heavily onto your triceps."},
-  "Barbell squat":{description:"Position a barbell across your upper traps and stand with feet shoulder-width apart. Descend by pushing your knees out and sitting your hips back until your thighs are parallel to the floor, then drive back up. Keep your chest up and your weight through your heels."},
-  "Dumbbell goblet squat":{description:"Hold a dumbbell vertically at your chest with both hands cupped around one end. Squat down by pushing your knees out and sitting back until your thighs are parallel, then drive up through your heels. The goblet position helps keep your torso upright."},
-  "Bodyweight squat":{description:"Stand with feet shoulder-width apart and arms extended forward for balance. Lower yourself by bending at the hips and knees until your thighs are parallel to the floor, then stand back up. Focus on keeping your knees tracking over your toes and your back upright."},
-  "Barbell deadlift":{description:"Stand over a barbell with feet hip-width apart, grip just outside your legs, and hinge forward with a flat back. Drive through your heels to lift the bar, extending your hips and knees simultaneously until you're standing tall. Lower it back by hinging at the hips first."},
-  "Dumbbell RDL":{description:"Stand holding dumbbells in front of your thighs and hinge at the hips, pushing them back as you lower the weights down your legs. Stop when you feel a stretch in your hamstrings, then drive your hips forward to return to standing. Keep a soft bend in your knees and your back flat throughout."},
-  "Glute bridge":{description:"Lie on your back with knees bent and feet flat on the floor. Drive through your heels to lift your hips toward the ceiling, squeezing your glutes hard at the top, then lower back down. For more challenge, place a barbell or dumbbell across your hips."},
-  "Seated calf raise machine":{description:"Sit at the machine with the pad resting on your lower thighs just above your knees. Push up onto the balls of your feet as high as possible, hold briefly, then lower your heels below the platform for a full stretch. Slow, controlled reps with a full range of motion work best."},
-  "Dumbbell calf raise":{description:"Stand holding dumbbells at your sides with the balls of your feet on the edge of a step or platform. Rise up onto your tiptoes as high as possible, pause, then slowly lower your heels below the step level. The full range of motion is what separates this from flat-ground raises."},
-  "Bodyweight calf raise":{description:"Stand with feet hip-width apart and rise up onto the balls of your feet as high as possible, then lower slowly. You can do these on flat ground or on the edge of a step for a greater range of motion. Slow, controlled reps with a pause at the top will fatigue the calves quickly."},
-  "Cable crunch":{description:"Kneel in front of a cable machine with a rope attachment overhead. Grip the rope at your temples and crunch your elbows toward your knees, rounding your spine and contracting your abs. The cable keeps tension on your abs throughout the entire range — avoid pulling with your neck."},
-  "Dumbbell side bend":{description:"Stand holding a dumbbell in one hand at your side. Bend sideways at the waist toward the dumbbell side, then use your oblique on the opposite side to pull you back upright. Keep the movement controlled and avoid twisting your torso."},
-  "Plank":{description:"Get into a forearm plank with your elbows directly under your shoulders and your body forming a straight line from head to heels. Squeeze your glutes and abs to prevent your hips from sagging or rising. Breathe steadily and hold for the target time."},
-};
-
-function showExInfo(name, type) {
-  const tagLabel = {gym:'Gym equipment', dumbbell:'Dumbbells', bodyweight:'Bodyweight'};
-  const tagClass = {gym:'tag-gym', dumbbell:'tag-dumbbell', bodyweight:'tag-bodyweight'};
-  document.getElementById('ex-info-name').textContent = name;
-  document.getElementById('ex-info-tag').innerHTML = `<span class="lib-tag ${tagClass[type]||'tag-gym'}">${tagLabel[type]||type}</span>`;
-  const data = EXERCISE_INFO[name];
-  document.getElementById('ex-info-desc').textContent = data ? data.description : 'No info available for this exercise.';
-  document.getElementById('ex-info-modal').classList.add('show');
-}
-function closeExInfo() { document.getElementById('ex-info-modal').classList.remove('show'); }
 
 /* ════════════════════════════════════════════
    VALIDATION
