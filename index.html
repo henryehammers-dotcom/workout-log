@@ -490,7 +490,11 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
+
+function genId() {
+  return Math.random().toString(36).slice(2, 7);
+}
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -636,6 +640,41 @@ function setUnits(u) {
 }
 
 /* ════════════════════════════════════════════
+   ID MIGRATION
+   ════════════════════════════════════════════ */
+function migrateIds() {
+  let changed = false;
+  // Assign IDs to library exercises missing them
+  library.forEach(g => g.exercises.forEach(ex => {
+    if (!ex.id) { ex.id = genId(); changed = true; }
+  }));
+  if (changed) saveLibrary();
+
+  // Build name→id map
+  const nameToId = {};
+  library.forEach(g => g.exercises.forEach(ex => { nameToId[ex.name] = ex.id; }));
+
+  // Backfill schedule entries
+  let schedChanged = false;
+  DAY_NAMES.forEach(d => {
+    schedule[d].exercises.forEach(ex => {
+      if (!ex.exId && nameToId[ex.name]) { ex.exId = nameToId[ex.name]; schedChanged = true; }
+    });
+  });
+  if (schedChanged) saveSchedule();
+
+  // Backfill history entries
+  const hist = getHistory();
+  let histChanged = false;
+  Object.values(hist).forEach(entries => {
+    entries.forEach(e => {
+      if (!e.exId && nameToId[e.name]) { e.exId = nameToId[e.name]; histChanged = true; }
+    });
+  });
+  if (histChanged) saveHistory(hist);
+}
+
+/* ════════════════════════════════════════════
    SETTINGS
    ════════════════════════════════════════════ */
 function openSettings(isFirstLaunch) {
@@ -770,6 +809,8 @@ function setTheme(t) {
   loadLibrary();
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Assign IDs to library exercises that don't have them, then backfill schedule + history
+    migrateIds();
     // Units
     currentUnits = localStorage.getItem(KEYS.units) || 'lbs';
     document.getElementById('bw-unit-label').textContent = currentUnits;
@@ -1030,9 +1071,10 @@ function logExercise(d, idx) {
   const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
   const hist = getHistory();
   if (!hist[today]) hist[today] = [];
-  const exName = schedule[d].exercises[idx].name;
-  const newEntry = { name: exName, sets: valid.map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 })) };
-  const existing = hist[today].findIndex(e => e.name === exName);
+  const ex = schedule[d].exercises[idx];
+  const exName = ex.name;
+  const newEntry = { exId: ex.exId||'', name: exName, sets: valid.map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 })) };
+  const existing = hist[today].findIndex(e => e.exId && ex.exId ? e.exId === ex.exId : e.name === exName);
   if (existing >= 0) hist[today][existing] = newEntry; else hist[today].push(newEntry);
   saveHistory(hist);
   data.logged = true;
@@ -1108,9 +1150,18 @@ function destroyCharts() { activeCharts.forEach(c => { try { c.destroy(); } catc
 function getExerciseIndex(hist) {
   const idx = {};
   Object.entries(hist).forEach(([date, entries]) => {
-    entries.forEach(e => { if (!idx[e.name]) idx[e.name] = []; idx[e.name].push({ date, sets: e.sets }); });
+    entries.forEach(e => {
+      const key = e.exId || e.name;
+      if (!idx[key]) idx[key] = { name: e.name, sessions: [] };
+      idx[key].sessions.push({ date, sets: e.sets });
+    });
   });
   return idx;
+}
+
+// Get sorted display keys for history list
+function getHistoryDisplayNames(index) {
+  return Object.entries(index).map(([key, val]) => ({ key, name: val.name })).sort((a,b) => a.name.localeCompare(b.name));
 }
 
 function sessionVolume(sets) {
@@ -1124,9 +1175,10 @@ function parseRepRange(str) {
   return { lo: parseInt(m[1]), hi: parseInt(m[2]) };
 }
 
-function getRepRangeForExercise(name) {
-  for (const d of Object.values(schedule)) { for (const ex of d.exercises) { if (ex.name === name && ex.reps) return parseRepRange(ex.reps); } }
-  for (const g of library) { for (const ex of g.exercises) { if (ex.name === name && ex.reps) return parseRepRange(ex.reps); } }
+function getRepRangeForExercise(nameOrId) {
+  // Try by exId first (key may be an id), then by name
+  for (const g of library) { for (const ex of g.exercises) { if ((ex.id && ex.id === nameOrId) || ex.name === nameOrId) return parseRepRange(ex.reps); } }
+  for (const d of Object.values(schedule)) { for (const ex of d.exercises) { if (ex.name === nameOrId && ex.reps) return parseRepRange(ex.reps); } }
   return null;
 }
 
@@ -1150,13 +1202,15 @@ function renderHistory(selected) {
   if (!exercises.length) { container.innerHTML = '<div class="empty">No history yet. Log a workout to see it here.</div>'; return; }
 
   if (!selected) {
-    container.innerHTML = `<div class="exercise-list" id="ex-list">${exercises.map(name => {
-      const sessions = index[name];
+    const displayList = getHistoryDisplayNames(index);
+    container.innerHTML = `<div class="exercise-list" id="ex-list">${displayList.map(({key, name}) => {
+      const entry = index[key];
+      const sessions = entry.sessions;
       const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));
       const totalVol = sessions.reduce((sum, s) => sum + sessionVolume(s.sets), 0);
-      const range = getRepRangeForExercise(name), note = getProgressNote(sessions, range);
+      const range = getRepRangeForExercise(key), note = getProgressNote(sessions, range);
       const badge = note ? `<span class="note-badge ${note.type}">${note.type==='heavy'?'too heavy?':'too light?'}</span>` : '';
-      return `<div class="exercise-list-item" data-exname="${name.replace(/"/g,'&quot;')}">
+      return `<div class="exercise-list-item" data-exkey="${key.replace(/"/g,'&quot;')}">
         <div>
           <div class="ex-name">${name}${badge}</div>
           <div class="ex-count">${sessions.length} session${sessions.length!==1?'s':''} · best: ${best} ${currentUnits} · vol: ${totalVol.toLocaleString()} ${currentUnits}</div>
@@ -1165,13 +1219,15 @@ function renderHistory(selected) {
       </div>`;
     }).join('')}</div>`;
     document.getElementById('ex-list').addEventListener('click', e => {
-      const item = e.target.closest('[data-exname]');
-      if (item) renderHistory(item.dataset.exname);
+      const item = e.target.closest('[data-exkey]');
+      if (item) renderHistory(item.dataset.exkey);
     });
     return;
   }
 
-  const sessions = index[selected]; if (!sessions) { renderHistory(); return; }
+  const entry = index[selected]; if (!entry) { renderHistory(); return; }
+  const sessions = entry.sessions;
+  const selected_name = entry.name;
   const range = getRepRangeForExercise(selected), note = getProgressNote(sessions, range);
   const noteHtml = note ? `<div class="note-banner ${note.type}">${note.msg}</div>` : '';
   const labels = sessions.map(s => s.date.replace(/\w+,\s/, ''));
@@ -1206,9 +1262,9 @@ function renderHistory(selected) {
 
   container.innerHTML = `
     <button class="back-btn" onclick="renderHistory()">‹ All exercises</button>
-    <div class="ex-detail-name">${selected}</div>
+    <div class="ex-detail-name">${selected_name}</div>
     <div class="ex-detail-count">${sessions.length} session${sessions.length!==1?'s':''}</div>
-    $${noteHtml}
+    ${noteHtml}
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Best weight</div><div class="stat-value">${best} ${currentUnits}</div></div>
       <div class="stat-card"><div class="stat-label">Total volume</div><div class="stat-value">${totalVol.toLocaleString()} ${currentUnits}</div></div>
@@ -1417,6 +1473,19 @@ function saveLibEdit(gi, ei) {
     library[gi].exercises[ei] = updated;
   }
   saveLibrary();
+  // Propagate changes to schedule entries linked to this exercise
+  const updatedId = updated.id;
+  if (updatedId) {
+    DAY_NAMES.forEach(d => {
+      schedule[d].exercises.forEach((ex, i) => {
+        if (ex.exId === updatedId) {
+          schedule[d].exercises[i] = { ...ex, name: updated.name, reps: updated.reps, sets: updated.sets, duration: updated.duration, note: updated.note, rest: updated.rest, restSecs: updated.restSecs, type: updated.type };
+        }
+      });
+    });
+    saveSchedule();
+    renderDayContent();
+  }
   renderLibSheet();
 }
 
@@ -1427,14 +1496,14 @@ function addFromLibrarySheet(gi, ei) {
   const already = schedule[d].exercises.some(e => e.name === ex.name);
   if (already) {
     showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
-      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
+      schedule[d].exercises.push({ exId:ex.id, name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
       saveSchedule(); closeModal();
       if (currentDay === d) renderDayContent();
       closeLibSheet();
     });
     return;
   }
-  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
+  schedule[d].exercises.push({ exId:ex.id, name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
   saveSchedule();
   if (currentDay === d) renderDayContent();
   closeLibSheet();
@@ -1458,7 +1527,7 @@ function saveNewLibEntry() {
   }
   const restSecs = unit === 'min' ? rv * 60 : rv;
   const gi = library.findIndex(g => g.group.toLowerCase() === group.toLowerCase());
-  const entry = { name, reps, sets, duration, note, rest: rv+' '+unit, restSecs, type };
+  const entry = { id: genId(), name, reps, sets, duration, note, rest: rv+' '+unit, restSecs, type };
   if (gi >= 0) library[gi].exercises.push(entry);
   else library.push({ group, exercises: [entry] });
   saveLibrary();
