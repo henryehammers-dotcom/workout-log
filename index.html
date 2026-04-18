@@ -490,7 +490,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 
 function genId() {
   return Math.random().toString(36).slice(2, 7);
@@ -1355,7 +1355,7 @@ function renderLibSheet() {
         <div class="lib-item" id="li-${gi}-${ei}" onclick="addFromLibrarySheet(${gi},${ei})">
           <div class="lib-item-left">
             <div class="lib-item-name">${ex.name}<span class="lib-tag ${TAG_CLASS[ex.type]||'tag-gym'}">${TAG_LABEL[ex.type]||ex.type}</span></div>
-            <div class="lib-item-meta">${ex.reps ? ex.reps + ' reps \u00b7 ' : ''}${ex.rest} rest</div>
+            <div class="lib-item-meta">${[ex.reps ? ex.reps+' reps' : '', ex.sets ? ex.sets+' sets' : '', ex.duration||'', ex.rest ? ex.rest+' rest' : ''].filter(Boolean).join(' · ')}</div>
           </div>
           <div class="lib-item-actions">
           </div>
