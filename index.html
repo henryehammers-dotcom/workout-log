@@ -91,6 +91,30 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .welcome-error{font-size:12px;color:var(--red);margin-top:4px;display:none}
 
 
+/* ── Clock tab ── */
+.clock-display{font-size:64px;font-weight:200;text-align:center;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-1px;margin:1.5rem 0 1rem;font-family:system-ui,sans-serif}
+.clock-drums{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2rem;user-select:none}
+.drum-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.drum-label{font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.drum{width:90px;height:150px;overflow:hidden;position:relative;cursor:ns-resize;-webkit-overflow-scrolling:touch}
+.drum-inner{position:absolute;top:0;left:0;width:100%;will-change:transform}
+.drum-item{height:50px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:300;color:var(--text3);font-variant-numeric:tabular-nums}
+.drum-item.drum-selected{font-size:36px;font-weight:400;color:var(--text)}
+.drum-fade-top{position:absolute;top:0;left:0;right:0;height:50px;background:linear-gradient(to bottom,var(--bg) 0%,transparent 100%);pointer-events:none;z-index:2}
+.drum-fade-bot{position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg) 0%,transparent 100%);pointer-events:none;z-index:2}
+.drum-sep{font-size:32px;font-weight:200;color:var(--text3);padding:0 2px;padding-top:20px}
+.clock-controls{display:flex;justify-content:center;gap:24px;margin-bottom:1.5rem}
+.clock-btn{width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;font-size:16px;font-weight:500;font-family:inherit;transition:all 0.15s}
+.clock-btn:active{transform:scale(0.94)}
+.clock-btn-primary{background:var(--accent);color:#fff}
+.clock-btn-primary.running{background:var(--green);color:#fff}
+.clock-btn-secondary{background:var(--bg3);color:var(--text)}
+.sw-laps{max-height:220px;overflow-y:auto;margin-bottom:1.5rem}
+.sw-lap-row{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);font-size:14px;font-variant-numeric:tabular-nums}
+.sw-lap-num{color:var(--text3)}
+.sw-lap-time{color:var(--text);font-weight:500}
+.sw-lap-split{color:var(--text2);font-size:12px}
+
 .update-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--accent);color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .update-banner.show{display:block}
 
@@ -534,7 +558,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 
 function genId() {
   return Math.random().toString(36).slice(2, 7);
@@ -1755,6 +1779,7 @@ function setDrumValue(drum, val) {
   val = Math.max(0, Math.min(max, val));
   drum.dataset.val = val;
   const inner = drum.querySelector('.drum-inner');
+  // Center: drum height is 150px, item height 50px, so center offset is 50px (one item above selected)
   inner.style.transform = `translateY(${50 - val * 50}px)`;
   drum.querySelectorAll('.drum-item').forEach((el, i) => {
     el.classList.toggle('drum-selected', i === val);
@@ -1792,7 +1817,8 @@ function updateClockCountdown() {
   const h = parseInt(document.getElementById('drum-h')?.dataset.val || 0);
   const m = parseInt(document.getElementById('drum-m')?.dataset.val || 0);
   const s = parseInt(document.getElementById('drum-s')?.dataset.val || 0);
-  document.getElementById('clock-countdown').textContent = formatClockTime(h * 3600 + m * 60 + s);
+  const el = document.getElementById('clock-countdown');
+  if (el && !ctRunning) el.textContent = formatClockTime(h * 3600 + m * 60 + s);
 }
 
 function formatClockTime(secs) {
