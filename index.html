@@ -488,7 +488,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -679,7 +679,7 @@ function setHideWarn(hide) {
 function exportForAI() {
   const name = localStorage.getItem(KEYS.name) || 'User';
   const hist = getHistory();
-  const lines = [`${name}'s Tallymark workout data\n`];
+  const lines = [`${name}'s workout data\n`];
 
   lines.push('=== WEEKLY SCHEDULE ===');
   DAY_NAMES.forEach(d => {
