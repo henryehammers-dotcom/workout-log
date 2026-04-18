@@ -435,12 +435,14 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Muscle group</span><input type="text" id="lf-group" placeholder="e.g. Back" style="height:36px;font-size:16px"></div>
         </div>
         <div class="lib-edit-grid" style="margin-bottom:8px">
-          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span><select id="lf-type" style="height:36px"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option><option value="custom">Custom</option></select></div>
+          <div class="field-group" style="margin-bottom:0"><span class="field-hint">Equipment</span><select id="lf-type" style="height:36px" onchange="toggleDurationField('lf',this.value)"><option value="gym">Gym</option><option value="dumbbell">Dumbbells</option><option value="bodyweight">Bodyweight</option><option value="custom">Custom</option></select></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Sets</span><input type="number" id="lf-sets" placeholder="3" min="1" style="height:36px;font-size:16px"></div>
+          <div class="field-group" id="lf-duration-wrap" style="margin-bottom:0;display:none"><span class="field-hint">Duration</span><input type="text" id="lf-duration" placeholder="e.g. 30 min" style="height:36px;font-size:16px"></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="lf-reps" placeholder="e.g. 8-12" style="height:36px;font-size:16px"></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="lf-rest" placeholder="90" min="1" style="height:36px;font-size:16px"></div>
           <div class="field-group" style="margin-bottom:0"><span class="field-hint">&nbsp;</span><select id="lf-unit" style="height:36px"><option value="sec">sec</option><option value="min">min</option></select></div>
         </div>
+        <div class="field-group" style="margin-bottom:8px"><span class="field-hint">Note (optional)</span><input type="text" id="lf-note" placeholder="e.g. Keep core tight" style="height:36px;font-size:16px;width:100%;border:1px solid var(--border2);border-radius:8px;padding:0 10px;background:var(--bg2);color:var(--text);font-family:inherit"></div>
         <button class="btn btn-primary" style="width:100%;padding:8px" onclick="saveNewLibEntry()">Add to library</button>
       </div>
     </div>
@@ -488,7 +490,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v26';
+const APP_VERSION = 'v27';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -688,8 +690,10 @@ function exportForAI() {
     const exList = day.exercises.map(e => {
       const parts = [e.name];
       if (e.sets) parts.push(`${e.sets} sets`);
+      if (e.duration) parts.push(e.duration);
       if (e.reps) parts.push(`${e.reps} reps`);
       if (e.rest) parts.push(`${e.rest} rest`);
+      if (e.note) parts.push(`[${e.note}]`);
       return parts.join(', ');
     });
     lines.push(`${FULL_DAYS[d]}: ${exList.length ? exList.join(' | ') : 'No exercises'}`);
@@ -863,7 +867,8 @@ function renderDayContent() {
     ? '<div class="empty">No exercises yet — add one below or pick from the Library tab.</div>'
     : day.exercises.map((ex, i) => {
         const data = getSetData(d, i);
-        const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
+        const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', ex.type==='custom'&&ex.duration ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
+        const noteHtml = ex.note ? `<div class="exercise-meta" style="color:var(--text3);font-style:italic">${ex.note}</div>` : '';
         const rows = data.sets.map((s, si) => `<tr>
           <td><span class="set-num">${si+1}</span></td>
           <td><input class="set-input" type="number" min="0" placeholder="—" value="${s.reps}" data-day="${d}" data-ex="${i}" data-si="${si}" data-reps="1"></td>
@@ -875,7 +880,7 @@ function renderDayContent() {
             <div class="exercise-header">
               <div style="display:flex;align-items:flex-start">
                 <span class="drag-handle">⠇</span>
-                <div><div class="exercise-name">${ex.name}</div>${meta?`<div class="exercise-meta">${meta}</div>`:''}</div>
+                <div><div class="exercise-name">${ex.name}</div>${meta?`<div class="exercise-meta">${meta}</div>`:''}${noteHtml}</div>
               </div>
               <button class="btn btn-danger btn-sm" onclick="removeExercise('${d}',${i})">Remove</button>
             </div>
@@ -885,7 +890,7 @@ function renderDayContent() {
           <div class="exercise-header">
             <div style="display:flex;align-items:flex-start">
               <span class="drag-handle">⠇</span>
-              <div><div class="exercise-name">${ex.name}</div>${meta?`<div class="exercise-meta">${meta}</div>`:''}</div>
+              <div><div class="exercise-name">${ex.name}</div>${meta?`<div class="exercise-meta">${meta}</div>`:''}${noteHtml}</div>
             </div>
             <button class="btn btn-danger btn-sm" onclick="removeExercise('${d}',${i})">Remove</button>
           </div>
@@ -1203,7 +1208,7 @@ function renderHistory(selected) {
     <button class="back-btn" onclick="renderHistory()">‹ All exercises</button>
     <div class="ex-detail-name">${selected}</div>
     <div class="ex-detail-count">${sessions.length} session${sessions.length!==1?'s':''}</div>
-    ${noteHtml}
+    $${noteHtml}
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Best weight</div><div class="stat-value">${best} ${currentUnits}</div></div>
       <div class="stat-card"><div class="stat-label">Total volume</div><div class="stat-value">${totalVol.toLocaleString()} ${currentUnits}</div></div>
@@ -1365,7 +1370,8 @@ function startLibEdit(gi, ei) {
           </select>
         </div>
         <div class="field-group" style="margin-bottom:0"><span class="field-hint">Sets</span><input type="number" id="le-sets-${gi}-${ei}" value="${ex.sets||''}" placeholder="—" min="1" style="height:32px;font-size:14px"></div>
-        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}" placeholder="${isCustom?'e.g. 45 sec':'e.g. 8-12'}" style="height:32px;font-size:14px"></div>
+        ${isCustom ? `<div class="field-group" style="margin-bottom:0"><span class="field-hint">Duration</span><input type="text" id="le-duration-${gi}-${ei}" value="${ex.duration||''}" placeholder="e.g. 30 min" style="height:32px;font-size:14px"></div>` : ''}
+        <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rep range</span><input type="text" id="le-reps-${gi}-${ei}" value="${ex.reps||''}" placeholder="e.g. 8-12" style="height:32px;font-size:14px"></div>
         <div class="field-group" style="margin-bottom:0"><span class="field-hint">Rest</span><input type="number" id="le-rest-${gi}-${ei}" value="${parseInt(ex.rest)||90}" min="1" style="height:32px;font-size:14px"></div>
         <div class="field-group" style="margin-bottom:0"><span class="field-hint">&nbsp;</span>
           <select id="le-unit-${gi}-${ei}" style="height:32px">
@@ -1374,6 +1380,7 @@ function startLibEdit(gi, ei) {
           </select>
         </div>
       </div>
+      <div class="field-group" style="margin-bottom:8px"><span class="field-hint">Note (optional)</span><input type="text" id="le-note-${gi}-${ei}" value="${ex.note||''}" placeholder="e.g. Keep core tight" style="height:32px;font-size:14px;width:100%;border:1px solid var(--border2);border-radius:6px;padding:0 8px;background:var(--bg2);color:var(--text);font-family:inherit"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary btn-sm" style="flex:1;padding:6px" onclick="saveLibEdit(${gi},${ei})">Save</button>
         <button class="btn btn-sm" style="flex:1;padding:6px" onclick="renderLibSheet()">Cancel</button>
@@ -1386,6 +1393,9 @@ function saveLibEdit(gi, ei) {
   const group = document.getElementById(`le-group-${gi}-${ei}`).value.trim();
   const type  = document.getElementById(`le-type-${gi}-${ei}`).value;
   const sets  = parseInt(document.getElementById(`le-sets-${gi}-${ei}`).value) || 0;
+  const durEl = document.getElementById(`le-duration-${gi}-${ei}`);
+  const duration = durEl ? durEl.value.trim() : '';
+  const note  = document.getElementById(`le-note-${gi}-${ei}`).value.trim();
   const reps  = document.getElementById(`le-reps-${gi}-${ei}`).value.trim();
   const rv    = parseInt(document.getElementById(`le-rest-${gi}-${ei}`).value) || 90;
   const unit  = document.getElementById(`le-unit-${gi}-${ei}`).value;
@@ -1394,7 +1404,7 @@ function saveLibEdit(gi, ei) {
     const repsEl = document.getElementById(`le-reps-${gi}-${ei}`);
     if (!validReps(repsEl.value)) { repsEl.style.borderColor = 'var(--red)'; setTimeout(() => repsEl.style.borderColor = '', 1500); return; }
   }
-  const updated = { ...library[gi].exercises[ei], name, reps, sets, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv, type };
+  const updated = { ...library[gi].exercises[ei], name, reps, sets, duration, note, rest: rv+' '+unit, restSecs: unit==='min'?rv*60:rv, type };
   const oldGroup = library[gi].group;
   if (group && group.toLowerCase() !== oldGroup.toLowerCase()) {
     // Move to different group
@@ -1417,14 +1427,14 @@ function addFromLibrarySheet(gi, ei) {
   const already = schedule[d].exercises.some(e => e.name === ex.name);
   if (already) {
     showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
-      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
+      schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
       saveSchedule(); closeModal();
       if (currentDay === d) renderDayContent();
       closeLibSheet();
     });
     return;
   }
-  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
+  schedule[d].exercises.push({ name:ex.name, reps:ex.reps, sets:ex.sets||0, duration:ex.duration||'', note:ex.note||'', rest:ex.rest, restSecs:ex.restSecs, type:ex.type });
   saveSchedule();
   if (currentDay === d) renderDayContent();
   closeLibSheet();
@@ -1436,6 +1446,8 @@ function saveNewLibEntry() {
   const type  = document.getElementById('lf-type').value;
   const reps  = document.getElementById('lf-reps').value.trim();
   const sets  = parseInt(document.getElementById('lf-sets').value) || 0;
+  const duration = type === 'custom' ? (document.getElementById('lf-duration').value.trim()) : '';
+  const note  = document.getElementById('lf-note').value.trim();
   const rv    = parseInt(document.getElementById('lf-rest').value) || 90;
   const unit  = document.getElementById('lf-unit').value;
   if (!name)  { document.getElementById('lf-name').focus(); return; }
@@ -1446,7 +1458,7 @@ function saveNewLibEntry() {
   }
   const restSecs = unit === 'min' ? rv * 60 : rv;
   const gi = library.findIndex(g => g.group.toLowerCase() === group.toLowerCase());
-  const entry = { name, reps, sets, rest: rv+' '+unit, restSecs, type };
+  const entry = { name, reps, sets, duration, note, rest: rv+' '+unit, restSecs, type };
   if (gi >= 0) library[gi].exercises.push(entry);
   else library.push({ group, exercises: [entry] });
   saveLibrary();
@@ -1466,6 +1478,11 @@ function deleteLibEntry(gi, ei) {
 /* ════════════════════════════════════════════
    VALIDATION
    ════════════════════════════════════════════ */
+
+function toggleDurationField(prefix, type) {
+  const wrap = document.getElementById(prefix + '-duration-wrap');
+  if (wrap) wrap.style.display = type === 'custom' ? '' : 'none';
+}
 function validReps(val) {
   if (!val || val.trim() === '') return true;
   return /^\d+\s*[-–]\s*\d+$/.test(val.trim());
