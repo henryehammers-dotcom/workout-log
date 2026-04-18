@@ -334,16 +334,18 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
         <div class="settings-toggle-opt" data-val="matrix" onclick="setTheme('matrix')">Matrix</div>
       </div>
     </div>
+    <div class="settings-field">
+      <span class="settings-field-hint">Progress warnings</span>
+      <div class="settings-toggle" id="warn-toggle">
+        <div class="settings-toggle-opt active" data-val="on" onclick="setHideWarn(false)">On</div>
+        <div class="settings-toggle-opt" data-val="off" onclick="setHideWarn(true)">Off</div>
+      </div>
+    </div>
 
     <div class="settings-section-label" id="settings-data-section" style="display:none">Data</div>
     <div id="settings-data-btns" style="display:none">
     <button class="settings-data-btn" onclick="saveFile()">Save file</button>
-    <button class="settings-data-btn" onclick="exportJSON()">Export data as JSON</button>
-    <label class="settings-data-btn" style="display:flex;align-items:center;cursor:pointer">
-      Import JSON backup
-      <input type="file" accept=".json" style="display:none" onchange="importJSON(this)">
-    </label>
-    <button class="settings-data-btn danger" onclick="confirmClearHistory()">Clear all history</button>
+    <button class="settings-data-btn" onclick="exportForAI()">Copy data for AI</button>
     </div>
 
     <div style="text-align:center;margin-top:1rem;font-size:11px;color:var(--text3)">Tallymark <span id="settings-version"></span></div>
@@ -483,9 +485,10 @@ const KEYS = {
   units:     'wl_units',
   welcomed:  'wl_welcomed',
   library:   'wl_library',
+  hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -653,6 +656,10 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#theme-toggle .settings-toggle-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.val === theme);
   });
+  const hideWarn = localStorage.getItem(KEYS.hideWarn) === '1';
+  document.querySelectorAll('#warn-toggle .settings-toggle-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.val === (hideWarn ? 'off' : 'on'));
+  });
   document.getElementById('settings-data-section').style.display = 'block';
   document.getElementById('settings-data-btns').style.display = 'block';
   document.getElementById('settings-modal').classList.add('show');
@@ -660,6 +667,53 @@ function openSettings(isFirstLaunch) {
 
 function closeSettings() {
   document.getElementById('settings-modal').classList.remove('show');
+}
+
+function setHideWarn(hide) {
+  localStorage.setItem(KEYS.hideWarn, hide ? '1' : '0');
+  document.querySelectorAll('#warn-toggle .settings-toggle-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.val === (hide ? 'off' : 'on'));
+  });
+}
+
+function exportForAI() {
+  const name = localStorage.getItem(KEYS.name) || 'User';
+  const hist = getHistory();
+  const lines = [`${name}'s Tallymark workout data\n`];
+
+  lines.push('=== WEEKLY SCHEDULE ===');
+  DAY_NAMES.forEach(d => {
+    const day = schedule[d];
+    if (day.restDay) { lines.push(`${FULL_DAYS[d]}: Rest day`); return; }
+    const exList = day.exercises.map(e => {
+      const parts = [e.name];
+      if (e.sets) parts.push(`${e.sets} sets`);
+      if (e.reps) parts.push(`${e.reps} reps`);
+      if (e.rest) parts.push(`${e.rest} rest`);
+      return parts.join(', ');
+    });
+    lines.push(`${FULL_DAYS[d]}: ${exList.length ? exList.join(' | ') : 'No exercises'}`);
+  });
+
+  lines.push('\n=== WORKOUT HISTORY ===');
+  const dates = Object.keys(hist).sort();
+  if (!dates.length) {
+    lines.push('No history recorded yet.');
+  } else {
+    dates.forEach(date => {
+      lines.push(`\n${date}`);
+      hist[date].forEach(entry => {
+        const sets = entry.sets.map((s, i) => `Set ${i+1}: ${s.reps} reps @ ${s.weight} ${currentUnits}`).join(', ');
+        lines.push(`  ${entry.name}: ${sets}`);
+      });
+    });
+  }
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('[onclick="exportForAI()"]');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Copied!'; btn.style.color = 'var(--green)'; setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000); }
+  }).catch(() => alert('Copy failed — try again.'));
 }
 
 function syncWelcomeTheme(t) {
@@ -943,16 +997,18 @@ function initDrag(d) {
 function toggleRestDay() { flushInputs(); schedule[currentDay].restDay = !schedule[currentDay].restDay; saveSchedule(); renderDayTabs(); renderDayContent(); }
 
 function removeExercise(d, idx) {
-  flushInputs();
-  schedule[d].exercises.splice(idx, 1);
-  const n = {};
-  Object.keys(sessionSets).forEach(k => {
-    const [kd, ki] = [k.split('_')[0], parseInt(k.split('_')[1])];
-    if (kd !== d) { n[k] = sessionSets[k]; return; }
-    if (ki < idx) n[k] = sessionSets[k];
-    else if (ki > idx) n[kd+'_'+(ki-1)] = sessionSets[k];
+  showModal('Remove exercise?', `Remove "${schedule[d].exercises[idx].name}" from ${FULL_DAYS[d]}?`, () => {
+    flushInputs();
+    schedule[d].exercises.splice(idx, 1);
+    const n = {};
+    Object.keys(sessionSets).forEach(k => {
+      const [kd, ki] = [k.split('_')[0], parseInt(k.split('_')[1])];
+      if (kd !== d) { n[k] = sessionSets[k]; return; }
+      if (ki < idx) n[k] = sessionSets[k];
+      else if (ki > idx) n[kd+'_'+(ki-1)] = sessionSets[k];
+    });
+    sessionSets = n; saveSchedule(); closeModal(); renderDayContent();
   });
-  sessionSets = n; saveSchedule(); renderDayContent();
 }
 
 function addSet(d, i) { flushInputs(); const data = getSetData(d, i); data.logged = false; data.sets.push({reps:'',weight:''}); renderDayContent(); }
@@ -1070,6 +1126,7 @@ function getRepRangeForExercise(name) {
 }
 
 function getProgressNote(sessions, range) {
+  if (localStorage.getItem(KEYS.hideWarn) === '1') return null;
   if (!range || sessions.length < 3) return null;
   const last3 = sessions.slice(-3);
   const avgs = last3.map(s => s.sets.reduce((a, x) => a + (Number(x.reps)||0), 0) / s.sets.length);
