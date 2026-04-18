@@ -380,6 +380,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 <div class="top-tabs">
   <button class="top-tab active" onclick="switchTab('log',this)">Log</button>
   <button class="top-tab" onclick="switchTab('history',this)">History</button>
+  <button class="top-tab" onclick="switchTab('clock',this)">Clock</button>
 </div>
 
 <!-- ── Log tab ── -->
@@ -401,6 +402,49 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
     You're approaching the storage limit. Consider exporting a JSON backup from Settings.
   </div>
   <div id="history-container"></div>
+</div>
+
+<!-- ── Clock tab ── -->
+<div id="tab-clock" style="display:none">
+  <div class="day-tabs" style="margin-bottom:1.25rem">
+    <button class="day-tab active" id="clock-sub-timer" onclick="switchClockTab('timer',this)">Timer</button>
+    <button class="day-tab" id="clock-sub-stopwatch" onclick="switchClockTab('stopwatch',this)">Stopwatch</button>
+  </div>
+
+  <!-- Timer sub-tab -->
+  <div id="clock-timer">
+    <div class="clock-display" id="clock-countdown">0:00:00</div>
+    <div class="clock-drums" id="clock-drums">
+      <div class="drum-wrap">
+        <div class="drum-label">Hours</div>
+        <div class="drum" id="drum-h" data-max="23" data-val="0"></div>
+      </div>
+      <div class="drum-sep">:</div>
+      <div class="drum-wrap">
+        <div class="drum-label">Min</div>
+        <div class="drum" id="drum-m" data-max="59" data-val="0"></div>
+      </div>
+      <div class="drum-sep">:</div>
+      <div class="drum-wrap">
+        <div class="drum-label">Sec</div>
+        <div class="drum" id="drum-s" data-max="59" data-val="0"></div>
+      </div>
+    </div>
+    <div class="clock-controls">
+      <button class="clock-btn clock-btn-secondary" id="ct-reset" onclick="clockTimerReset()">Reset</button>
+      <button class="clock-btn clock-btn-primary" id="ct-start" onclick="clockTimerToggle()">Start</button>
+    </div>
+  </div>
+
+  <!-- Stopwatch sub-tab -->
+  <div id="clock-stopwatch" style="display:none">
+    <div class="clock-display" id="sw-display">0:00.00</div>
+    <div class="sw-laps" id="sw-laps"></div>
+    <div class="clock-controls">
+      <button class="clock-btn clock-btn-secondary" id="sw-lap-btn" onclick="swLap()" disabled>Lap</button>
+      <button class="clock-btn clock-btn-primary" id="sw-start-btn" onclick="swToggle()">Start</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Library sheet ── -->
@@ -490,7 +534,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v29';
+const APP_VERSION = 'v30';
 
 function genId() {
   return Math.random().toString(36).slice(2, 7);
@@ -567,7 +611,7 @@ const DEFAULT_LIBRARY = [
    ════════════════════════════════════════════ */
 let schedule    = JSON.parse(JSON.stringify(DEFAULT_DAYS));
 let library     = JSON.parse(JSON.stringify(DEFAULT_LIBRARY));
-let currentDay  = 'Mon';
+let currentDay  = DAY_NAMES[new Date().getDay()];
 let sessionSets = {};
 let timerInterval = null, timerSeconds = 0;
 let activeCharts = [];
@@ -860,10 +904,11 @@ function flushInputs() {
 function switchTab(tab, el) {
   document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['log','history'].forEach(t => {
+  ['log','history','clock'].forEach(t => {
     document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
   });
   if (tab === 'history') renderHistory();
+  else if (tab === 'clock') ensureClockBuilt();
   else destroyCharts();
 }
 
@@ -1119,6 +1164,7 @@ function startTimer(secs) {
   document.getElementById('timer-bar').style.display = 'flex';
   updateTimerDisplay();
   timerInterval = setInterval(() => { timerSeconds--; updateTimerDisplay(); if (timerSeconds <= 0) stopTimer(); }, 1000);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function updateTimerDisplay() {
   const m = Math.floor(timerSeconds / 60), s = timerSeconds % 60;
@@ -1671,6 +1717,217 @@ document.addEventListener('click', e => {
 </script>
 
 <script>
+/* ════════════════════════════════════════════
+   CLOCK TAB
+   ════════════════════════════════════════════ */
+function switchClockTab(sub, el) {
+  document.querySelectorAll('#tab-clock .day-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('clock-timer').style.display = sub === 'timer' ? '' : 'none';
+  document.getElementById('clock-stopwatch').style.display = sub === 'stopwatch' ? '' : 'none';
+}
+
+/* ── Drum scroll wheel ── */
+const drumState = { h: 0, m: 0, s: 0 };
+
+function buildDrum(id) {
+  const drum = document.getElementById(id);
+  if (!drum || drum.querySelector('.drum-inner')) return;
+  const max = parseInt(drum.dataset.max);
+  const inner = document.createElement('div');
+  inner.className = 'drum-inner';
+  for (let i = 0; i <= max; i++) {
+    const item = document.createElement('div');
+    item.className = 'drum-item' + (i === 0 ? ' drum-selected' : '');
+    item.textContent = String(i).padStart(2, '0');
+    inner.appendChild(item);
+  }
+  // Fade overlays
+  const ft = document.createElement('div'); ft.className = 'drum-fade-top';
+  const fb = document.createElement('div'); fb.className = 'drum-fade-bot';
+  drum.appendChild(inner); drum.appendChild(ft); drum.appendChild(fb);
+  setDrumValue(drum, 0);
+  initDrumInteraction(drum);
+}
+
+function setDrumValue(drum, val) {
+  const max = parseInt(drum.dataset.max);
+  val = Math.max(0, Math.min(max, val));
+  drum.dataset.val = val;
+  const inner = drum.querySelector('.drum-inner');
+  inner.style.transform = `translateY(${50 - val * 50}px)`;
+  drum.querySelectorAll('.drum-item').forEach((el, i) => {
+    el.classList.toggle('drum-selected', i === val);
+  });
+  updateClockCountdown();
+}
+
+function initDrumInteraction(drum) {
+  let startY = 0, startVal = 0, dragging = false;
+
+  function onStart(y) { startY = y; startVal = parseInt(drum.dataset.val); dragging = true; }
+  function onMove(y) {
+    if (!dragging) return;
+    const delta = Math.round((startY - y) / 50);
+    setDrumValue(drum, startVal + delta);
+  }
+  function onEnd() { dragging = false; }
+
+  drum.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
+  drum.addEventListener('touchmove', e => { e.preventDefault(); onMove(e.touches[0].clientY); }, { passive: false });
+  drum.addEventListener('touchend', onEnd);
+  drum.addEventListener('mousedown', e => { onStart(e.clientY); });
+  document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
+  document.addEventListener('mouseup', onEnd);
+
+  // Scroll wheel support
+  drum.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 1 : -1;
+    setDrumValue(drum, parseInt(drum.dataset.val) + delta);
+  }, { passive: false });
+}
+
+function updateClockCountdown() {
+  const h = parseInt(document.getElementById('drum-h')?.dataset.val || 0);
+  const m = parseInt(document.getElementById('drum-m')?.dataset.val || 0);
+  const s = parseInt(document.getElementById('drum-s')?.dataset.val || 0);
+  document.getElementById('clock-countdown').textContent = formatClockTime(h * 3600 + m * 60 + s);
+}
+
+function formatClockTime(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return h + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+let ctInterval = null, ctRemaining = 0, ctRunning = false;
+
+function clockTimerToggle() {
+  if (!ctRunning) {
+    const h = parseInt(document.getElementById('drum-h').dataset.val);
+    const m = parseInt(document.getElementById('drum-m').dataset.val);
+    const s = parseInt(document.getElementById('drum-s').dataset.val);
+    if (!ctRemaining) {
+      ctRemaining = h * 3600 + m * 60 + s;
+    }
+    if (!ctRemaining) return;
+    ctRunning = true;
+    document.getElementById('ct-start').textContent = 'Pause';
+    document.getElementById('ct-start').classList.add('running');
+    document.getElementById('clock-drums').style.display = 'none';
+    ctInterval = setInterval(() => {
+      ctRemaining--;
+      document.getElementById('clock-countdown').textContent = formatClockTime(ctRemaining);
+      if (ctRemaining <= 0) {
+        clearInterval(ctInterval);
+        ctRunning = false;
+        ctRemaining = 0;
+        document.getElementById('ct-start').textContent = 'Start';
+        document.getElementById('ct-start').classList.remove('running');
+        document.getElementById('clock-drums').style.display = 'flex';
+        updateClockCountdown();
+      }
+    }, 1000);
+  } else {
+    clearInterval(ctInterval);
+    ctRunning = false;
+    document.getElementById('ct-start').textContent = 'Resume';
+    document.getElementById('ct-start').classList.remove('running');
+  }
+}
+
+function clockTimerReset() {
+  clearInterval(ctInterval);
+  ctRunning = false; ctRemaining = 0;
+  document.getElementById('ct-start').textContent = 'Start';
+  document.getElementById('ct-start').classList.remove('running');
+  document.getElementById('clock-drums').style.display = 'flex';
+  setDrumValue(document.getElementById('drum-h'), 0);
+  setDrumValue(document.getElementById('drum-m'), 0);
+  setDrumValue(document.getElementById('drum-s'), 0);
+  updateClockCountdown();
+}
+
+// Build drums when clock tab is first opened
+(function() {
+  const origSwitch = switchTab;
+  window._clockBuilt = false;
+})();
+
+function ensureClockBuilt() {
+  if (!window._clockBuilt) {
+    buildDrum('drum-h');
+    buildDrum('drum-m');
+    buildDrum('drum-s');
+    window._clockBuilt = true;
+  }
+}
+
+/* ── Stopwatch ── */
+let swRunning = false, swStart = 0, swElapsed = 0, swInterval = null, swLaps = [], swLastLap = 0;
+
+function swToggle() {
+  if (!swRunning) {
+    swStart = Date.now() - swElapsed;
+    swRunning = true;
+    document.getElementById('sw-start-btn').textContent = 'Stop';
+    document.getElementById('sw-start-btn').classList.add('running');
+    document.getElementById('sw-lap-btn').disabled = false;
+    swInterval = setInterval(swTick, 10);
+  } else {
+    clearInterval(swInterval);
+    swRunning = false;
+    document.getElementById('sw-start-btn').textContent = 'Start';
+    document.getElementById('sw-start-btn').classList.remove('running');
+    document.getElementById('sw-lap-btn').disabled = true;
+    document.getElementById('sw-lap-btn').textContent = 'Reset';
+    document.getElementById('sw-lap-btn').onclick = swReset;
+  }
+}
+
+function swTick() {
+  swElapsed = Date.now() - swStart;
+  document.getElementById('sw-display').textContent = formatSw(swElapsed);
+}
+
+function formatSw(ms) {
+  const total = Math.floor(ms / 10);
+  const cs = total % 100;
+  const s = Math.floor(total / 100) % 60;
+  const m = Math.floor(total / 6000) % 60;
+  const h = Math.floor(total / 360000);
+  return (h ? h + ':' : '') + (h ? String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0') + '.' + String(cs).padStart(2,'0');
+}
+
+function swLap() {
+  if (!swRunning) return;
+  const split = swElapsed - swLastLap;
+  swLastLap = swElapsed;
+  swLaps.unshift({ n: swLaps.length + 1, total: swElapsed, split });
+  renderSwLaps();
+}
+
+function renderSwLaps() {
+  document.getElementById('sw-laps').innerHTML = swLaps.map(l =>
+    `<div class="sw-lap-row"><span class="sw-lap-num">Lap ${l.n}</span><span class="sw-lap-split">${formatSw(l.split)}</span><span class="sw-lap-time">${formatSw(l.total)}</span></div>`
+  ).join('');
+}
+
+function swReset() {
+  clearInterval(swInterval);
+  swRunning = false; swStart = 0; swElapsed = 0; swLaps = []; swLastLap = 0;
+  document.getElementById('sw-display').textContent = '0:00.00';
+  document.getElementById('sw-laps').innerHTML = '';
+  document.getElementById('sw-start-btn').textContent = 'Start';
+  document.getElementById('sw-start-btn').classList.remove('running');
+  document.getElementById('sw-lap-btn').textContent = 'Lap';
+  document.getElementById('sw-lap-btn').onclick = swLap;
+  document.getElementById('sw-lap-btn').disabled = true;
+}
+
+
 /* ── Update system ── */
 let _updateAvailable = false;
 
