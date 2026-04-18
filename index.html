@@ -467,6 +467,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
     <div class="clock-controls">
       <button class="clock-btn clock-btn-secondary" id="sw-lap-btn" onclick="swLap()" disabled>Lap</button>
       <button class="clock-btn clock-btn-primary" id="sw-start-btn" onclick="swToggle()">Start</button>
+      <button class="clock-btn clock-btn-secondary" id="sw-reset-btn" onclick="swReset()" style="display:none">Reset</button>
     </div>
   </div>
 </div>
@@ -558,7 +559,7 @@ const KEYS = {
   hideWarn:  'wl_hide_warn',
 };
 
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 
 function genId() {
   return Math.random().toString(36).slice(2, 7);
@@ -1901,6 +1902,7 @@ function swToggle() {
     document.getElementById('sw-start-btn').textContent = 'Stop';
     document.getElementById('sw-start-btn').classList.add('running');
     document.getElementById('sw-lap-btn').disabled = false;
+    document.getElementById('sw-reset-btn').style.display = 'none';
     swInterval = setInterval(swTick, 10);
   } else {
     clearInterval(swInterval);
@@ -1908,8 +1910,7 @@ function swToggle() {
     document.getElementById('sw-start-btn').textContent = 'Start';
     document.getElementById('sw-start-btn').classList.remove('running');
     document.getElementById('sw-lap-btn').disabled = true;
-    document.getElementById('sw-lap-btn').textContent = 'Reset';
-    document.getElementById('sw-lap-btn').onclick = swReset;
+    document.getElementById('sw-reset-btn').style.display = '';
   }
 }
 
@@ -1948,9 +1949,8 @@ function swReset() {
   document.getElementById('sw-laps').innerHTML = '';
   document.getElementById('sw-start-btn').textContent = 'Start';
   document.getElementById('sw-start-btn').classList.remove('running');
-  document.getElementById('sw-lap-btn').textContent = 'Lap';
-  document.getElementById('sw-lap-btn').onclick = swLap;
   document.getElementById('sw-lap-btn').disabled = true;
+  document.getElementById('sw-reset-btn').style.display = 'none';
 }
 
 
