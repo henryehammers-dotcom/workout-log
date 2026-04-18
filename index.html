@@ -115,6 +115,13 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .sw-lap-time{color:var(--text);font-weight:500}
 .sw-lap-split{color:var(--text2);font-size:12px}
 
+.greeting-wrap{display:none;position:fixed;inset:0;background:var(--bg);z-index:1050;align-items:center;justify-content:center;padding:2rem;text-align:center}
+.greeting-wrap.show{display:flex}
+.greeting-box{max-width:340px;width:100%}
+.greeting-day{font-size:26px;font-weight:700;color:var(--text);margin-bottom:6px}
+.greeting-workout{font-size:15px;color:var(--text2);margin-bottom:1.5rem;line-height:1.5}
+.greeting-msg{font-size:14px;color:var(--text2);margin-bottom:6px;line-height:1.6}
+.greeting-reminder{font-size:13px;color:var(--accent);margin-bottom:2rem;line-height:1.6}
 .update-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--accent);color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .update-banner.show{display:block}
 
@@ -376,6 +383,17 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
   </div>
 </div>
 
+<!-- ── Daily greeting ── -->
+<div id="greeting-wrap" class="greeting-wrap">
+  <div class="greeting-box">
+    <div class="greeting-day" id="greeting-day"></div>
+    <div class="greeting-workout" id="greeting-workout"></div>
+    <div class="greeting-msg" id="greeting-msg"></div>
+    <div class="greeting-reminder" id="greeting-reminder"></div>
+    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
+  </div>
+</div>
+
 <!-- ── Update banner ── -->
 <div id="update-banner" class="update-banner" onclick="applyUpdate()">
   🎉 New version available — tap to update
@@ -557,9 +575,11 @@ const KEYS = {
   welcomed:  'wl_welcomed',
   library:   'wl_library',
   hideWarn:  'wl_hide_warn',
+  greetDate: 'wl_greet_date',
+  greetOrder:'wl_greet_order',
 };
 
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 
 function genId() {
   return Math.random().toString(36).slice(2, 7);
@@ -900,6 +920,8 @@ function setTheme(t) {
     // First launch
     if (!localStorage.getItem(KEYS.welcomed)) {
       openSettings(true);
+    } else {
+      maybeShowGreeting();
     }
   });
 })();
@@ -1953,6 +1975,78 @@ function swReset() {
   document.getElementById('sw-reset-btn').style.display = 'none';
 }
 
+
+/* ════════════════════════════════════════════
+   DAILY GREETING
+   ════════════════════════════════════════════ */
+const GREET_MESSAGES = [
+  { msg: "You've been putting in the work. Today's no different.", reminder: "Remember to stay hydrated!" },
+  { msg: "Another day, another chance to get better. Let's do it.", reminder: "Don't forget to warm up properly!" },
+  { msg: "You've been doing great. Keep that momentum going today.", reminder: "Make sure you've eaten something before you start!" },
+  { msg: "Take it one set at a time and enjoy it. You've got this.", reminder: "Don't rush your rest!" },
+  { msg: "Today's a great day to feel strong. Go enjoy it.", reminder: "Focus on your form today!" },
+  { msg: "Just remember why you started. Now let's go get it.", reminder: "Get a good stretch in after!" },
+  { msg: "Believe in the process. Today's session is adding up to something.", reminder: "Log everything — progress matters!" },
+  { msg: "Give it everything you've got today — you'll be glad you did.", reminder: "Drink some water before you start!" },
+  { msg: "Have a great one today. You've earned it.", reminder: "Make sure you get enough sleep tonight to recover!" },
+  { msg: "You're doing something most people won't. Remember that.", reminder: "Take a few deep breaths before you start — it helps!" },
+];
+
+const FULL_DAYS_LONG = { Sun:'Sunday', Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday' };
+
+function getGreetMessage() {
+  let order = [];
+  try { order = JSON.parse(localStorage.getItem(KEYS.greetOrder) || '[]'); } catch {}
+  if (!order.length) {
+    // Shuffle fresh deck
+    order = [...Array(GREET_MESSAGES.length).keys()];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+  }
+  const idx = order.shift();
+  localStorage.setItem(KEYS.greetOrder, JSON.stringify(order));
+  return GREET_MESSAGES[idx];
+}
+
+function maybeShowGreeting() {
+  if (!localStorage.getItem(KEYS.welcomed)) return; // don't show before onboarding
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(KEYS.greetDate) === today) return; // already seen today
+  localStorage.setItem(KEYS.greetDate, today);
+
+  const name = localStorage.getItem(KEYS.name) || '';
+  const day = DAY_NAMES[new Date().getDay()];
+  const dayFull = FULL_DAYS_LONG[day];
+  const sched = schedule[day];
+  const { msg, reminder } = getGreetMessage();
+
+  document.getElementById('greeting-day').textContent = name ? `Happy ${dayFull}, ${name}!` : `Happy ${dayFull}!`;
+
+  if (sched.restDay) {
+    document.getElementById('greeting-workout').textContent = '';
+    document.getElementById('greeting-msg').textContent = "What are you doing here? You should be resting! 😁";
+    document.getElementById('greeting-reminder').textContent = '';
+  } else {
+    const suffix = sched.label.includes('—') ? sched.label.replace(/^.+?—\s*/, '').trim() : '';
+    if (suffix) {
+      document.getElementById('greeting-workout').textContent = `Today's workout is ${suffix}`;
+    } else if (sched.exercises.length === 0) {
+      document.getElementById('greeting-workout').textContent = "Looks like you don't have anything planned yet for today!";
+    } else {
+      document.getElementById('greeting-workout').textContent = '';
+    }
+    document.getElementById('greeting-msg').textContent = msg;
+    document.getElementById('greeting-reminder').textContent = reminder;
+  }
+
+  document.getElementById('greeting-wrap').classList.add('show');
+}
+
+function dismissGreeting() {
+  document.getElementById('greeting-wrap').classList.remove('show');
+}
 
 /* ── Update system ── */
 let _updateAvailable = false;
