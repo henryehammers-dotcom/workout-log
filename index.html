@@ -130,7 +130,7 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .btn:hover{background:var(--bg3);border-color:var(--border2)}
 .btn:active{transform:scale(0.97)}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
-.btn-primary:hover{opacity:0.88;background:var(--accent)}
+.btn-primary:hover{opacity:0.88}
 .btn-danger{border-color:var(--red-border);color:var(--red)}
 .btn-danger:hover{background:var(--red-dim)}
 .btn-success{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
@@ -138,7 +138,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .btn-warning:hover{background:var(--accent-dim)}
 .btn-sm{padding:4px 10px;font-size:11px}
 .btn-icon{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all 0.15s}
-.add-toggle-btn{width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;font-size:24px;font-weight:300;color:#000;line-height:1;display:inline-flex;align-items:center;justify-content:center}
 
 /* ── Rest day screen ── */
 .rest-screen{text-align:center;padding:2.5rem 1rem;color:var(--text2)}
@@ -170,16 +169,8 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .timer-label{font-size:13px;color:var(--blue);flex:1;line-height:1.4}
 
 /* ── Add exercise ── */
-.add-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:8px}
-.section-label{font-size:11px;font-weight:500;letter-spacing:0.08em;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
-.add-fields{display:grid;grid-template-columns:1fr 70px 80px 60px;gap:8px;margin-bottom:8px;align-items:end}
 .field-group{display:flex;flex-direction:column;gap:3px}
 .field-hint{font-size:10px;color:var(--text3)}
-.add-fields input[type=text],.add-fields input[type=number]{height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 10px;font-size:16px;background:var(--bg3);color:var(--text);width:100%}
-.add-fields input:focus{outline:none;border-color:var(--accent)}
-.add-fields select{height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 8px;font-size:14px;background:var(--bg3);color:var(--text);cursor:pointer;width:100%}
-.add-fields select:focus{outline:none;border-color:var(--accent)}
-.add-submit{width:100%}
 
 /* ── Modals ── */
 .modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center}
@@ -209,7 +200,6 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .settings-toggle-opt+.settings-toggle-opt{border-left:1px solid var(--border2)}
 .settings-toggle-opt.active{background:var(--accent);color:#fff;font-weight:500}
 .settings-data-btn{width:100%;height:36px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;text-align:left;padding:0 12px;margin-bottom:8px;transition:all 0.15s;font-family:inherit}
-.settings-data-btn:hover{background:var(--bg3);border-color:var(--border2)}
 .settings-data-btn.danger{border-color:var(--red-border);color:var(--red);background:transparent}
 .settings-data-btn.danger:hover{background:var(--red-dim)}
 .settings-cta{width:100%;height:38px;border-radius:8px;background:var(--accent);border:none;color:#fff;font-size:14px;font-weight:500;cursor:pointer;margin-top:1.25rem}
@@ -1197,12 +1187,6 @@ function confirmClearSession() {
     closeModal(); renderDayContent();
   });
 }
-function confirmClearHistory() {
-  showModal('Clear all history?', 'Your entire workout history will be permanently deleted.', () => {
-    saveHistory({}); destroyCharts(); closeModal(); renderHistory();
-  });
-}
-
 /* ════════════════════════════════════════════
    TIMER
    ════════════════════════════════════════════ */
@@ -1690,50 +1674,6 @@ function saveFile() {
 }
 
 /* ════════════════════════════════════════════
-   EXPORT / IMPORT JSON
-   ════════════════════════════════════════════ */
-function exportJSON() {
-  const data = {
-    history:  getHistory(),
-    bw:       localStorage.getItem(KEYS.bw) || '',
-    schedule: schedule,
-    library:  library,
-    name:     localStorage.getItem(KEYS.name) || '',
-    units:    currentUnits,
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'tallymark_backup.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importJSON(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      showModal('Import backup?', 'This will overwrite your current history, schedule, and library. Continue?', () => {
-        if (data.history)  { localStorage.setItem(KEYS.history, JSON.stringify(data.history)); }
-        if (data.bw != null) { localStorage.setItem(KEYS.bw, typeof data.bw === 'object' ? '' : String(data.bw)); }
-        if (data.schedule) { schedule = data.schedule; saveSchedule(); }
-        if (data.library)  { library = data.library; saveLibrary(); }
-        if (data.name)     { localStorage.setItem(KEYS.name, data.name); updateAppTitle(); }
-        if (data.units)    { setUnits(data.units); }
-        closeModal();
-        renderDayTabs();
-        renderDayContent();
-      });
-    } catch { alert('Invalid backup file.'); }
-    input.value = '';
-  };
-  reader.readAsText(file);
-}
-
-/* ════════════════════════════════════════════
    MUSIC PLAYER
    ════════════════════════════════════════════ */
 const audio = document.getElementById('audio-player');
@@ -1775,8 +1715,6 @@ function switchClockTab(sub, el) {
 }
 
 /* ── Drum scroll wheel ── */
-const drumState = { h: 0, m: 0, s: 0 };
-
 function buildDrum(id) {
   const drum = document.getElementById(id);
   if (!drum || drum.querySelector('.drum-inner')) return;
@@ -1899,11 +1837,7 @@ function clockTimerReset() {
   updateClockCountdown();
 }
 
-// Build drums when clock tab is first opened
-(function() {
-  const origSwitch = switchTab;
-  window._clockBuilt = false;
-})();
+window._clockBuilt = false;
 
 function ensureClockBuilt() {
   if (!window._clockBuilt) {
@@ -1992,8 +1926,6 @@ const GREET_MESSAGES = [
   { msg: "You're doing something most people won't. Remember that.", reminder: "Take a few deep breaths before you start — it helps!" },
 ];
 
-const FULL_DAYS_LONG = { Sun:'Sunday', Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday' };
-
 function getGreetMessage() {
   let order = [];
   try { order = JSON.parse(localStorage.getItem(KEYS.greetOrder) || '[]'); } catch {}
@@ -2018,7 +1950,7 @@ function maybeShowGreeting() {
 
   const name = localStorage.getItem(KEYS.name) || '';
   const day = DAY_NAMES[new Date().getDay()];
-  const dayFull = FULL_DAYS_LONG[day];
+  const dayFull = FULL_DAYS[day];
   const sched = schedule[day];
   const { msg, reminder } = getGreetMessage();
 
