@@ -1,6 +1,9 @@
-const CACHE = 'tallymark-v36';
+const CACHE = 'tallymark-v37';
 const FILES = [
   './index.html',
+  './app.js',
+  './app2.js',
+  './logo-anim.js',
   './manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
 ];

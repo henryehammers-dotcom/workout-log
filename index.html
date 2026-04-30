@@ -132,7 +132,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    ────────────────────────────────────────────────────────── */
 .app-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
 .app-header-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.app-logo{width:34px;height:34px;border-radius:8px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.10)}
+.app-logo{width:34px;height:34px;border-radius:8px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.10);background:#0d2823;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0}
+.app-logo svg, .welcome-logo svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .app-title{font-family:var(--display);font-weight:700;font-size:20px;color:var(--text);letter-spacing:-0.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cog-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .cog-btn:hover{background:var(--bg3);border-color:var(--border2)}
@@ -389,7 +390,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    ────────────────────────────────────────────────────────── */
 .welcome-wrap{position:fixed;inset:0;background:var(--bg);z-index:900;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;overflow-y:auto}
 .welcome-wrap.show{display:flex}
-.welcome-logo{width:104px;height:104px;border-radius:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.10)}
+.welcome-logo{width:104px;height:104px;border-radius:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.10);background:#0d2823;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0}
 .welcome-title{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-0.02em;color:var(--text);margin-bottom:10px;text-align:center;line-height:1.1}
 .welcome-sub{font-size:14px;color:var(--text2);text-align:center;max-width:300px;margin-bottom:28px;line-height:1.4}
 .welcome-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
@@ -487,7 +488,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Header ── -->
 <div class="app-header">
   <div class="app-header-left">
-    <img class="app-logo" src="Tallymark-icon-192.png" alt="">
+    <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
     <div id="app-title" class="app-title">Tallymark</div>
   </div>
   <button class="cog-btn" onclick="openSettings(false)" aria-label="Settings">
@@ -567,7 +568,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Welcome ── -->
 <div class="welcome-wrap" id="welcome-wrap">
-  <img class="welcome-logo" src="Tallymark-icon-512.png" alt="">
+  <button class="welcome-logo" id="welcome-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
   <div class="welcome-title">Welcome to Tallymark!</div>
   <div class="welcome-sub">Log your sets. Track your progress. Build the habit.</div>
   <div class="welcome-form">
@@ -795,6 +796,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
+<script src="logo-anim.js"></script>
 <script src="app.js"></script>
 <script src="app2.js"></script>
 </body>
