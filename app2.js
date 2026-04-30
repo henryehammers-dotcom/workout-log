@@ -623,10 +623,10 @@ let _updateAvailable = false;
 function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); _updateAvailable = false; window.location.reload(true); }
 function checkForUpdate() {
   if (_updateAvailable) return;
-  fetch(window.location.href + '?v=' + Date.now(), { cache: 'no-store' })
+  fetch('./app.js?v=' + Date.now(), { cache: 'no-store' })
     .then(r => r.text())
-    .then(html => {
-      const match = html.match(/APP_VERSION\s*=\s*'(v\d+)'/);
+    .then(js => {
+      const match = js.match(/APP_VERSION\s*=\s*'(v\d+)'/);
       if (match && match[1] !== APP_VERSION) {
         _updateAvailable = true;
         document.getElementById('update-banner').classList.add('show');
