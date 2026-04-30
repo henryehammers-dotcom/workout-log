@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v37';
+const CACHE = 'tallymark-v38';
 const FILES = [
   './index.html',
   './app.js',
@@ -8,12 +8,14 @@ const FILES = [
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
 ];
 
-// Install: cache all files
+// Install: cache all files and activate immediately so the next launch
+// (after the PWA is fully closed) gets the new bundle without waiting.
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FILES))
+    caches.open(CACHE)
+      .then(c => c.addAll(FILES))
+      .then(() => self.skipWaiting())
   );
-  // No auto skipWaiting — page decides when to activate
 });
 
 // Listen for page to trigger activation (when no active workout session)
