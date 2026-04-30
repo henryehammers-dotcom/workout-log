@@ -18,7 +18,7 @@ const KEYS = {
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
 };
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
 const TAG_LABEL = {gym:'Gym',dumbbell:'Dumbbells',bodyweight:'Bodyweight',custom:'Custom'};
