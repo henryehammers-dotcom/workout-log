@@ -1,21 +1,12 @@
 {
   "name": "Tallymark",
   "short_name": "Tallymark",
-  "start_url": "https://henryehammers-dotcom.github.io/workout-log/",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#111111",
-  "orientation": "portrait",
+  "background_color": "#f4efe6",
+  "theme_color": "#1f4f47",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "Tallymark-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "Tallymark-icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
