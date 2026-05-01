@@ -91,8 +91,8 @@ function renderHistory(selected) {
 
   const sessionRows = sessions.slice().reverse().map(s => {
     const bestW = Math.max(...s.sets.map(x => Number(x.weight)||0));
-    return `<div class="session-row">
-      <div class="session-date">${escHtml(s.date.replace(/\w+,\s/,''))}</div>
+    return `<div class="session-row session-row-tap" data-exkey="${escAttr(selected)}" data-date="${escAttr(s.date)}" role="button" tabindex="0">
+      <div class="session-date">${escHtml(s.date.replace(/\w+,\s/,''))}<span class="session-edit-hint">tap to edit</span></div>
       <div class="session-sets">${s.sets.map(x=>`<span class="pill${Number(x.weight)===bestW&&bestW>0?' pill-best':''}">${x.reps} × ${x.weight} ${currentUnits}</span>`).join('')}</div>
     </div>`;
   }).join('');
@@ -128,6 +128,113 @@ function renderHistory(selected) {
       },
     }));
   } catch (e) { console.error(e); }
+
+  // Wire tappable session rows -> open edit sheet
+  container.querySelectorAll('.session-row-tap').forEach(el => {
+    const open = () => openEditSession(el.dataset.exkey, el.dataset.date);
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+}
+
+/* ─── EDIT SESSION SHEET ─── */
+let _editSession = null; // { exKey, date, sets: [...], name, exId }
+
+function openEditSession(exKey, date) {
+  const hist = getHistory();
+  if (!hist[date]) return;
+  const i = hist[date].findIndex(e => (e.exId || e.name) === exKey);
+  if (i < 0) return;
+  const entry = hist[date][i];
+  _editSession = {
+    exKey,
+    date,
+    name: entry.name,
+    exId: entry.exId || '',
+    sets: entry.sets.map(s => ({ reps: String(s.reps ?? ''), weight: String(s.weight ?? '') })),
+  };
+  renderEditSession();
+  document.getElementById('edit-session-wrap').classList.add('show');
+}
+function closeEditSession() {
+  _editSession = null;
+  document.getElementById('edit-session-wrap').classList.remove('show');
+}
+function renderEditSession() {
+  if (!_editSession) return;
+  document.getElementById('edit-session-title').textContent = _editSession.name;
+  document.getElementById('edit-session-date').textContent = _editSession.date.replace(/\w+,\s/, '');
+  const rows = _editSession.sets.map((s, i) => `
+    <div class="edit-set-row">
+      <div class="edit-set-num">Set ${i+1}</div>
+      <input class="set-input edit-set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-i="${i}" data-field="reps">
+      <input class="set-input edit-set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-i="${i}" data-field="weight">
+    </div>`).join('');
+  document.getElementById('edit-session-sets').innerHTML = rows || '<div class="empty">No sets.</div>';
+  document.getElementById('edit-session-sets').querySelectorAll('.edit-set-input').forEach(el => {
+    el.addEventListener('input', () => {
+      const idx = Number(el.dataset.i);
+      const field = el.dataset.field;
+      if (_editSession && _editSession.sets[idx]) _editSession.sets[idx][field] = el.value;
+    });
+  });
+}
+function saveEditSession() {
+  if (!_editSession) return;
+  // Flush any in-progress input values (mobile keyboards sometimes lag)
+  document.getElementById('edit-session-sets').querySelectorAll('.edit-set-input').forEach(el => {
+    const idx = Number(el.dataset.i);
+    const field = el.dataset.field;
+    if (_editSession.sets[idx]) _editSession.sets[idx][field] = el.value;
+  });
+  const cleanSets = _editSession.sets
+    .filter(s => s.reps !== '' || s.weight !== '')
+    .map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
+  const exKey = _editSession.exKey;
+  const hist = getHistory();
+  const dayEntries = hist[_editSession.date];
+  if (!dayEntries) { closeEditSession(); renderHistory(); return; }
+  const i = dayEntries.findIndex(e => (e.exId || e.name) === exKey);
+  if (i < 0) { closeEditSession(); renderHistory(); return; }
+  if (!cleanSets.length) {
+    // All sets cleared -> remove this session entirely
+    dayEntries.splice(i, 1);
+    if (!dayEntries.length) delete hist[_editSession.date];
+  } else {
+    dayEntries[i].sets = cleanSets;
+  }
+  saveHistory(hist);
+  closeEditSession();
+  // If exercise still has any sessions across history, stay on its detail view; otherwise fall back to list
+  renderHistory(exerciseStillHasSessions(exKey) ? exKey : undefined);
+}
+
+function deleteSession() {
+  if (!_editSession) return;
+  const exKey = _editSession.exKey;
+  const date = _editSession.date;
+  const name = _editSession.name;
+  showModal('Delete this session?', `Permanently remove the ${date.replace(/\w+,\s/, '')} session for ${name}?`, () => {
+    const hist = getHistory();
+    const dayEntries = hist[date];
+    if (dayEntries) {
+      const i = dayEntries.findIndex(e => (e.exId || e.name) === exKey);
+      if (i >= 0) {
+        dayEntries.splice(i, 1);
+        if (!dayEntries.length) delete hist[date];
+        saveHistory(hist);
+      }
+    }
+    closeModal();
+    closeEditSession();
+    renderHistory(exerciseStillHasSessions(exKey) ? exKey : undefined);
+  });
+}
+
+function exerciseStillHasSessions(exKey) {
+  if (!exKey) return false;
+  const hist = getHistory();
+  return Object.values(hist).some(entries => entries.some(e => (e.exId || e.name) === exKey));
 }
 
 /* ─── LIBRARY SHEET ─── */

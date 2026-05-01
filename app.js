@@ -521,26 +521,44 @@ function logExercise(d, idx) {
   const hist = getHistory();
   if (!hist[today]) hist[today] = [];
   const ex = schedule[d].exercises[idx];
-  const newEntry = { exId: ex.exId||'', name: ex.name, sets: valid.map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 })) };
+  const newSets = valid.map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
   const existing = hist[today].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
-  if (existing >= 0) hist[today][existing] = newEntry; else hist[today].push(newEntry);
+  if (existing >= 0) {
+    // Append to today's existing entry so multiple log presses on the same day merge
+    hist[today][existing].sets = hist[today][existing].sets.concat(newSets);
+  } else {
+    hist[today].push({ exId: ex.exId||'', name: ex.name, sets: newSets });
+  }
   saveHistory(hist);
   data.logged = true;
+  data.lastLoggedCount = newSets.length; // remember for undo
   renderDayContent();
   startTimer(ex.restSecs || 90);
 }
 function undoLog(d, idx) {
   const data = getSetData(d, idx);
   data.logged = false;
-  // Remove from today's history
+  // Remove only the sets that were just appended (not earlier same-day logs)
   const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
   const hist = getHistory();
   const ex = schedule[d].exercises[idx];
+  const removeCount = data.lastLoggedCount || 0;
   if (hist[today]) {
-    hist[today] = hist[today].filter(e => (e.exId && ex.exId) ? e.exId !== ex.exId : e.name !== ex.name);
-    if (!hist[today].length) delete hist[today];
-    saveHistory(hist);
+    const i = hist[today].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
+    if (i >= 0) {
+      const entry = hist[today][i];
+      if (removeCount > 0 && entry.sets.length > removeCount) {
+        // Earlier sets exist from a previous log this day — keep them, drop only the latest batch
+        entry.sets = entry.sets.slice(0, entry.sets.length - removeCount);
+      } else {
+        // Either no earlier sets, or we don't know the count — remove the whole entry
+        hist[today].splice(i, 1);
+      }
+      if (!hist[today].length) delete hist[today];
+      saveHistory(hist);
+    }
   }
+  data.lastLoggedCount = 0;
   renderDayContent();
 }
 

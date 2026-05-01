@@ -261,10 +261,30 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .chart-area{height:180px;position:relative}
 .session-history{display:flex;flex-direction:column;gap:8px}
 .session-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
+.session-row-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.12s, transform 0.08s}
+.session-row-tap:hover{background:var(--bg3)}
+.session-row-tap:active{transform:scale(0.99)}
+.session-edit-hint{float:right;color:var(--text3);font-weight:500;letter-spacing:0;text-transform:none;font-size:10px;opacity:0.7}
 .session-date{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;letter-spacing:0.04em}
 .session-sets{display:flex;flex-wrap:wrap;gap:4px}
 .pill{display:inline-block;padding:2px 8px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg);color:var(--text2);font-variant-numeric:tabular-nums}
 .pill-best{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border);font-weight:600}
+
+/* Edit-session sheet */
+.edit-session-wrap{position:fixed;inset:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
+.edit-session-wrap.show{display:flex}
+.edit-session{background:var(--bg);border-radius:16px;padding:20px;max-width:380px;width:100%;border:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
+.edit-session-header{margin-bottom:14px}
+.edit-session-title{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:2px}
+.edit-session-date{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.edit-session-sets{display:flex;flex-direction:column;gap:8px;overflow-y:auto;margin-bottom:16px;padding-right:2px}
+.edit-set-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:8px;align-items:center}
+.edit-set-num{font-size:12px;color:var(--text3);font-weight:600}
+.edit-set-input{padding:8px 10px;font-size:14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
+.edit-session-actions{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.edit-session-actions .right-group{display:flex;gap:8px}
+.btn-base.danger{color:var(--red);border-color:var(--border2)}
+.btn-base.danger:hover{background:rgba(220,80,80,0.08)}
 
 /* ──────────────────────────────────────────────────────────
    CLOCK
@@ -761,6 +781,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="confirm-actions">
       <button class="btn-base" onclick="closeModal()">Cancel</button>
       <button class="btn-base primary" id="modal-ok">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit session sheet ── -->
+<div class="edit-session-wrap" id="edit-session-wrap">
+  <div class="edit-session">
+    <div class="edit-session-header">
+      <div class="edit-session-title" id="edit-session-title"></div>
+      <div class="edit-session-date" id="edit-session-date"></div>
+    </div>
+    <div class="edit-session-sets" id="edit-session-sets"></div>
+    <div class="edit-session-actions">
+      <button class="btn-base danger" onclick="deleteSession()">Delete</button>
+      <div class="right-group">
+        <button class="btn-base" onclick="closeEditSession()">Cancel</button>
+        <button class="btn-base primary" onclick="saveEditSession()">Save</button>
+      </div>
     </div>
   </div>
 </div>
