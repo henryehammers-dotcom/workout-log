@@ -18,7 +18,20 @@ const KEYS = {
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
 };
-const APP_VERSION = 'v38';
+// APP_VERSION is read from the service worker's cache name at runtime,
+// so the only place to update the version is service-worker.js.
+let APP_VERSION = '';
+async function loadAppVersion() {
+  try {
+    const keys = await caches.keys();
+    const tm = keys.find(k => k.startsWith('tallymark-'));
+    if (tm) {
+      APP_VERSION = tm.replace('tallymark-', '');
+      const vEl = document.getElementById('settings-version');
+      if (vEl) vEl.textContent = APP_VERSION;
+    }
+  } catch {}
+}
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
 const TAG_LABEL = {gym:'Gym',dumbbell:'Dumbbells',bodyweight:'Bodyweight',custom:'Custom'};
@@ -292,7 +305,8 @@ function saveFile() {
     renderDayContent();
 
     const vEl = document.getElementById('settings-version');
-    if (vEl) vEl.textContent = APP_VERSION;
+    if (vEl) vEl.textContent = APP_VERSION || '…';
+    loadAppVersion();
 
     // Music opt-in
     if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float').classList.add('show');
