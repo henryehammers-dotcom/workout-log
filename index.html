@@ -221,6 +221,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .log-sets-btn:active{transform:scale(0.98)}
 .log-sets-btn.logged{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);cursor:default;display:flex;align-items:center;justify-content:center;gap:8px}
 .log-sets-btn.logged:hover{filter:none}
+.log-sets-btn.timing{background:var(--bg2);color:var(--text2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:10px;font-variant-numeric:tabular-nums}
+.log-sets-btn.timing:hover{filter:none;background:var(--bg3)}
+.log-sets-btn.timing .timer-count{font-size:16px;font-weight:800;color:var(--text);letter-spacing:0.02em}
+.log-sets-btn.ready{background:var(--accent);color:var(--accent-text);border:none;animation:readyPulse 1.4s ease-in-out infinite}
+.log-sets-btn.ready:hover{filter:brightness(0.95)}
+@keyframes readyPulse{0%,100%{box-shadow:0 0 0 0 rgba(31,79,71,0)}50%{box-shadow:0 0 0 6px rgba(31,79,71,0.18)}}
 .undo-btn{font-size:11px;font-weight:600;padding:5px 10px;background:transparent;border:1px solid var(--coral-border);color:var(--coral);border-radius:var(--r-sm);cursor:pointer;font-family:inherit;margin-right:6px}
 
 /* + Add exercise button */
@@ -285,6 +291,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .edit-session-actions .right-group{display:flex;gap:8px}
 .btn-base.danger{color:var(--red);border-color:var(--border2)}
 .btn-base.danger:hover{background:rgba(220,80,80,0.08)}
+.restore-textarea{width:100%;min-height:180px;padding:10px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);resize:vertical;box-sizing:border-box;margin-bottom:14px}
 
 /* ──────────────────────────────────────────────────────────
    CLOCK
@@ -705,7 +712,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="section-label">Data</div>
     <button class="data-card" onclick="saveFile()">
       <div class="data-card-title">Save backup file</div>
-      <div class="data-card-sub">Download a self-contained HTML copy</div>
+      <div class="data-card-sub">Downloads a JSON file with your routine, history, and settings</div>
+    </button>
+    <button class="data-card" onclick="openRestoreSheet()">
+      <div class="data-card-title">Paste backup file</div>
+      <div class="data-card-sub">Restore from a previously saved backup</div>
     </button>
     <button class="data-card" onclick="exportForAI()">
       <div class="data-card-title">Copy training summary</div>
@@ -798,6 +809,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="right-group">
         <button class="btn-base" onclick="closeEditSession()">Cancel</button>
         <button class="btn-base primary" onclick="saveEditSession()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Restore (paste backup) sheet ── -->
+<div class="edit-session-wrap" id="restore-wrap">
+  <div class="edit-session">
+    <div class="edit-session-header">
+      <div class="edit-session-title">Paste backup file</div>
+      <div class="edit-session-date">REPLACES ALL CURRENT DATA</div>
+    </div>
+    <textarea id="restore-textarea" class="restore-textarea" placeholder="Paste the contents of your backup .json file here..."></textarea>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base" onclick="closeRestoreSheet()">Cancel</button>
+        <button class="btn-base primary" onclick="applyRestore()">Restore</button>
       </div>
     </div>
   </div>

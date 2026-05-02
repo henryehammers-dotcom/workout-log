@@ -21,16 +21,16 @@ const KEYS = {
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
 let APP_VERSION = '';
-async function loadAppVersion() {
-  try {
-    const keys = await caches.keys();
-    const tm = keys.find(k => k.startsWith('tallymark-'));
+function loadAppVersion() {
+  if (!('caches' in self)) return;
+  caches.keys().then(function(keys) {
+    var tm = keys.find(function(k) { return k.indexOf('tallymark-') === 0; });
     if (tm) {
       APP_VERSION = tm.replace('tallymark-', '');
-      const vEl = document.getElementById('settings-version');
+      var vEl = document.getElementById('settings-version');
       if (vEl) vEl.textContent = APP_VERSION;
     }
-  } catch {}
+  }).catch(function(){});
 }
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -102,6 +102,8 @@ let library  = JSON.parse(JSON.stringify(DEFAULT_LIBRARY));
 let currentDay = DAY_NAMES[new Date().getDay()];
 let sessionSets = {};
 let timerInterval = null, timerSeconds = 0;
+// Per-exercise rest timers — keyed by `${day}-${idx}`. Each: { secsLeft, total, intervalId }
+let exerciseTimers = {};
 let activeCharts = [];
 let currentUnits = 'lbs';
 
@@ -257,31 +259,73 @@ function exportForAI() {
 
 /* ─── SAVE FILE ─── */
 function saveFile() {
-  const src = document.documentElement.outerHTML;
-  const hist = localStorage.getItem(KEYS.history) || '{}';
-  const bw = localStorage.getItem(KEYS.bw) || '';
-  const name = localStorage.getItem(KEYS.name) || '';
-  const welc = localStorage.getItem(KEYS.welcomed) || '';
-  const units = localStorage.getItem(KEYS.units) || 'lbs';
-  const theme = localStorage.getItem(KEYS.theme) || 'light';
-  const tag = 'script';
-  const injection = `<${tag} id="wl-saved-data">(function(){var s=localStorage;`
-    + `if((s.getItem('${KEYS.history}')||'{}')==='{}') s.setItem('${KEYS.history}',${JSON.stringify(hist)});`
-    + `if(!s.getItem('${KEYS.bw}')&&${JSON.stringify(bw)}) s.setItem('${KEYS.bw}',${JSON.stringify(bw)});`
-    + `if(!s.getItem('${KEYS.schedule}')) s.setItem('${KEYS.schedule}',${JSON.stringify(JSON.stringify(schedule))});`
-    + `if(!s.getItem('${KEYS.library}')) s.setItem('${KEYS.library}',${JSON.stringify(JSON.stringify(library))});`
-    + `if(!s.getItem('${KEYS.name}')&&${JSON.stringify(name)}) s.setItem('${KEYS.name}',${JSON.stringify(name)});`
-    + `if(!s.getItem('${KEYS.welcomed}')&&${JSON.stringify(welc)}) s.setItem('${KEYS.welcomed}',${JSON.stringify(welc)});`
-    + `if(!s.getItem('${KEYS.units}')) s.setItem('${KEYS.units}',${JSON.stringify(units)});`
-    + `if(!s.getItem('${KEYS.theme}')) s.setItem('${KEYS.theme}',${JSON.stringify(theme)});`
-    + `})();</` + `${tag}>`;
-  const finalHtml = src.replace('</' + 'body>', injection + '</' + 'body>');
-  const blob = new Blob([finalHtml], { type: 'text/html' });
+  const backup = {
+    tallymark_backup: true,
+    version: APP_VERSION || 'unknown',
+    savedAt: new Date().toISOString(),
+    data: {
+      history:  localStorage.getItem(KEYS.history)  || '{}',
+      schedule: localStorage.getItem(KEYS.schedule) || '',
+      library:  localStorage.getItem(KEYS.library)  || '',
+      name:     localStorage.getItem(KEYS.name)     || '',
+      bw:       localStorage.getItem(KEYS.bw)       || '',
+      units:    localStorage.getItem(KEYS.units)    || 'lbs',
+      theme:    localStorage.getItem(KEYS.theme)    || 'light',
+      welcomed: localStorage.getItem(KEYS.welcomed) || '',
+      music:    localStorage.getItem(KEYS.music)    || '',
+      greetOrder: localStorage.getItem(KEYS.greetOrder) || '',
+    },
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'tallymark.html';
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  a.download = 'tallymark-backup-' + stamp + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function openRestoreSheet() {
+  document.getElementById('restore-textarea').value = '';
+  document.getElementById('restore-wrap').classList.add('show');
+  setTimeout(function(){ document.getElementById('restore-textarea').focus(); }, 100);
+}
+function closeRestoreSheet() {
+  document.getElementById('restore-wrap').classList.remove('show');
+}
+function applyRestore() {
+  const txt = document.getElementById('restore-textarea').value.trim();
+  if (!txt) { alert('Paste your backup file contents first.'); return; }
+  let parsed;
+  try { parsed = JSON.parse(txt); }
+  catch (e) { alert('That doesn\u2019t look like a valid backup file (couldn\u2019t parse JSON).'); return; }
+  if (!parsed || !parsed.tallymark_backup || !parsed.data) {
+    alert('That doesn\u2019t look like a Tallymark backup file.'); return;
+  }
+  showModal('Replace all data?', 'This will overwrite your current routine, history, and settings with the backup. This cannot be undone.', function() {
+    const d = parsed.data;
+    function set(key, val) {
+      if (val === undefined || val === null || val === '') {
+        try { localStorage.removeItem(key); } catch (e) {}
+      } else {
+        try { localStorage.setItem(key, val); } catch (e) {}
+      }
+    }
+    set(KEYS.history,  d.history);
+    set(KEYS.schedule, d.schedule);
+    set(KEYS.library,  d.library);
+    set(KEYS.name,     d.name);
+    set(KEYS.bw,       d.bw);
+    set(KEYS.units,    d.units);
+    set(KEYS.theme,    d.theme);
+    set(KEYS.welcomed, d.welcomed);
+    set(KEYS.music,    d.music);
+    set(KEYS.greetOrder, d.greetOrder);
+    closeModal();
+    closeRestoreSheet();
+    location.reload();
+  });
 }
 
 /* ─── INIT ─── */
@@ -406,9 +450,20 @@ function renderDayContent() {
             <button class="del-set" onclick="removeSet('${d}',${i},${si})" ${data.logged?'disabled':''}>✕</button>
           </div>`).join('');
 
-        const logBtnHtml = data.logged
-          ? `<button class="log-sets-btn logged"><span>✓ Logged</span><button class="undo-btn" onclick="undoLog('${d}',${i});event.stopPropagation()">Undo</button></button>`
-          : `<button class="log-sets-btn" onclick="logExercise('${d}',${i})">Log sets</button>`;
+        const timerKey = d + '-' + i;
+        const timer = exerciseTimers[timerKey];
+        let logBtnHtml;
+        if (timer && timer.secsLeft > 0) {
+          const m = Math.floor(timer.secsLeft/60), s = timer.secsLeft%60;
+          const display = m + ':' + String(s).padStart(2,'0');
+          logBtnHtml = `<button class="log-sets-btn timing" id="logbtn-${d}-${i}" onclick="skipExerciseTimer('${d}',${i})">Rest <span class="timer-count">${display}</span></button>`;
+        } else if (timer && timer.secsLeft <= 0) {
+          logBtnHtml = `<button class="log-sets-btn ready" id="logbtn-${d}-${i}" onclick="dismissExerciseTimer('${d}',${i})">Ready to go!</button>`;
+        } else if (data.logged) {
+          logBtnHtml = `<button class="log-sets-btn logged"><span>✓ Logged</span><button class="undo-btn" onclick="undoLog('${d}',${i});event.stopPropagation()">Undo</button></button>`;
+        } else {
+          logBtnHtml = `<button class="log-sets-btn" onclick="logExercise('${d}',${i})">Log sets</button>`;
+        }
 
         return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
           <div class="ex-head">
@@ -547,7 +602,7 @@ function logExercise(d, idx) {
   data.logged = true;
   data.lastLoggedCount = newSets.length; // remember for undo
   renderDayContent();
-  startTimer(ex.restSecs || 90);
+  startTimer(ex.restSecs || 90, d, idx);
 }
 function undoLog(d, idx) {
   const data = getSetData(d, idx);
@@ -598,20 +653,56 @@ function confirmClearSession() {
   });
 }
 
-/* ─── REST TIMER ─── */
-function startTimer(secs) {
-  stopTimer(); timerSeconds = secs;
-  document.getElementById('timer-bar').classList.add('show');
-  updateTimerDisplay();
-  timerInterval = setInterval(() => { timerSeconds--; updateTimerDisplay(); if (timerSeconds <= 0) stopTimer(); }, 1000);
+/* ─── REST TIMER (per exercise, lives in the Log button) ─── */
+function startTimer(secs, d, idx) {
+  // Backwards-compat: if called without d/idx (shouldn't happen now), no-op
+  if (typeof d === 'undefined' || typeof idx === 'undefined') return;
+  const key = d + '-' + idx;
+  // Clear any existing timer for this exercise
+  if (exerciseTimers[key] && exerciseTimers[key].intervalId) {
+    clearInterval(exerciseTimers[key].intervalId);
+  }
+  exerciseTimers[key] = { secsLeft: secs, total: secs, intervalId: null };
+  renderDayContent();
+  exerciseTimers[key].intervalId = setInterval(() => {
+    const t = exerciseTimers[key];
+    if (!t) return;
+    t.secsLeft--;
+    if (t.secsLeft <= 0) {
+      clearInterval(t.intervalId);
+      t.intervalId = null;
+      t.secsLeft = 0;
+      renderDayContent(); // re-render to show "Ready to go!"
+    } else {
+      // Update only the button text, no full re-render (avoids input blur while typing)
+      const btn = document.getElementById('logbtn-' + key);
+      if (btn) {
+        const m = Math.floor(t.secsLeft/60), s = t.secsLeft%60;
+        const span = btn.querySelector('.timer-count');
+        if (span) span.textContent = m + ':' + String(s).padStart(2,'0');
+      }
+    }
+  }, 1000);
 }
-function updateTimerDisplay() {
-  const m = Math.floor(timerSeconds / 60), s = timerSeconds % 60;
-  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2, '0');
-  document.getElementById('timer-label').textContent = timerSeconds > 0 ? 'Rest — recover before next set' : 'Rest complete — ready to go!';
+function skipExerciseTimer(d, idx) {
+  const key = d + '-' + idx;
+  const t = exerciseTimers[key];
+  if (t && t.intervalId) clearInterval(t.intervalId);
+  delete exerciseTimers[key];
+  // Reset the exercise so user can log another batch
+  const data = getSetData(d, idx);
+  data.logged = false;
+  data.sets = [{reps:'',weight:''}];
+  renderDayContent();
 }
-function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
-function skipTimer() { stopTimer(); document.getElementById('timer-bar').classList.remove('show'); }
+function dismissExerciseTimer(d, idx) {
+  const key = d + '-' + idx;
+  delete exerciseTimers[key];
+  const data = getSetData(d, idx);
+  data.logged = false;
+  data.sets = [{reps:'',weight:''}];
+  renderDayContent();
+}
 
 /* ─── MODAL ─── */
 function showModal(title, body, onConfirm) {
