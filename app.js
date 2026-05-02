@@ -442,12 +442,18 @@ function renderDayContent() {
           </div>`;
         }
 
+        // Set number = (number of sets already logged today for this exercise) + 1
+        const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+        const histAll = getHistory();
+        const todaysEntry = (histAll[today] || []).find(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
+        const setNumber = (todaysEntry ? todaysEntry.sets.length : 0) + 1;
+
         const rows = data.sets.map((s, si) => `
           <div class="set-row">
-            <span class="set-num">${si+1}</span>
+            <span class="set-num">${setNumber}</span>
             <input class="set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-day="${d}" data-ex="${i}" data-si="${si}" data-reps="1" ${data.logged?'disabled':''}>
             <input class="set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-day="${d}" data-ex="${i}" data-si="${si}" data-weight="1" ${data.logged?'disabled':''}>
-            <button class="del-set" onclick="removeSet('${d}',${i},${si})" ${data.logged?'disabled':''}>✕</button>
+            <button class="del-set" onclick="clearSet('${d}',${i},${si})" ${data.logged?'disabled':''} aria-label="Clear">✕</button>
           </div>`).join('');
 
         const timerKey = d + '-' + i;
@@ -457,10 +463,6 @@ function renderDayContent() {
           const m = Math.floor(timer.secsLeft/60), s = timer.secsLeft%60;
           const display = m + ':' + String(s).padStart(2,'0');
           logBtnHtml = `<button class="log-sets-btn timing" id="logbtn-${d}-${i}" onclick="skipExerciseTimer('${d}',${i})">Rest <span class="timer-count">${display}</span></button>`;
-        } else if (timer && timer.secsLeft <= 0) {
-          logBtnHtml = `<button class="log-sets-btn ready" id="logbtn-${d}-${i}" onclick="dismissExerciseTimer('${d}',${i})">Ready to go!</button>`;
-        } else if (data.logged) {
-          logBtnHtml = `<button class="log-sets-btn logged"><span>✓ Logged</span><button class="undo-btn" onclick="undoLog('${d}',${i});event.stopPropagation()">Undo</button></button>`;
         } else {
           logBtnHtml = `<button class="log-sets-btn" onclick="logExercise('${d}',${i})">Log sets</button>`;
         }
@@ -485,7 +487,6 @@ function renderDayContent() {
             ${rows}
           </div>
           <div class="card-footer">
-            <button class="add-set-btn" onclick="addSet('${d}',${i})" ${data.logged?'disabled':''}>+ Set</button>
             ${logBtnHtml}
           </div>
         </div>`;
@@ -577,8 +578,13 @@ function removeExercise(d, idx) {
     sessionSets = n; saveSchedule(); closeModal(); renderDayContent();
   });
 }
-function addSet(d, i) { flushInputs(); const data = getSetData(d, i); if (data.logged) return; data.sets.push({reps:'',weight:''}); renderDayContent(); }
-function removeSet(d, i, si) { flushInputs(); const data = getSetData(d, i); if (data.logged) return; if (data.sets.length === 1) return; data.sets.splice(si, 1); renderDayContent(); }
+function clearSet(d, i, si) {
+  flushInputs();
+  const data = getSetData(d, i);
+  if (data.logged) return;
+  if (data.sets[si]) { data.sets[si].reps = ''; data.sets[si].weight = ''; }
+  renderDayContent();
+}
 
 /* ─── LOGGING ─── */
 function logExercise(d, idx) {
@@ -655,10 +661,8 @@ function confirmClearSession() {
 
 /* ─── REST TIMER (per exercise, lives in the Log button) ─── */
 function startTimer(secs, d, idx) {
-  // Backwards-compat: if called without d/idx (shouldn't happen now), no-op
   if (typeof d === 'undefined' || typeof idx === 'undefined') return;
   const key = d + '-' + idx;
-  // Clear any existing timer for this exercise
   if (exerciseTimers[key] && exerciseTimers[key].intervalId) {
     clearInterval(exerciseTimers[key].intervalId);
   }
@@ -670,11 +674,9 @@ function startTimer(secs, d, idx) {
     t.secsLeft--;
     if (t.secsLeft <= 0) {
       clearInterval(t.intervalId);
-      t.intervalId = null;
-      t.secsLeft = 0;
-      renderDayContent(); // re-render to show "Ready to go!"
+      finishTimer(d, idx);
     } else {
-      // Update only the button text, no full re-render (avoids input blur while typing)
+      // Update only the button text — no full re-render so any other inputs stay focused
       const btn = document.getElementById('logbtn-' + key);
       if (btn) {
         const m = Math.floor(t.secsLeft/60), s = t.secsLeft%60;
@@ -684,24 +686,20 @@ function startTimer(secs, d, idx) {
     }
   }, 1000);
 }
-function skipExerciseTimer(d, idx) {
+function finishTimer(d, idx) {
   const key = d + '-' + idx;
-  const t = exerciseTimers[key];
-  if (t && t.intervalId) clearInterval(t.intervalId);
   delete exerciseTimers[key];
-  // Reset the exercise so user can log another batch
+  // Clear input row and unlock so button reverts to "Log sets"
   const data = getSetData(d, idx);
   data.logged = false;
   data.sets = [{reps:'',weight:''}];
   renderDayContent();
 }
-function dismissExerciseTimer(d, idx) {
+function skipExerciseTimer(d, idx) {
   const key = d + '-' + idx;
-  delete exerciseTimers[key];
-  const data = getSetData(d, idx);
-  data.logged = false;
-  data.sets = [{reps:'',weight:''}];
-  renderDayContent();
+  const t = exerciseTimers[key];
+  if (t && t.intervalId) clearInterval(t.intervalId);
+  finishTimer(d, idx);
 }
 
 /* ─── MODAL ─── */
