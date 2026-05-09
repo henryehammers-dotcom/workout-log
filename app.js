@@ -208,10 +208,14 @@ function openSettings(isFirstLaunch) {
   document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
   const notifOn = localStorage.getItem(KEYS.notifOn) === '1';
-  document.getElementById('notif-switch').checked = notifOn;
-  const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
-  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
-  document.getElementById('notif-time-row').style.display = notifOn ? '' : 'none';
+  const notifSwitch = document.getElementById('notif-switch');
+  const notifTimeRow = document.getElementById('notif-time-row');
+  if (notifSwitch) notifSwitch.checked = notifOn;
+  if (notifTimeRow) {
+    const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
+    document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
+    notifTimeRow.style.display = notifOn ? '' : 'none';
+  }
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -776,19 +780,22 @@ async function toggleNotif(on) {
   if (on) {
     const granted = await requestNotifPermission();
     if (!granted) {
-      document.getElementById('notif-switch').checked = false;
+      const sw = document.getElementById('notif-switch');
+      if (sw) sw.checked = false;
       alert("Notifications blocked. Enable them in your browser/OS settings for this site.");
       return;
     }
     localStorage.setItem(KEYS.notifOn, '1');
     const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
     document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
-    document.getElementById('notif-time-row').style.display = '';
+    const tr = document.getElementById('notif-time-row');
+    if (tr) tr.style.display = '';
     scheduleWorkoutNotif();
   } else {
     localStorage.setItem(KEYS.notifOn, '0');
     _notifTimer && clearTimeout(_notifTimer);
-    document.getElementById('notif-time-row').style.display = 'none';
+    const tr = document.getElementById('notif-time-row');
+    if (tr) tr.style.display = 'none';
   }
 }
 
