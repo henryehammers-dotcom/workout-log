@@ -715,22 +715,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <span class="switch-slider"></span>
         </label>
       </div>
-      <div id="notif-time-row" style="display:none;padding:8px 0 4px">
-        <div class="drum-row" style="margin:0;grid-template-columns:1fr 10px 1fr 16px 1fr">
-          <div class="drum-col">
-            <div class="drum-label">HR</div>
-            <div class="drum" id="notif-drum-h" data-min="1" data-max="12" data-val="8"></div>
-          </div>
-          <div class="drum-colon"><span></span><span></span></div>
-          <div class="drum-col">
-            <div class="drum-label">MIN</div>
-            <div class="drum" id="notif-drum-m" data-min="0" data-max="59" data-val="0"></div>
-          </div>
-          <div style="width:16px"></div>
-          <div class="drum-col">
-            <div class="drum-label">&#160;</div>
-            <div class="drum" id="notif-drum-ap" data-min="0" data-max="1" data-val="0"></div>
-          </div>
+      <div class="settings-block-row" id="notif-time-row" style="display:none">
+        <span class="settings-block-title" style="flex:1">Reminder time</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <select id="notif-sel-h" class="settings-input" style="width:52px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()"></select>
+          <span style="font-weight:700;color:var(--text2)">:</span>
+          <select id="notif-sel-m" class="settings-input" style="width:60px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()"></select>
+          <select id="notif-sel-ap" class="settings-input" style="width:58px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
         </div>
       </div>
     </div>

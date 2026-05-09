@@ -785,96 +785,54 @@ function toggleNotif(on) {
   }
 }
 
-/* Notif drum picker */
+/* Notif time selects */
 function initNotifDrums() {
+  var selH  = document.getElementById('notif-sel-h');
+  var selM  = document.getElementById('notif-sel-m');
+  var selAP = document.getElementById('notif-sel-ap');
+  if (!selH || !selM || !selAP) return;
+
+  // Populate hour options 1-12
+  if (!selH.options.length) {
+    for (var i = 1; i <= 12; i++) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      selH.appendChild(opt);
+    }
+  }
+
+  // Populate minute options 00-59
+  if (!selM.options.length) {
+    for (var j = 0; j <= 59; j++) {
+      var optM = document.createElement('option');
+      optM.value = j;
+      optM.textContent = String(j).padStart(2, '0');
+      selM.appendChild(optM);
+    }
+  }
+
+  // Set values from saved time
   var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
   var parts = timeStr.split(':');
   var h24 = parseInt(parts[0], 10);
   var mins = parseInt(parts[1], 10);
   var isPM = h24 >= 12;
   var h12 = h24 % 12; if (h12 === 0) h12 = 12;
-
-  buildNotifDrum('notif-drum-h',  12, 1,  h12,  function(v) { onNotifDrumChange(); });
-  buildNotifDrum('notif-drum-m',  59, 0,  mins, function(v) { onNotifDrumChange(); });
-  buildNotifDrum('notif-drum-ap', 1,  0,  isPM ? 1 : 0, function(v) { onNotifDrumChange(); }, ['AM','PM']);
+  selH.value  = h12;
+  selM.value  = mins;
+  selAP.value = isPM ? 'PM' : 'AM';
 }
 
-function buildNotifDrum(id, max, min, initVal, onChange, labels) {
-  var drum = document.getElementById(id);
-  if (!drum) return;
-  drum.innerHTML = '';
-  var inner = document.createElement('div');
-  inner.className = 'drum-inner';
-  var count = max - min + 1;
-  for (var i = 0; i < count; i++) {
-    var v = min + i;
-    var item = document.createElement('div');
-    item.className = 'drum-item' + (v === initVal ? ' drum-selected' : '');
-    item.textContent = labels ? labels[v] : String(v).padStart(2, '0');
-    inner.appendChild(item);
-  }
-  var ft = document.createElement('div'); ft.className = 'drum-fade-top';
-  var fb = document.createElement('div'); fb.className = 'drum-fade-bot';
-  drum.appendChild(inner); drum.appendChild(ft); drum.appendChild(fb);
-  drum.dataset.min = min;
-  drum.dataset.max = max;
-  drum.dataset.val = initVal;
-  setNotifDrumValue(drum, initVal);
-  initNotifDrumInteraction(drum, onChange);
-}
-
-function setNotifDrumValue(drum, val) {
-  var min = parseInt(drum.dataset.min, 10);
-  var max = parseInt(drum.dataset.max, 10);
-  val = Math.max(min, Math.min(max, val));
-  drum.dataset.val = val;
-  var offset = val - min;
-  drum.querySelector('.drum-inner').style.transform = 'translateY(' + (50 - offset * 50) + 'px)';
-  drum.querySelectorAll('.drum-item').forEach(function(el, i) {
-    el.classList.toggle('drum-selected', i === offset);
-  });
-}
-
-function initNotifDrumInteraction(drum, onChange) {
-  // Remove old listeners by cloning
-  var newDrum = drum.cloneNode(true);
-  drum.parentNode.replaceChild(newDrum, drum);
-  drum = newDrum;
-  // Re-store refs
-  document.getElementById(drum.id); // no-op, just ensuring id is set
-
-  var startY = 0, startVal = 0, dragging = false;
-  function onStart(y) { startY = y; startVal = parseInt(drum.dataset.val, 10); dragging = true; }
-  function onMove(y) {
-    if (!dragging) return;
-    var delta = Math.round((startY - y) / 50);
-    setNotifDrumValue(drum, startVal + delta);
-    if (onChange) onChange(parseInt(drum.dataset.val, 10));
-  }
-  function onEnd() { dragging = false; }
-  drum.addEventListener('touchstart', function(e) { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
-  drum.addEventListener('touchmove',  function(e) { e.preventDefault(); onMove(e.touches[0].clientY); },  { passive: false });
-  drum.addEventListener('touchend',   onEnd);
-  drum.addEventListener('mousedown',  function(e) { onStart(e.clientY); });
-  document.addEventListener('mousemove', function(e) { if (dragging) onMove(e.clientY); });
-  document.addEventListener('mouseup',   onEnd);
-  drum.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    var delta = e.deltaY > 0 ? 1 : -1;
-    setNotifDrumValue(drum, parseInt(drum.dataset.val, 10) + delta);
-    if (onChange) onChange(parseInt(drum.dataset.val, 10));
-  }, { passive: false });
-}
-
-function onNotifDrumChange() {
-  var hDrum  = document.getElementById('notif-drum-h');
-  var mDrum  = document.getElementById('notif-drum-m');
-  var apDrum = document.getElementById('notif-drum-ap');
-  if (!hDrum || !mDrum || !apDrum) return;
-  var h12  = parseInt(hDrum.dataset.val, 10);
-  var mins = parseInt(mDrum.dataset.val, 10);
-  var isPM = parseInt(apDrum.dataset.val, 10) === 1;
-  var h24 = h12 % 12 + (isPM ? 12 : 0);
+function onNotifTimeChange() {
+  var selH  = document.getElementById('notif-sel-h');
+  var selM  = document.getElementById('notif-sel-m');
+  var selAP = document.getElementById('notif-sel-ap');
+  if (!selH || !selM || !selAP) return;
+  var h12  = parseInt(selH.value, 10);
+  var mins = parseInt(selM.value, 10);
+  var isPM = selAP.value === 'PM';
+  var h24  = h12 % 12 + (isPM ? 12 : 0);
   var timeStr = String(h24).padStart(2,'0') + ':' + String(mins).padStart(2,'0');
   localStorage.setItem(KEYS.notifTime, timeStr);
   scheduleWorkoutNotif();
