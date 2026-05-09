@@ -791,28 +791,6 @@ function initNotifDrums() {
   var selM  = document.getElementById('notif-sel-m');
   var selAP = document.getElementById('notif-sel-ap');
   if (!selH || !selM || !selAP) return;
-
-  // Populate hour options 1-12
-  if (!selH.options.length) {
-    for (var i = 1; i <= 12; i++) {
-      var opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = i;
-      selH.appendChild(opt);
-    }
-  }
-
-  // Populate minute options 00-59
-  if (!selM.options.length) {
-    for (var j = 0; j <= 59; j++) {
-      var optM = document.createElement('option');
-      optM.value = j;
-      optM.textContent = String(j).padStart(2, '0');
-      selM.appendChild(optM);
-    }
-  }
-
-  // Set values from saved time
   var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
   var parts = timeStr.split(':');
   var h24 = parseInt(parts[0], 10);
