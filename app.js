@@ -209,7 +209,8 @@ function openSettings(isFirstLaunch) {
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
   const notifOn = localStorage.getItem(KEYS.notifOn) === '1';
   document.getElementById('notif-switch').checked = notifOn;
-  document.getElementById('notif-time-input').value = localStorage.getItem(KEYS.notifTime) || '08:00';
+  const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
+  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
   document.getElementById('notif-time-row').style.display = notifOn ? '' : 'none';
   document.getElementById('settings-modal').classList.add('show');
 }
@@ -780,6 +781,8 @@ async function toggleNotif(on) {
       return;
     }
     localStorage.setItem(KEYS.notifOn, '1');
+    const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
+    document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
     document.getElementById('notif-time-row').style.display = '';
     scheduleWorkoutNotif();
   } else {
@@ -791,6 +794,7 @@ async function toggleNotif(on) {
 
 function saveNotifTime(val) {
   localStorage.setItem(KEYS.notifTime, val);
+  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === val));
   scheduleWorkoutNotif();
 }
 

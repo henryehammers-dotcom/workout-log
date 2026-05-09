@@ -715,10 +715,17 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <span class="switch-slider"></span>
         </label>
       </div>
-      <div class="settings-block-row" id="notif-time-row" style="display:none">
-        <span class="settings-row-label" style="font-size:14px;color:var(--text);font-weight:500;flex:1">Reminder time</span>
-        <input class="settings-input narrow" id="notif-time-input" type="time" value="08:00"
-          onchange="saveNotifTime(this.value)" style="width:100px;text-align:right">
+      <div class="settings-block-row" id="notif-time-row" style="display:none;flex-direction:column;align-items:stretch;gap:10px">
+        <span style="font-size:13px;color:var(--text2);font-weight:500">Reminder time</span>
+        <div class="segmented" id="notif-time-seg" style="width:100%">
+          <button class="seg-opt" data-val="06:00" onclick="saveNotifTime('06:00')">6 am</button>
+          <button class="seg-opt" data-val="07:00" onclick="saveNotifTime('07:00')">7 am</button>
+          <button class="seg-opt" data-val="08:00" onclick="saveNotifTime('08:00')">8 am</button>
+          <button class="seg-opt" data-val="09:00" onclick="saveNotifTime('09:00')">9 am</button>
+          <button class="seg-opt" data-val="12:00" onclick="saveNotifTime('12:00')">12 pm</button>
+          <button class="seg-opt" data-val="17:00" onclick="saveNotifTime('17:00')">5 pm</button>
+          <button class="seg-opt" data-val="18:00" onclick="saveNotifTime('18:00')">6 pm</button>
+        </div>
       </div>
     </div>
 
