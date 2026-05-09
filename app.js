@@ -776,6 +776,7 @@ function toggleNotif(on) {
       localStorage.setItem(KEYS.notifOn, '1');
       var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = '';
       initNotifDrums();
+      var btn = document.getElementById('notif-save-btn'); if (btn) btn.onclick = saveNotifTime;
       scheduleWorkoutNotif();
     });
   } else {
@@ -797,15 +798,27 @@ function initNotifDrums() {
   var mins = parseInt(parts[1], 10);
   var isPM = h24 >= 12;
   var h12 = h24 % 12; if (h12 === 0) h12 = 12;
-  selH.value  = h12;
-  selM.value  = mins;
+  selH.value  = String(h12);
+  selM.value  = String(mins);
   selAP.value = isPM ? 'PM' : 'AM';
+  // If time was previously saved, start in locked/Change state
+  var btn = document.getElementById('notif-save-btn');
+  if (localStorage.getItem(KEYS.notifTime)) {
+    selH.disabled = true; selM.disabled = true; selAP.disabled = true;
+    selH.style.opacity = '0.45'; selM.style.opacity = '0.45'; selAP.style.opacity = '0.45';
+    if (btn) { btn.textContent = 'Change'; btn.onclick = unlockNotifTime; }
+  } else {
+    selH.disabled = false; selM.disabled = false; selAP.disabled = false;
+    selH.style.opacity = ''; selM.style.opacity = ''; selAP.style.opacity = '';
+    if (btn) { btn.textContent = 'Save'; btn.onclick = saveNotifTime; }
+  }
 }
 
-function onNotifTimeChange() {
+function saveNotifTime() {
   var selH  = document.getElementById('notif-sel-h');
   var selM  = document.getElementById('notif-sel-m');
   var selAP = document.getElementById('notif-sel-ap');
+  var btn   = document.getElementById('notif-save-btn');
   if (!selH || !selM || !selAP) return;
   var h12  = parseInt(selH.value, 10);
   var mins = parseInt(selM.value, 10);
@@ -814,6 +827,28 @@ function onNotifTimeChange() {
   var timeStr = String(h24).padStart(2,'0') + ':' + String(mins).padStart(2,'0');
   localStorage.setItem(KEYS.notifTime, timeStr);
   scheduleWorkoutNotif();
+  // Lock the selects and switch to Change mode
+  selH.disabled  = true;
+  selM.disabled  = true;
+  selAP.disabled = true;
+  selH.style.opacity  = '0.45';
+  selM.style.opacity  = '0.45';
+  selAP.style.opacity = '0.45';
+  if (btn) { btn.textContent = 'Change'; }
+}
+
+function unlockNotifTime() {
+  var selH  = document.getElementById('notif-sel-h');
+  var selM  = document.getElementById('notif-sel-m');
+  var selAP = document.getElementById('notif-sel-ap');
+  var btn   = document.getElementById('notif-save-btn');
+  selH.disabled  = false;
+  selM.disabled  = false;
+  selAP.disabled = false;
+  selH.style.opacity  = '';
+  selM.style.opacity  = '';
+  selAP.style.opacity = '';
+  if (btn) { btn.textContent = 'Save'; btn.onclick = saveNotifTime; }
 }
 
 

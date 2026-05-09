@@ -718,7 +718,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="settings-block-row" id="notif-time-row" style="display:none">
         <span class="settings-block-title" style="flex:1">Reminder time</span>
         <div style="display:flex;align-items:center;gap:4px">
-          <select id="notif-sel-h" class="settings-input" style="width:52px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()">
+          <select id="notif-sel-h" class="settings-input" style="width:52px;padding:0 6px;text-align:center">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -733,7 +733,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <option value="12">12</option>
           </select>
           <span style="font-weight:700;color:var(--text2)">:</span>
-          <select id="notif-sel-m" class="settings-input" style="width:60px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()">
+          <select id="notif-sel-m" class="settings-input" style="width:60px;padding:0 6px;text-align:center">
             <option value="0">00</option>
             <option value="1">01</option>
             <option value="2">02</option>
@@ -795,10 +795,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <option value="58">58</option>
             <option value="59">59</option>
           </select>
-          <select id="notif-sel-ap" class="settings-input" style="width:58px;padding:0 6px;text-align:center" onchange="onNotifTimeChange()">
+          <select id="notif-sel-ap" class="settings-input" style="width:58px;padding:0 6px;text-align:center">
             <option value="AM">AM</option>
             <option value="PM">PM</option>
           </select>
+          <button id="notif-save-btn" type="button" class="btn" style="height:38px;padding:0 12px;font-size:13px;white-space:nowrap" onclick="saveNotifTime()">Save</button>
         </div>
       </div>
     </div>
