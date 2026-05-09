@@ -34,14 +34,15 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Tap notification → open/focus the app
-self.addEventListener('notificationclick', e => {
+
+// Tap notification -> open/focus the app
+self.addEventListener('notificationclick', function(e) {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      for (const client of list) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].url.includes(self.location.origin) && 'focus' in list[i]) {
+          return list[i].focus();
         }
       }
       return clients.openWindow('./');
