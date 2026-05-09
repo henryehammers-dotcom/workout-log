@@ -207,13 +207,13 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
   document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
-  const notifOn = localStorage.getItem(KEYS.notifOn) === '1';
-  const notifSwitch = document.getElementById('notif-switch');
-  const notifTimeRow = document.getElementById('notif-time-row');
-  if (notifSwitch) notifSwitch.checked = notifOn;
-  if (notifTimeRow) notifTimeRow.style.display = notifOn ? '' : 'none';
-  const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
-  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTime));
+  var _ns = document.getElementById('notif-switch');
+  var _nr = document.getElementById('notif-time-row');
+  var _no = localStorage.getItem(KEYS.notifOn) === '1';
+  if (_ns) _ns.checked = _no;
+  if (_nr) _nr.style.display = _no ? '' : 'none';
+  var _nt = localStorage.getItem(KEYS.notifTime) || '08:00';
+  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === _nt); });
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -363,8 +363,6 @@ function applyRestore() {
 
     // Music opt-in
     if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float').classList.add('show');
-
-    // Notification scheduling
     scheduleWorkoutNotif();
 
     if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
@@ -715,83 +713,73 @@ function skipExerciseTimer(d, idx) {
 }
 
 /* ─── NOTIFICATIONS ─── */
-let _notifTimer = null;
+var _notifTimer = null;
 
 function getTodayWorkoutLabel() {
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const key = days[new Date().getDay()];
-  const day = schedule[key];
+  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var key = days[new Date().getDay()];
+  var day = schedule[key];
   if (!day) return 'Time to train!';
   if (day.restDay) return 'Rest day — enjoy the recovery!';
-  const suffix = day.label.includes('\u2014') ? day.label.replace(/^.+?\u2014\s*/, '').trim() : '';
-  const exCount = day.exercises.length;
-  if (suffix && exCount > 0) return suffix + ' \u00b7 ' + exCount + ' exercise' + (exCount !== 1 ? 's' : '');
+  var suffix = day.label.indexOf('—') !== -1 ? day.label.replace(/^.+?—\s*/, '').trim() : '';
+  var exCount = day.exercises.length;
+  if (suffix && exCount > 0) return suffix + ' · ' + exCount + ' exercise' + (exCount !== 1 ? 's' : '');
   if (suffix) return suffix;
   if (exCount > 0) return exCount + ' exercise' + (exCount !== 1 ? 's' : '') + ' today';
   return 'Time to train!';
 }
 
-async function requestNotifPermission() {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission === 'granted') return true;
-  if (Notification.permission === 'denied') return false;
-  const result = await Notification.requestPermission();
-  return result === 'granted';
-}
-
-async function scheduleWorkoutNotif() {
-  _notifTimer && clearTimeout(_notifTimer);
+function scheduleWorkoutNotif() {
+  if (_notifTimer) { clearTimeout(_notifTimer); _notifTimer = null; }
   if (localStorage.getItem(KEYS.notifOn) !== '1') return;
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-  const timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
-  const parts = timeStr.split(':');
-  const h = parseInt(parts[0]);
-  const m = parseInt(parts[1]);
-  const now = new Date();
-  const next = new Date();
+  var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
+  var parts = timeStr.split(':');
+  var h = parseInt(parts[0], 10);
+  var m = parseInt(parts[1], 10);
+  var now = new Date();
+  var next = new Date();
   next.setHours(h, m, 0, 0);
   if (next <= now) next.setDate(next.getDate() + 1);
-  const delay = next - now;
-  _notifTimer = setTimeout(async function() {
+  _notifTimer = setTimeout(function() {
+    _notifTimer = null;
     if (localStorage.getItem(KEYS.notifOn) !== '1') return;
     if (Notification.permission !== 'granted') return;
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const label = getTodayWorkoutLabel();
-      const hour = new Date().getHours();
-      const greeting = hour < 12 ? 'Good morning!' : hour < 16 ? 'Good afternoon!' : 'Good evening!';
+    navigator.serviceWorker.ready.then(function(reg) {
+      var label = getTodayWorkoutLabel();
+      var hour = new Date().getHours();
+      var greeting = hour < 12 ? 'Good morning!' : hour < 16 ? 'Good afternoon!' : 'Good evening!';
       reg.showNotification(greeting, {
-        body: "Today\'s workout: " + label,
+        body: "Today's workout: " + label,
         icon: './Tallymark-icon-192.png',
         badge: './Tallymark-icon-192.png',
         tag: 'tallymark-workout-reminder',
-        renotify: true,
+        renotify: true
       });
-    } catch(e) {}
-    scheduleWorkoutNotif();
-  }, delay);
+      scheduleWorkoutNotif();
+    }).catch(function() {});
+  }, next - now);
 }
 
-async function toggleNotif(on) {
+function toggleNotif(on) {
   if (on) {
-    const granted = await requestNotifPermission();
-    if (!granted) {
-      const sw = document.getElementById('notif-switch');
-      if (sw) sw.checked = false;
-      alert('Notifications blocked. Enable them in your browser or OS settings for this site.');
-      return;
-    }
-    localStorage.setItem(KEYS.notifOn, '1');
-    const savedTime = localStorage.getItem(KEYS.notifTime) || '08:00';
-    document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === savedTime); });
-    const tr = document.getElementById('notif-time-row');
-    if (tr) tr.style.display = '';
-    scheduleWorkoutNotif();
+    if (!('Notification' in window)) { alert('Notifications not supported on this device.'); var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false; return; }
+    Notification.requestPermission().then(function(result) {
+      if (result !== 'granted') {
+        alert('Notifications blocked. Enable them in your browser or OS settings for this site.');
+        var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false;
+        return;
+      }
+      localStorage.setItem(KEYS.notifOn, '1');
+      var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = '';
+      var t = localStorage.getItem(KEYS.notifTime) || '08:00';
+      document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === t); });
+      scheduleWorkoutNotif();
+    });
   } else {
     localStorage.setItem(KEYS.notifOn, '0');
-    _notifTimer && clearTimeout(_notifTimer);
-    const tr = document.getElementById('notif-time-row');
-    if (tr) tr.style.display = 'none';
+    if (_notifTimer) { clearTimeout(_notifTimer); _notifTimer = null; }
+    var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = 'none';
   }
 }
 
@@ -800,6 +788,7 @@ function saveNotifTime(val) {
   document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === val); });
   scheduleWorkoutNotif();
 }
+
 
 /* ─── MODAL ─── */
 function showModal(title, body, onConfirm) {
