@@ -705,6 +705,21 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <span class="switch-slider"></span>
         </label>
       </div>
+      <div class="settings-block-row">
+        <div class="settings-block-text">
+          <div class="settings-block-title">Workout reminder</div>
+          <div class="settings-block-sub">Daily notification with today's workout</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="notif-switch" onchange="toggleNotif(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div class="settings-block-row" id="notif-time-row" style="display:none">
+        <span class="settings-row-label" style="font-size:14px;color:var(--text);font-weight:500;flex:1">Reminder time</span>
+        <input class="settings-input narrow" id="notif-time-input" type="time" value="08:00"
+          onchange="saveNotifTime(this.value)" style="width:100px;text-align:right">
+      </div>
     </div>
 
     <div class="section-label">Data</div>

@@ -17,6 +17,8 @@ const KEYS = {
   greetDate: 'wl_greet_date',
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
+  notifOn:   'wl_notif_on',
+  notifTime: 'wl_notif_time',
 };
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
@@ -205,6 +207,10 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
   document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
+  const notifOn = localStorage.getItem(KEYS.notifOn) === '1';
+  document.getElementById('notif-switch').checked = notifOn;
+  document.getElementById('notif-time-input').value = localStorage.getItem(KEYS.notifTime) || '08:00';
+  document.getElementById('notif-time-row').style.display = notifOn ? '' : 'none';
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -354,6 +360,9 @@ function applyRestore() {
 
     // Music opt-in
     if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float').classList.add('show');
+
+    // Notification scheduling
+    scheduleWorkoutNotif();
 
     if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
     else maybeShowGreeting();
@@ -700,6 +709,89 @@ function skipExerciseTimer(d, idx) {
   const t = exerciseTimers[key];
   if (t && t.intervalId) clearInterval(t.intervalId);
   finishTimer(d, idx);
+}
+
+/* ─── NOTIFICATIONS ─── */
+let _notifTimer = null;
+
+function getTodayWorkoutLabel() {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const key = days[new Date().getDay()];
+  const day = schedule[key];
+  if (!day) return null;
+  if (day.restDay) return 'Rest day — enjoy the recovery!';
+  const suffix = day.label.includes('—') ? day.label.replace(/^.+?—\s*/, '').trim() : '';
+  const exCount = day.exercises.length;
+  if (suffix && exCount > 0) return `${suffix} · ${exCount} exercise${exCount !== 1 ? 's' : ''}`;
+  if (suffix) return suffix;
+  if (exCount > 0) return `${exCount} exercise${exCount !== 1 ? 's' : ''} today`;
+  return "Time to train!";
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+async function scheduleWorkoutNotif() {
+  _notifTimer && clearTimeout(_notifTimer);
+  if (localStorage.getItem(KEYS.notifOn) !== '1') return;
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+  const timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
+  const [h, m] = timeStr.split(':').map(Number);
+
+  const now = new Date();
+  const next = new Date();
+  next.setHours(h, m, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+
+  const delay = next - now;
+  _notifTimer = setTimeout(async () => {
+    if (localStorage.getItem(KEYS.notifOn) !== '1') return;
+    if (Notification.permission !== 'granted') return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const label = getTodayWorkoutLabel();
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning!' : hour < 16 ? 'Good afternoon!' : 'Good evening!';
+      reg.showNotification(greeting, {
+        body: `Today's workout: ${label}`,
+        icon: './Tallymark-icon-192.png',
+        badge: './Tallymark-icon-192.png',
+        tag: 'tallymark-workout-reminder',
+        renotify: true,
+      });
+    } catch (e) {}
+    // Re-schedule for tomorrow
+    scheduleWorkoutNotif();
+  }, delay);
+}
+
+async function toggleNotif(on) {
+  if (on) {
+    const granted = await requestNotifPermission();
+    if (!granted) {
+      document.getElementById('notif-switch').checked = false;
+      alert("Notifications blocked. Enable them in your browser/OS settings for this site.");
+      return;
+    }
+    localStorage.setItem(KEYS.notifOn, '1');
+    document.getElementById('notif-time-row').style.display = '';
+    scheduleWorkoutNotif();
+  } else {
+    localStorage.setItem(KEYS.notifOn, '0');
+    _notifTimer && clearTimeout(_notifTimer);
+    document.getElementById('notif-time-row').style.display = 'none';
+  }
+}
+
+function saveNotifTime(val) {
+  localStorage.setItem(KEYS.notifTime, val);
+  scheduleWorkoutNotif();
 }
 
 /* ─── MODAL ─── */

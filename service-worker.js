@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v43';
+const CACHE = 'tallymark-v44';
 const FILES = [
   './index.html',
   './app.js',
@@ -31,6 +31,21 @@ self.addEventListener('activate', e => {
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
+  );
+});
+
+// Tap notification → open/focus the app
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow('./');
+    })
   );
 });
 
