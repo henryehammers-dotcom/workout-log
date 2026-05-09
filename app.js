@@ -17,8 +17,6 @@ const KEYS = {
   greetDate: 'wl_greet_date',
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
-  notifOn:   'wl_notif_on',
-  notifTime: 'wl_notif_time',
 };
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
@@ -207,12 +205,6 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
   document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
-  var _no = localStorage.getItem(KEYS.notifOn) === '1';
-  var _ns = document.getElementById('notif-switch');
-  var _nr = document.getElementById('notif-time-row');
-  if (_ns) _ns.checked = _no;
-  if (_nr) _nr.style.display = _no ? '' : 'none';
-  initNotifDrums();
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -362,7 +354,6 @@ function applyRestore() {
 
     // Music opt-in
     if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float').classList.add('show');
-    scheduleWorkoutNotif();
 
     if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
     else maybeShowGreeting();
@@ -710,147 +701,6 @@ function skipExerciseTimer(d, idx) {
   if (t && t.intervalId) clearInterval(t.intervalId);
   finishTimer(d, idx);
 }
-
-/* --- NOTIFICATIONS --- */
-var _notifTimer = null;
-
-function getTodayWorkoutLabel() {
-  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var key = days[new Date().getDay()];
-  var day = schedule[key];
-  if (!day) return 'Time to train!';
-  if (day.restDay) return 'Rest day \u2014 enjoy the recovery!';
-  var suffix = day.label.indexOf('\u2014') !== -1 ? day.label.replace(/^.+?\u2014\s*/, '').trim() : '';
-  var exCount = day.exercises.length;
-  if (suffix && exCount > 0) return suffix + ' \u00b7 ' + exCount + ' exercise' + (exCount !== 1 ? 's' : '');
-  if (suffix) return suffix;
-  if (exCount > 0) return exCount + ' exercise' + (exCount !== 1 ? 's' : '') + ' today';
-  return 'Time to train!';
-}
-
-function scheduleWorkoutNotif() {
-  if (_notifTimer) { clearTimeout(_notifTimer); _notifTimer = null; }
-  if (localStorage.getItem(KEYS.notifOn) !== '1') return;
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-  var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
-  var parts = timeStr.split(':');
-  var h = parseInt(parts[0], 10);
-  var m = parseInt(parts[1], 10);
-  var now = new Date();
-  var next = new Date();
-  next.setHours(h, m, 0, 0);
-  if (next <= now) next.setDate(next.getDate() + 1);
-  _notifTimer = setTimeout(function() {
-    _notifTimer = null;
-    if (localStorage.getItem(KEYS.notifOn) !== '1') return;
-    if (Notification.permission !== 'granted') return;
-    navigator.serviceWorker.ready.then(function(reg) {
-      var label = getTodayWorkoutLabel();
-      var hour = new Date().getHours();
-      var greeting = hour < 12 ? 'Good morning!' : hour < 16 ? 'Good afternoon!' : 'Good evening!';
-      reg.showNotification(greeting, {
-        body: "Today's workout: " + label,
-        icon: './Tallymark-icon-192.png',
-        badge: './Tallymark-icon-192.png',
-        tag: 'tallymark-workout-reminder',
-        renotify: true
-      });
-      scheduleWorkoutNotif();
-    }).catch(function() {});
-  }, next - now);
-}
-
-function toggleNotif(on) {
-  if (on) {
-    if (!('Notification' in window)) {
-      alert('Notifications not supported on this device.');
-      var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false;
-      return;
-    }
-    Notification.requestPermission().then(function(result) {
-      if (result !== 'granted') {
-        alert('Notifications blocked. Enable them in your browser or OS settings for this site.');
-        var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false;
-        return;
-      }
-      localStorage.setItem(KEYS.notifOn, '1');
-      var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = '';
-      initNotifDrums();
-      var btn = document.getElementById('notif-save-btn'); if (btn) btn.onclick = saveNotifTime;
-      scheduleWorkoutNotif();
-    });
-  } else {
-    localStorage.setItem(KEYS.notifOn, '0');
-    if (_notifTimer) { clearTimeout(_notifTimer); _notifTimer = null; }
-    var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = 'none';
-  }
-}
-
-/* Notif time selects */
-function initNotifDrums() {
-  var selH  = document.getElementById('notif-sel-h');
-  var selM  = document.getElementById('notif-sel-m');
-  var selAP = document.getElementById('notif-sel-ap');
-  if (!selH || !selM || !selAP) return;
-  var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
-  var parts = timeStr.split(':');
-  var h24 = parseInt(parts[0], 10);
-  var mins = parseInt(parts[1], 10);
-  var isPM = h24 >= 12;
-  var h12 = h24 % 12; if (h12 === 0) h12 = 12;
-  selH.value  = String(h12);
-  selM.value  = String(mins);
-  selAP.value = isPM ? 'PM' : 'AM';
-  // If time was previously saved, start in locked/Change state
-  var btn = document.getElementById('notif-save-btn');
-  if (localStorage.getItem(KEYS.notifTime)) {
-    selH.disabled = true; selM.disabled = true; selAP.disabled = true;
-    selH.style.opacity = '0.45'; selM.style.opacity = '0.45'; selAP.style.opacity = '0.45';
-    if (btn) { btn.textContent = 'Change'; btn.onclick = unlockNotifTime; }
-  } else {
-    selH.disabled = false; selM.disabled = false; selAP.disabled = false;
-    selH.style.opacity = ''; selM.style.opacity = ''; selAP.style.opacity = '';
-    if (btn) { btn.textContent = 'Save'; btn.onclick = saveNotifTime; }
-  }
-}
-
-function saveNotifTime() {
-  var selH  = document.getElementById('notif-sel-h');
-  var selM  = document.getElementById('notif-sel-m');
-  var selAP = document.getElementById('notif-sel-ap');
-  var btn   = document.getElementById('notif-save-btn');
-  if (!selH || !selM || !selAP) return;
-  var h12  = parseInt(selH.value, 10);
-  var mins = parseInt(selM.value, 10);
-  var isPM = selAP.value === 'PM';
-  var h24  = h12 % 12 + (isPM ? 12 : 0);
-  var timeStr = String(h24).padStart(2,'0') + ':' + String(mins).padStart(2,'0');
-  localStorage.setItem(KEYS.notifTime, timeStr);
-  scheduleWorkoutNotif();
-  // Lock the selects and switch to Change mode
-  selH.disabled  = true;
-  selM.disabled  = true;
-  selAP.disabled = true;
-  selH.style.opacity  = '0.45';
-  selM.style.opacity  = '0.45';
-  selAP.style.opacity = '0.45';
-  if (btn) { btn.textContent = 'Change'; }
-}
-
-function unlockNotifTime() {
-  var selH  = document.getElementById('notif-sel-h');
-  var selM  = document.getElementById('notif-sel-m');
-  var selAP = document.getElementById('notif-sel-ap');
-  var btn   = document.getElementById('notif-save-btn');
-  selH.disabled  = false;
-  selM.disabled  = false;
-  selAP.disabled = false;
-  selH.style.opacity  = '';
-  selM.style.opacity  = '';
-  selAP.style.opacity = '';
-  if (btn) { btn.textContent = 'Save'; btn.onclick = saveNotifTime; }
-}
-
 
 /* ─── MODAL ─── */
 function showModal(title, body, onConfirm) {
