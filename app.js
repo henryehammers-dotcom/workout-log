@@ -207,13 +207,12 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
   document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
+  var _no = localStorage.getItem(KEYS.notifOn) === '1';
   var _ns = document.getElementById('notif-switch');
   var _nr = document.getElementById('notif-time-row');
-  var _no = localStorage.getItem(KEYS.notifOn) === '1';
   if (_ns) _ns.checked = _no;
   if (_nr) _nr.style.display = _no ? '' : 'none';
-  var _nt = localStorage.getItem(KEYS.notifTime) || '08:00';
-  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === _nt); });
+  initNotifDrums();
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -712,7 +711,7 @@ function skipExerciseTimer(d, idx) {
   finishTimer(d, idx);
 }
 
-/* ─── NOTIFICATIONS ─── */
+/* --- NOTIFICATIONS --- */
 var _notifTimer = null;
 
 function getTodayWorkoutLabel() {
@@ -720,10 +719,10 @@ function getTodayWorkoutLabel() {
   var key = days[new Date().getDay()];
   var day = schedule[key];
   if (!day) return 'Time to train!';
-  if (day.restDay) return 'Rest day — enjoy the recovery!';
-  var suffix = day.label.indexOf('—') !== -1 ? day.label.replace(/^.+?—\s*/, '').trim() : '';
+  if (day.restDay) return 'Rest day \u2014 enjoy the recovery!';
+  var suffix = day.label.indexOf('\u2014') !== -1 ? day.label.replace(/^.+?\u2014\s*/, '').trim() : '';
   var exCount = day.exercises.length;
-  if (suffix && exCount > 0) return suffix + ' · ' + exCount + ' exercise' + (exCount !== 1 ? 's' : '');
+  if (suffix && exCount > 0) return suffix + ' \u00b7 ' + exCount + ' exercise' + (exCount !== 1 ? 's' : '');
   if (suffix) return suffix;
   if (exCount > 0) return exCount + ' exercise' + (exCount !== 1 ? 's' : '') + ' today';
   return 'Time to train!';
@@ -763,7 +762,11 @@ function scheduleWorkoutNotif() {
 
 function toggleNotif(on) {
   if (on) {
-    if (!('Notification' in window)) { alert('Notifications not supported on this device.'); var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false; return; }
+    if (!('Notification' in window)) {
+      alert('Notifications not supported on this device.');
+      var sw = document.getElementById('notif-switch'); if (sw) sw.checked = false;
+      return;
+    }
     Notification.requestPermission().then(function(result) {
       if (result !== 'granted') {
         alert('Notifications blocked. Enable them in your browser or OS settings for this site.');
@@ -772,8 +775,7 @@ function toggleNotif(on) {
       }
       localStorage.setItem(KEYS.notifOn, '1');
       var tr = document.getElementById('notif-time-row'); if (tr) tr.style.display = '';
-      var t = localStorage.getItem(KEYS.notifTime) || '08:00';
-      document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === t); });
+      initNotifDrums();
       scheduleWorkoutNotif();
     });
   } else {
@@ -783,9 +785,98 @@ function toggleNotif(on) {
   }
 }
 
-function saveNotifTime(val) {
-  localStorage.setItem(KEYS.notifTime, val);
-  document.querySelectorAll('#notif-time-seg .seg-opt').forEach(function(el) { el.classList.toggle('active', el.dataset.val === val); });
+/* Notif drum picker */
+function initNotifDrums() {
+  var timeStr = localStorage.getItem(KEYS.notifTime) || '08:00';
+  var parts = timeStr.split(':');
+  var h24 = parseInt(parts[0], 10);
+  var mins = parseInt(parts[1], 10);
+  var isPM = h24 >= 12;
+  var h12 = h24 % 12; if (h12 === 0) h12 = 12;
+
+  buildNotifDrum('notif-drum-h',  12, 1,  h12,  function(v) { onNotifDrumChange(); });
+  buildNotifDrum('notif-drum-m',  59, 0,  mins, function(v) { onNotifDrumChange(); });
+  buildNotifDrum('notif-drum-ap', 1,  0,  isPM ? 1 : 0, function(v) { onNotifDrumChange(); }, ['AM','PM']);
+}
+
+function buildNotifDrum(id, max, min, initVal, onChange, labels) {
+  var drum = document.getElementById(id);
+  if (!drum) return;
+  drum.innerHTML = '';
+  var inner = document.createElement('div');
+  inner.className = 'drum-inner';
+  var count = max - min + 1;
+  for (var i = 0; i < count; i++) {
+    var v = min + i;
+    var item = document.createElement('div');
+    item.className = 'drum-item' + (v === initVal ? ' drum-selected' : '');
+    item.textContent = labels ? labels[v] : String(v).padStart(2, '0');
+    inner.appendChild(item);
+  }
+  var ft = document.createElement('div'); ft.className = 'drum-fade-top';
+  var fb = document.createElement('div'); fb.className = 'drum-fade-bot';
+  drum.appendChild(inner); drum.appendChild(ft); drum.appendChild(fb);
+  drum.dataset.min = min;
+  drum.dataset.max = max;
+  drum.dataset.val = initVal;
+  setNotifDrumValue(drum, initVal);
+  initNotifDrumInteraction(drum, onChange);
+}
+
+function setNotifDrumValue(drum, val) {
+  var min = parseInt(drum.dataset.min, 10);
+  var max = parseInt(drum.dataset.max, 10);
+  val = Math.max(min, Math.min(max, val));
+  drum.dataset.val = val;
+  var offset = val - min;
+  drum.querySelector('.drum-inner').style.transform = 'translateY(' + (50 - offset * 50) + 'px)';
+  drum.querySelectorAll('.drum-item').forEach(function(el, i) {
+    el.classList.toggle('drum-selected', i === offset);
+  });
+}
+
+function initNotifDrumInteraction(drum, onChange) {
+  // Remove old listeners by cloning
+  var newDrum = drum.cloneNode(true);
+  drum.parentNode.replaceChild(newDrum, drum);
+  drum = newDrum;
+  // Re-store refs
+  document.getElementById(drum.id); // no-op, just ensuring id is set
+
+  var startY = 0, startVal = 0, dragging = false;
+  function onStart(y) { startY = y; startVal = parseInt(drum.dataset.val, 10); dragging = true; }
+  function onMove(y) {
+    if (!dragging) return;
+    var delta = Math.round((startY - y) / 50);
+    setNotifDrumValue(drum, startVal + delta);
+    if (onChange) onChange(parseInt(drum.dataset.val, 10));
+  }
+  function onEnd() { dragging = false; }
+  drum.addEventListener('touchstart', function(e) { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
+  drum.addEventListener('touchmove',  function(e) { e.preventDefault(); onMove(e.touches[0].clientY); },  { passive: false });
+  drum.addEventListener('touchend',   onEnd);
+  drum.addEventListener('mousedown',  function(e) { onStart(e.clientY); });
+  document.addEventListener('mousemove', function(e) { if (dragging) onMove(e.clientY); });
+  document.addEventListener('mouseup',   onEnd);
+  drum.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 1 : -1;
+    setNotifDrumValue(drum, parseInt(drum.dataset.val, 10) + delta);
+    if (onChange) onChange(parseInt(drum.dataset.val, 10));
+  }, { passive: false });
+}
+
+function onNotifDrumChange() {
+  var hDrum  = document.getElementById('notif-drum-h');
+  var mDrum  = document.getElementById('notif-drum-m');
+  var apDrum = document.getElementById('notif-drum-ap');
+  if (!hDrum || !mDrum || !apDrum) return;
+  var h12  = parseInt(hDrum.dataset.val, 10);
+  var mins = parseInt(mDrum.dataset.val, 10);
+  var isPM = parseInt(apDrum.dataset.val, 10) === 1;
+  var h24 = h12 % 12 + (isPM ? 12 : 0);
+  var timeStr = String(h24).padStart(2,'0') + ':' + String(mins).padStart(2,'0');
+  localStorage.setItem(KEYS.notifTime, timeStr);
   scheduleWorkoutNotif();
 }
 

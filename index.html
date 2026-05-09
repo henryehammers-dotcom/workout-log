@@ -715,16 +715,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <span class="switch-slider"></span>
         </label>
       </div>
-      <div class="settings-block-row" id="notif-time-row" style="display:none;flex-direction:column;align-items:stretch;gap:10px">
-        <span style="font-size:13px;color:var(--text2);font-weight:500">Reminder time</span>
-        <div class="segmented" id="notif-time-seg" style="width:100%">
-          <button class="seg-opt" type="button" data-val="06:00" onclick="saveNotifTime('06:00')">6 am</button>
-          <button class="seg-opt" type="button" data-val="07:00" onclick="saveNotifTime('07:00')">7 am</button>
-          <button class="seg-opt" type="button" data-val="08:00" onclick="saveNotifTime('08:00')">8 am</button>
-          <button class="seg-opt" type="button" data-val="09:00" onclick="saveNotifTime('09:00')">9 am</button>
-          <button class="seg-opt" type="button" data-val="12:00" onclick="saveNotifTime('12:00')">12 pm</button>
-          <button class="seg-opt" type="button" data-val="17:00" onclick="saveNotifTime('17:00')">5 pm</button>
-          <button class="seg-opt" type="button" data-val="18:00" onclick="saveNotifTime('18:00')">6 pm</button>
+      <div id="notif-time-row" style="display:none;padding:8px 0 4px">
+        <div class="drum-row" style="margin:0;grid-template-columns:1fr 10px 1fr 16px 1fr">
+          <div class="drum-col">
+            <div class="drum-label">HR</div>
+            <div class="drum" id="notif-drum-h" data-min="1" data-max="12" data-val="8"></div>
+          </div>
+          <div class="drum-colon"><span></span><span></span></div>
+          <div class="drum-col">
+            <div class="drum-label">MIN</div>
+            <div class="drum" id="notif-drum-m" data-min="0" data-max="59" data-val="0"></div>
+          </div>
+          <div style="width:16px"></div>
+          <div class="drum-col">
+            <div class="drum-label">&#160;</div>
+            <div class="drum" id="notif-drum-ap" data-min="0" data-max="1" data-val="0"></div>
+          </div>
         </div>
       </div>
     </div>
