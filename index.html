@@ -127,6 +127,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .display{font-family:var(--display);letter-spacing:-0.01em}
 .mono{font-family:var(--mono)}
 
+.sticky-top{
+  position:sticky;
+  top:0;
+  z-index:60;
+  background:var(--bg);
+  margin:0 -20px 18px;
+  padding:20px 20px 0;
+}
+.sticky-top .top-tabs{margin-bottom:0}
+
 /* ──────────────────────────────────────────────────────────
    HEADER (logo + wordmark + settings cog)
    ────────────────────────────────────────────────────────── */
@@ -516,6 +526,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 </head>
 <body>
 
+<!-- ── Sticky top ── -->
+<div class="sticky-top">
+
 <!-- ── Header ── -->
 <div class="app-header">
   <div class="app-header-left">
@@ -543,6 +556,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <button class="top-tab" onclick="switchTab('history',this)">History</button>
   <button class="top-tab" onclick="switchTab('clock',this)">Clock</button>
 </div>
+
+</div>
+<!-- ── /Sticky top ── -->
 
 <!-- ── Log tab ── -->
 <div id="tab-log">
