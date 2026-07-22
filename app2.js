@@ -98,12 +98,17 @@ function renderHistory(selected) {
       <div class="stat-card"><div class="stat-label">Trend</div><div class="stat-value" style="color:${trendColor}">${trendStr}</div></div>
     </div>
     <div class="chart-wrap">
-      <div class="chart-title">Session momentum (est. 1RM)</div>
+      <div class="chart-title-row">
+        <div class="chart-title">Session momentum</div>
+        <button class="chart-info-btn" onclick="showFormulaInfo()" aria-label="How this is measured">?</button>
+      </div>
       <div class="momentum-bars" id="momentum-bars"></div>
+      <div class="momentum-detail" id="momentum-detail">Tap a bar to see that session</div>
     </div>
     <div class="session-history">${sessionRows}</div>`;
 
   const barsEl = document.getElementById('momentum-bars');
+  const detailEl = document.getElementById('momentum-detail');
   const minE = Math.min(...e1rmPerSession), maxE = Math.max(...e1rmPerSession);
   const range = maxE - minE || 1;
   const prMax = Math.max(...e1rmPerSession);
@@ -112,11 +117,21 @@ function renderHistory(selected) {
     const isPR = v === prMax;
     const isUp = i === 0 || v >= e1rmPerSession[i-1];
     const cls = isPR ? 'bar-pr' : (isUp ? 'bar-up' : 'bar-down');
-    return `<div class="momentum-col">
-      <div class="momentum-bar ${cls}" style="height:${Math.round(h)}px" title="${Math.round(v)} ${currentUnits} est."></div>
+    return `<div class="momentum-col" data-date="${escAttr(sessions[i].date)}" data-score="${Math.round(v)}" role="button" tabindex="0">
+      <div class="momentum-bar ${cls}" style="height:${Math.round(h)}px"></div>
       <span class="momentum-label">${labels[i]}</span>
     </div>`;
   }).join('');
+
+  // Wire tappable momentum bars -> reveal date + score
+  barsEl.querySelectorAll('.momentum-col').forEach(el => {
+    const reveal = () => {
+      const d = el.dataset.date.replace(/\w+,\s/, '');
+      detailEl.textContent = `${d} · ${el.dataset.score} ${currentUnits} est.`;
+    };
+    el.addEventListener('click', reveal);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); } });
+  });
 
   // Wire tappable session rows -> open edit sheet
   container.querySelectorAll('.session-row-tap').forEach(el => {
@@ -124,6 +139,13 @@ function renderHistory(selected) {
     el.addEventListener('click', open);
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   });
+}
+function showFormulaInfo() {
+  showModal(
+    'How session momentum is measured',
+    `Each bar shows your estimated one-rep max for that session — the heaviest single set, scaled up using the Epley formula: weight × (1 + reps ÷ 30). This rewards genuine strength gains over just doing more total reps at a lighter weight.`,
+    closeModal
+  );
 }
 
 /* ─── EDIT SESSION SHEET ─── */

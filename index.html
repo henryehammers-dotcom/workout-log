@@ -257,13 +257,17 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .stat-value{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
 .chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:14px}
 .chart-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px}
+.chart-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.chart-title-row .chart-title{margin-bottom:0}
+.chart-info-btn{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);color:var(--text3);font-size:11px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .momentum-bars{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:10px}
-.momentum-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.momentum-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;cursor:pointer}
 .momentum-bar{width:100%;border-radius:6px 6px 2px 2px;transition:height 0.2s ease}
 .bar-up{background:var(--green)}
 .bar-down{background:var(--red)}
 .bar-pr{background:var(--accent)}
 .momentum-label{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.momentum-detail{font-size:12px;color:var(--text3);text-align:center;margin-top:10px;min-height:16px}
 .session-history{display:flex;flex-direction:column;gap:8px}
 .session-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
 .session-row-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.12s, transform 0.08s}
