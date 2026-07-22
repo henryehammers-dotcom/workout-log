@@ -127,62 +127,65 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .display{font-family:var(--display);letter-spacing:-0.01em}
 .mono{font-family:var(--mono)}
 
-.sticky-top{
-  position:sticky;
-  top:0;
-  z-index:60;
-  background:var(--bg);
-  margin:0 -20px 18px;
-  padding:20px 20px 0;
-}
-.sticky-top .top-tabs{margin-bottom:0}
+/* ──────────────────────────────────────────────────────────
+   TOP BAR (hamburger + logo, sidebar closed)
+   ────────────────────────────────────────────────────────── */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.hamburger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+.hamburger-btn:hover{background:var(--bg3)}
+.hamburger-btn:active{transform:scale(0.96)}
 
 /* ──────────────────────────────────────────────────────────
-   HEADER (logo + wordmark + settings cog)
+   SIDEBAR
    ────────────────────────────────────────────────────────── */
-.app-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
-.app-header-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(15,47,42,0.45);z-index:500;display:none}
+.sidebar-overlay.show{display:block}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:20px 16px;transform:translateX(-100%);transition:transform .25s ease}
+.sidebar.show{transform:translateX(0)}
+.sidebar-header{margin-bottom:20px}
+.sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:12px}
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;border:none;background:transparent;color:var(--text2);font-size:15px;font-weight:500;cursor:pointer;text-align:left;transition:background .15s,color .15s;font-family:inherit}
+.sidebar-nav-item:hover{background:var(--bg3)}
+.sidebar-nav-item.active{color:var(--text);font-weight:600}
+.sidebar-nav-dot{width:7px;height:7px;border-radius:50%;background:transparent;flex-shrink:0;transition:background .15s}
+.sidebar-nav-item.active .sidebar-nav-dot{background:var(--accent)}
+.sidebar-footer{padding-top:12px;border-top:1px solid var(--border)}
+
+/* ──────────────────────────────────────────────────────────
+   LOGO (top-right, sidebar closed)
+   ────────────────────────────────────────────────────────── */
 .app-logo{width:34px;height:34px;border-radius:8px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.10);background:#0d2823;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0}
 .app-logo svg, .welcome-logo svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.app-title{font-family:var(--display);font-weight:700;font-size:20px;color:var(--text);letter-spacing:-0.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cog-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .cog-btn:hover{background:var(--bg3);border-color:var(--border2)}
 .cog-btn:active{transform:scale(0.96)}
 
 /* ──────────────────────────────────────────────────────────
-   BW chip
+   BW chip (used inside sidebar header)
    ────────────────────────────────────────────────────────── */
-.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg2);margin-bottom:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
 .bw-chip:hover{border-color:var(--border2);background:var(--bg3)}
 .bw-chip-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.04em}
 .bw-chip-value{font-size:14px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
 .bw-chip-unit{font-size:11px;color:var(--text3)}
 
 /* ──────────────────────────────────────────────────────────
-   TOP TABS — Log / History / Clock
+   DAY HEADER — small day name + dropdown caret, big display title
    ────────────────────────────────────────────────────────── */
-.top-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;padding:0 2px}
-.top-tab{padding:10px 14px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
-.top-tab:hover{color:var(--text)}
-.top-tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
-[data-theme=matrix] .top-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-
-/* ──────────────────────────────────────────────────────────
-   DAY CHIPS — square-ish rounded rect, solid filled when active
-   ────────────────────────────────────────────────────────── */
-.day-tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:18px}
-.day-tab{position:relative;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text2);text-align:center;transition:all .15s;font-family:inherit}
-.day-tab:hover{border-color:var(--border2);color:var(--text)}
-.day-tab.active{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:700}
-.day-tab.rest-day::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--text3)}
-.day-tab.rest-day.active::after{background:var(--accent-text);opacity:0.6}
-
-/* ──────────────────────────────────────────────────────────
-   DAY HEADER — small uppercase label + big display title
-   ────────────────────────────────────────────────────────── */
-.day-header{margin-bottom:14px}
-.day-abbr{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.10em;display:block;margin-bottom:2px}
-.day-title-input{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-0.02em;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0;line-height:1.1}
+.day-header{margin-bottom:14px;text-align:center;position:relative}
+.day-picker{display:inline-flex;align-items:center;gap:4px;background:transparent;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit}
+.day-picker:hover{background:var(--bg3)}
+.day-abbr{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.10em}
+.day-picker-caret{width:10px;height:10px;color:var(--text3);flex-shrink:0;transition:transform .15s}
+.day-picker.open .day-picker-caret{transform:rotate(180deg)}
+.day-dropdown{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.20);z-index:40;display:none}
+.day-dropdown.show{display:block}
+.day-dropdown-item{display:flex;align-items:center;justify-content:center;gap:6px;position:relative;padding:8px 10px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-radius:6px;text-align:center}
+.day-dropdown-item:hover{background:var(--bg3);color:var(--text)}
+.day-dropdown-item.active{color:var(--accent);font-weight:700}
+.day-dropdown-item.rest-day::after{content:'';width:3px;height:3px;border-radius:50%;background:var(--text3)}
+.day-title-input{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-0.02em;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0;line-height:1.1;text-align:center}
 .day-title-input::placeholder{color:var(--text3);font-weight:700}
 [data-theme=matrix] .day-title-input{font-family:var(--mono);letter-spacing:0;font-weight:700}
 
@@ -526,43 +529,46 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 </head>
 <body>
 
-<!-- ── Sticky top ── -->
-<div class="sticky-top">
+<!-- ── Sidebar overlay ── -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-<!-- ── Header ── -->
-<div class="app-header">
-  <div class="app-header-left">
-    <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
-    <div id="app-title" class="app-title">Tallymark</div>
+<!-- ── Sidebar ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title" id="sidebar-title">Workout log</div>
+    <button class="bw-chip" onclick="closeSidebar();openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
+      <span class="bw-chip-label">BW</span>
+      <span class="bw-chip-value" id="bw-display">—</span>
+      <span class="bw-chip-unit" id="bw-unit-label">lbs</span>
+    </button>
   </div>
-  <button class="cog-btn" onclick="openSettings(false)" aria-label="Settings">
+  <div class="sidebar-nav">
+    <button class="sidebar-nav-item active" id="snav-log" onclick="switchTab('log')"><span class="sidebar-nav-dot"></span>Log</button>
+    <button class="sidebar-nav-item" id="snav-history" onclick="switchTab('history')"><span class="sidebar-nav-dot"></span>History</button>
+    <button class="sidebar-nav-item" id="snav-clock" onclick="switchTab('clock')"><span class="sidebar-nav-dot"></span>Clock</button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="cog-btn" onclick="closeSidebar();openSettings(false)" aria-label="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── Top bar (sidebar closed) ── -->
+<div class="top-bar">
+  <button class="hamburger-btn" onclick="openSidebar()" aria-label="Open menu">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
     </svg>
   </button>
+  <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
 </div>
-
-<!-- ── BW chip ── -->
-<button class="bw-chip" onclick="openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
-  <span class="bw-chip-label">BW</span>
-  <span class="bw-chip-value" id="bw-display">—</span>
-  <span class="bw-chip-unit" id="bw-unit-label">lbs</span>
-</button>
-
-<!-- ── Top tabs ── -->
-<div class="top-tabs">
-  <button class="top-tab active" onclick="switchTab('log',this)">Log</button>
-  <button class="top-tab" onclick="switchTab('history',this)">History</button>
-  <button class="top-tab" onclick="switchTab('clock',this)">Clock</button>
-</div>
-
-</div>
-<!-- ── /Sticky top ── -->
 
 <!-- ── Log tab ── -->
 <div id="tab-log">
-  <div class="day-tabs" id="day-tabs"></div>
   <div id="day-content"></div>
 </div>
 

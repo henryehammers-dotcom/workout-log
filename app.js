@@ -183,7 +183,7 @@ function migrateIds() {
 /* ─── APP TITLE ─── */
 function updateAppTitle() {
   const name = localStorage.getItem(KEYS.name) || '';
-  document.getElementById('app-title').textContent = name ? name + "'s Workout Log" : 'Tallymark';
+  document.getElementById('sidebar-title').textContent = name ? name + "'s Workout Log" : 'Workout Log';
 }
 function applySettingsName(val) { localStorage.setItem(KEYS.name, val); updateAppTitle(); }
 
@@ -366,8 +366,12 @@ function applyRestore() {
 
     updateAppTitle();
     updateBwDisplay();
-    renderDayTabs();
     renderDayContent();
+
+    // Dismiss day dropdown when clicking/tapping outside it
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.day-header')) closeDayPicker();
+    });
 
     const vEl = document.getElementById('settings-version');
     if (vEl) vEl.textContent = APP_VERSION || '…';
@@ -397,24 +401,43 @@ function flushInputs() {
   });
 }
 
+/* ─── SIDEBAR ─── */
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('show');
+  document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
 /* ─── TAB SWITCHING ─── */
-function switchTab(tab, el) {
-  document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+function switchTab(tab) {
+  document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('snav-' + tab).classList.add('active');
   ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
   else if (tab === 'clock') ensureClockBuilt();
   else destroyCharts();
+  closeSidebar();
 }
 
-/* ─── DAY TABS / CONTENT ─── */
-function renderDayTabs() {
-  document.getElementById('day-tabs').innerHTML =
-    DAY_NAMES.map(d =>
-      `<button class="day-tab${d===currentDay?' active':''}${schedule[d].restDay?' rest-day':''}" onclick="selectDay('${d}')">${d}</button>`
-    ).join('');
+/* ─── DAY PICKER / CONTENT ─── */
+function toggleDayPicker() {
+  const dd = document.getElementById('day-dropdown');
+  const picker = document.getElementById('day-picker-btn');
+  if (!dd) return;
+  const opening = !dd.classList.contains('show');
+  dd.classList.toggle('show', opening);
+  picker.classList.toggle('open', opening);
 }
-function selectDay(d) { flushInputs(); currentDay = d; renderDayTabs(); renderDayContent(); }
+function closeDayPicker() {
+  const dd = document.getElementById('day-dropdown');
+  const picker = document.getElementById('day-picker-btn');
+  if (dd) dd.classList.remove('show');
+  if (picker) picker.classList.remove('open');
+}
+function selectDay(d) { flushInputs(); currentDay = d; closeDayPicker(); renderDayContent(); }
 
 function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -425,9 +448,17 @@ function renderDayContent() {
   const labelSuffix = day.label.includes('—') ? day.label.replace(/^.+?—\s*/, '') : '';
   const u = currentUnits;
 
+  const dayDropdownItems = DAY_NAMES.map(dn =>
+    `<div class="day-dropdown-item${dn===d?' active':''}${schedule[dn].restDay?' rest-day':''}" onclick="selectDay('${dn}')">${FULL_DAYS[dn]}</div>`
+  ).join('');
+
   const top = `
     <div class="day-header">
-      <span class="day-abbr">${FULL_DAYS[d]}</span>
+      <button class="day-picker" id="day-picker-btn" onclick="toggleDayPicker()">
+        <span class="day-abbr">${FULL_DAYS[d]}</span>
+        <svg class="day-picker-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="day-dropdown" id="day-dropdown">${dayDropdownItems}</div>
       <input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
         oninput="schedule['${d}'].label=FULL_DAYS['${d}']+' — '+this.value;saveSchedule()">
     </div>
@@ -584,7 +615,7 @@ function initDrag(d) {
 }
 
 /* ─── ADD/REMOVE ─── */
-function toggleRestDay() { flushInputs(); schedule[currentDay].restDay = !schedule[currentDay].restDay; saveSchedule(); renderDayTabs(); renderDayContent(); }
+function toggleRestDay() { flushInputs(); schedule[currentDay].restDay = !schedule[currentDay].restDay; saveSchedule(); renderDayContent(); }
 function removeExercise(d, idx) {
   showModal('Remove exercise?', `Remove "${schedule[d].exercises[idx].name}" from ${FULL_DAYS[d]}?`, () => {
     flushInputs();
@@ -670,7 +701,7 @@ function confirmCopyDay() {
         schedule[d].label = FULL_DAYS[d] + ' — ' + srcSuffix;
       }
     });
-    sessionSets = {}; saveSchedule(); closeModal(); renderDayTabs(); renderDayContent();
+    sessionSets = {}; saveSchedule(); closeModal(); renderDayContent();
   });
 }
 function confirmClearSession() {
