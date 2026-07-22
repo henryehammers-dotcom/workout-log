@@ -18,20 +18,14 @@ function getExerciseIndex(hist) {
 }
 function getHistoryDisplayNames(index) { return Object.entries(index).map(([key, val]) => ({ key, name: val.name })).sort((a,b) => a.name.localeCompare(b.name)); }
 function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Number(s.reps)||0) * (Number(s.weight)||0), 0); }
+// Estimated 1-rep max for a single set (Epley formula), used for strength trend
+function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
+// A session's strength score = its best single-set e1RM (not summed across sets)
+function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
 function parseRepRange(str) { if (!str) return null; const m = str.match(/(\d+)\s*[-–—]\s*(\d+)/); return m ? { lo: parseInt(m[1]), hi: parseInt(m[2]) } : null; }
 function getRepRangeForExercise(nameOrId) {
   for (const g of library) for (const ex of g.exercises) if ((ex.id && ex.id === nameOrId) || ex.name === nameOrId) return parseRepRange(ex.reps);
   for (const d of Object.values(schedule)) for (const ex of d.exercises) if (ex.name === nameOrId && ex.reps) return parseRepRange(ex.reps);
-  return null;
-}
-function getProgressNote(sessions, range) {
-  if (localStorage.getItem(KEYS.hideWarn) === '1') return null;
-  if (!range || sessions.length < 3) return null;
-  const last3 = sessions.slice(-3);
-  const avgs = last3.map(s => s.sets.reduce((a, x) => a + (Number(x.reps)||0), 0) / s.sets.length);
-  const allUnder = avgs.every(a => a < range.lo), allOver = avgs.every(a => a > range.hi);
-  if (allUnder) return { type:'heavy', msg:`You've fallen short of your ${range.lo}–${range.hi} rep target for the last 3 sessions. The weight might be a little heavy — try dropping it by 5 ${currentUnits}.` };
-  if (allOver)  return { type:'light', msg:`You've exceeded your ${range.lo}–${range.hi} rep target for the last 3 sessions. The weight might be too light — try increasing it by 5 ${currentUnits}.` };
   return null;
 }
 
@@ -52,11 +46,9 @@ function renderHistory(selected) {
         const sessions = entry.sessions;
         const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));
         const totalVol = sessions.reduce((sum, s) => sum + sessionVolume(s.sets), 0);
-        const range = getRepRangeForExercise(key), note = getProgressNote(sessions, range);
-        const badge = note ? `<span class="hist-badge ${note.type}">${note.type==='heavy'?'too heavy?':'too light?'}</span>` : '';
         return `<div class="hist-card" data-exkey="${escAttr(key)}">
           <div class="hist-card-text">
-            <div class="hist-name">${escHtml(name)}${badge}</div>
+            <div class="hist-name">${escHtml(name)}</div>
             <div class="hist-meta">${sessions.length} session${sessions.length!==1?'s':''} · best ${best} ${currentUnits} · vol ${totalVol.toLocaleString()} ${currentUnits}</div>
           </div>
           <span class="hist-chev">›</span>
@@ -68,17 +60,16 @@ function renderHistory(selected) {
 
   const entry = index[selected]; if (!entry) { renderHistory(); return; }
   const sessions = entry.sessions;
-  const range = getRepRangeForExercise(selected), note = getProgressNote(sessions, range);
-  const noteHtml = note ? `<div class="note-banner ${note.type}">${note.msg}</div>` : '';
   const labels = sessions.map(s => s.date.replace(/\w+,\s/, ''));
   const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));
   const totalVol = sessions.reduce((sum, s) => sum + sessionVolume(s.sets), 0);
   const volPerSession = sessions.map(s => sessionVolume(s.sets));
+  const e1rmPerSession = sessions.map(s => sessionBestE1RM(s.sets));
 
   let trendStr = '—', trendColor = 'var(--text3)';
   if (sessions.length >= 4) {
-    const recent = volPerSession.slice(-3).reduce((a,b)=>a+b,0) / 3;
-    const prev = volPerSession.slice(-6,-3);
+    const recent = e1rmPerSession.slice(-3).reduce((a,b)=>a+b,0) / 3;
+    const prev = e1rmPerSession.slice(-6,-3);
     if (prev.length > 0) {
       const prevAvg = prev.reduce((a,b)=>a+b,0) / prev.length;
       if (prevAvg > 0) {
@@ -101,7 +92,6 @@ function renderHistory(selected) {
     <button class="back-btn" onclick="renderHistory()">‹ All exercises</button>
     <div class="ex-detail-name">${escHtml(entry.name)}</div>
     <div class="ex-detail-count">${sessions.length} session${sessions.length!==1?'s':''}</div>
-    ${noteHtml}
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Best weight</div><div class="stat-value">${best} ${currentUnits}</div></div>
       <div class="stat-card"><div class="stat-label">Total volume</div><div class="stat-value">${totalVol.toLocaleString()}</div></div>

@@ -152,7 +152,6 @@ function setTheme(t) {
 function syncWelcomeTheme(t) {
   document.querySelectorAll('#welcome-theme .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
 }
-function setHideWarn(hide) { localStorage.setItem(KEYS.hideWarn, hide ? '1' : '0'); }
 
 function setMusicEnabled(on) {
   localStorage.setItem(KEYS.music, on ? '1' : '0');
@@ -203,7 +202,6 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
-  document.getElementById('warn-switch').checked = localStorage.getItem(KEYS.hideWarn) !== '1';
   document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
   document.getElementById('settings-modal').classList.add('show');
 }

@@ -246,16 +246,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .hist-name{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);letter-spacing:-0.01em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.2;margin-bottom:2px}
 .hist-meta{font-size:12px;color:var(--text2)}
 .hist-chev{color:var(--text3);font-size:18px;flex-shrink:0;line-height:1}
-.hist-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--r-pill);letter-spacing:0.01em}
-.hist-badge.light{background:var(--green-dim);color:var(--green)}
-.hist-badge.heavy{background:var(--red-dim);color:var(--red)}
+
 
 .back-btn{background:transparent;border:none;color:var(--text2);font-size:13px;cursor:pointer;padding:0 0 12px;font-family:inherit}
 .ex-detail-name{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
 .ex-detail-count{font-size:13px;color:var(--text2);margin-bottom:14px}
-.note-banner{padding:10px 12px;border-radius:var(--r-md);font-size:12px;margin-bottom:14px}
-.note-banner.heavy{background:var(--red-dim);color:var(--red);border:1px solid var(--red-border)}
-.note-banner.light{background:var(--green-dim);color:var(--green);border:1px solid var(--accent-border)}
+
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px}
 .stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px}
@@ -692,16 +688,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         </div>
         <label class="switch">
           <input type="checkbox" id="music-switch" onchange="setMusicEnabled(this.checked)">
-          <span class="switch-slider"></span>
-        </label>
-      </div>
-      <div class="settings-block-row">
-        <div class="settings-block-text">
-          <div class="settings-block-title">Progress warnings</div>
-          <div class="settings-block-sub">Notify when reps fall outside target range</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="warn-switch" onchange="setHideWarn(!this.checked)">
           <span class="switch-slider"></span>
         </label>
       </div>
