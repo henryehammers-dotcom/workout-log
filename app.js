@@ -223,13 +223,23 @@ function finishWelcome() {
 const APP_URL = 'https://henryehammers-dotcom.github.io/workout-log/';
 function shareApp() {
   if (navigator.share) {
-    navigator.share({ title: 'Tallymark', text: 'Check out Tallymark — a workout tracker', url: APP_URL }).catch(() => {});
+    navigator.share({ title: 'Tallymark', text: 'Check out Tallymark — a workout tracker', url: APP_URL })
+      .catch(err => { if (err.name !== 'AbortError') copyAppLink(); });
     return;
   }
-  navigator.clipboard.writeText(APP_URL).then(() => {
-    const btn = document.querySelector('[onclick="shareApp()"] .data-card-title');
-    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Link copied!'; btn.style.color = 'var(--green)'; setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000); }
-  }).catch(() => alert(APP_URL));
+  copyAppLink();
+}
+function copyAppLink() {
+  const btn = document.querySelector('[onclick="shareApp()"] .data-card-title');
+  const flash = (text, color) => { if (btn) { const orig = btn.textContent; btn.textContent = text; btn.style.color = color; setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(APP_URL).then(() => flash('✓ Link copied!', 'var(--green)')).catch(() => promptFallback());
+  } else {
+    promptFallback();
+  }
+  function promptFallback() {
+    window.prompt('Copy this link:', APP_URL);
+  }
 }
 
 function exportForAI() {
