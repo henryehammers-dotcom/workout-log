@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tallymark">
@@ -110,15 +110,17 @@
    ────────────────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg)}
+html{height:100%}
 body{
   font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color:var(--text);
   -webkit-text-size-adjust:100%;
   -webkit-font-smoothing:antialiased;
-  padding:20px 20px 80px;
+  padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
   max-width:560px;
   margin:0 auto;
   min-height:100vh;
+  min-height:100dvh;
 }
 input, button, select, textarea { font-family:inherit; color:inherit }
 input[type=number]::-webkit-inner-spin-button,
@@ -140,7 +142,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    ────────────────────────────────────────────────────────── */
 .sidebar-overlay{position:fixed;inset:0;background:rgba(15,47,42,0.45);z-index:500;display:none}
 .sidebar-overlay.show{display:block}
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:20px 16px;transform:translateX(-100%);transition:transform .25s ease}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));transform:translateX(-100%);transition:transform .25s ease}
 .sidebar.show{transform:translateX(0)}
 .sidebar-header{margin-bottom:20px}
 .sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:12px}
@@ -219,7 +221,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .sets-thead-cell.center{text-align:center}
 .set-row{display:grid;grid-template-columns:28px 1fr 1fr 24px;gap:8px;align-items:center;padding:6px 2px}
 .set-num{font-size:12px;color:var(--text3);text-align:center}
-.set-input{width:100%;height:36px;border:1px solid transparent;background:var(--bg3);border-radius:var(--r-md);padding:0 10px;font-size:15px;font-weight:600;color:var(--text);text-align:center;font-variant-numeric:tabular-nums;font-family:inherit;outline:none;transition:border-color .15s, background .15s}
+.set-input{width:100%;height:36px;border:1px solid transparent;background:var(--bg3);border-radius:var(--r-md);padding:0 10px;font-size:16px;font-weight:600;color:var(--text);text-align:center;font-variant-numeric:tabular-nums;font-family:inherit;outline:none;transition:border-color .15s, background .15s}
 .set-input::placeholder{color:var(--text3);font-weight:400}
 .set-input:focus{border-color:var(--accent-border);background:var(--bg2)}
 .del-set{background:transparent;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:0;line-height:1}
@@ -302,12 +304,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .edit-session-sets{display:flex;flex-direction:column;gap:8px;overflow-y:auto;margin-bottom:16px;padding-right:2px}
 .edit-set-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:8px;align-items:center}
 .edit-set-num{font-size:12px;color:var(--text3);font-weight:600}
-.edit-set-input{padding:8px 10px;font-size:14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
+.edit-set-input{padding:8px 10px;font-size:16px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
 .edit-session-actions{display:flex;gap:8px;justify-content:space-between;align-items:center}
 .edit-session-actions .right-group{display:flex;gap:8px}
 .btn-base.danger{color:var(--red);border-color:var(--border2)}
 .btn-base.danger:hover{background:rgba(220,80,80,0.08)}
-.restore-textarea{width:100%;min-height:180px;padding:10px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);resize:vertical;box-sizing:border-box;margin-bottom:14px}
+.restore-textarea{width:100%;min-height:180px;padding:10px;font-size:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);resize:vertical;box-sizing:border-box;margin-bottom:14px}
 
 /* ──────────────────────────────────────────────────────────
    CLOCK
@@ -379,7 +381,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .settings-row:last-child{border-bottom:none}
 .settings-row-label{font-size:14px;color:var(--text);font-weight:500;flex:1}
 .settings-row-value{display:flex;align-items:center;gap:6px}
-.settings-input{height:38px;background:var(--bg3);border:none;border-radius:var(--r-sm);padding:0 12px;font-size:15px;color:var(--text);font-family:inherit;outline:none;text-align:right;font-weight:600}
+.settings-input{height:38px;background:var(--bg3);border:none;border-radius:var(--r-sm);padding:0 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none;text-align:right;font-weight:600}
 .settings-input.wide{width:200px;text-align:left;font-weight:500}
 .settings-input.narrow{width:80px}
 .settings-row-unit{font-size:12px;color:var(--text3)}
@@ -439,7 +441,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .welcome-sub{font-size:14px;color:var(--text2);text-align:center;max-width:300px;margin-bottom:28px;line-height:1.4}
 .welcome-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
 .welcome-field-label{font-size:13px;color:var(--text2);margin-bottom:4px;display:block}
-.welcome-input{width:100%;height:48px;border:1px solid var(--border2);background:var(--bg2);border-radius:var(--r-md);padding:0 14px;font-size:15px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s}
+.welcome-input{width:100%;height:48px;border:1px solid var(--border2);background:var(--bg2);border-radius:var(--r-md);padding:0 14px;font-size:16px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s}
 .welcome-input:focus{border-color:var(--accent)}
 .welcome-error{color:var(--red);font-size:12px;display:none;margin-top:4px}
 .welcome-cta{width:100%;height:50px;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;font-family:inherit}
@@ -463,8 +465,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .lib-sheet-wrap.show{display:flex}
 .lib-sheet{background:var(--bg);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:14px 20px 24px;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .25s ease}
 .lib-search-row{display:flex;gap:8px;margin-bottom:12px}
-.lib-search-input{flex:1;height:40px;background:var(--bg3);border:none;border-radius:var(--r-md);padding:0 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none}
-.lib-filter-select{height:40px;background:var(--bg3);border:none;border-radius:var(--r-md);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;cursor:pointer}
+.lib-search-input{flex:1;height:40px;background:var(--bg3);border:none;border-radius:var(--r-md);padding:0 12px;font-size:16px;color:var(--text);font-family:inherit;outline:none}
+.lib-filter-select{height:40px;background:var(--bg3);border:none;border-radius:var(--r-md);padding:0 12px;font-size:16px;color:var(--text);font-family:inherit;cursor:pointer}
 .lib-list{overflow-y:auto;flex:1;margin:0 -4px;padding:0 4px}
 .lib-section-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.10em;text-transform:uppercase;margin:14px 0 8px;padding-left:4px}
 .lib-section-label:first-child{margin-top:0}
@@ -491,9 +493,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .field-group{display:flex;flex-direction:column;gap:4px}
 .field-hint{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.04em}
 .field-group{min-width:0}
-.field-input{width:100%;min-width:0;height:36px;background:var(--bg3);border:1px solid transparent;border-radius:var(--r-sm);padding:0 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+.field-input{width:100%;min-width:0;height:36px;background:var(--bg3);border:1px solid transparent;border-radius:var(--r-sm);padding:0 10px;font-size:16px;color:var(--text);font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
 .field-input:focus{border-color:var(--accent-border)}
-.field-select{width:100%;min-width:0;height:36px;background:var(--bg3);border:1px solid transparent;border-radius:var(--r-sm);padding:0 28px 0 10px;font-size:13px;color:var(--text);font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='%23a8c2bb' stroke-width='1.5' d='M1 1l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 10px center}
+.field-select{width:100%;min-width:0;height:36px;background:var(--bg3);border:1px solid transparent;border-radius:var(--r-sm);padding:0 28px 0 10px;font-size:16px;color:var(--text);font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='%23a8c2bb' stroke-width='1.5' d='M1 1l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 10px center}
 
 /* ──────────────────────────────────────────────────────────
    REST TIMER BAR
