@@ -109,17 +109,22 @@ function renderHistory(selected) {
 
   const barsEl = document.getElementById('momentum-bars');
   const detailEl = document.getElementById('momentum-detail');
-  const minE = Math.min(...e1rmPerSession), maxE = Math.max(...e1rmPerSession);
+  const BAR_WINDOW = 25;
+  const windowStart = Math.max(0, sessions.length - BAR_WINDOW);
+  const visSessions = sessions.slice(windowStart);
+  const visE1rm = e1rmPerSession.slice(windowStart);
+  const visLabels = labels.slice(windowStart);
+  const minE = Math.min(...visE1rm), maxE = Math.max(...visE1rm);
   const range = maxE - minE || 1;
-  const prMax = Math.max(...e1rmPerSession);
-  barsEl.innerHTML = e1rmPerSession.map((v, i) => {
+  const prMax = Math.max(...e1rmPerSession); // true all-time best, even if outside the visible window
+  barsEl.innerHTML = visE1rm.map((v, i) => {
     const h = 24 + ((v - minE) / range) * 76;
     const isPR = v === prMax;
-    const isUp = i === 0 || v >= e1rmPerSession[i-1];
+    const isUp = i === 0 || v >= visE1rm[i-1];
     const cls = isPR ? 'bar-pr' : (isUp ? 'bar-up' : 'bar-down');
-    return `<div class="momentum-col" data-date="${escAttr(sessions[i].date)}" data-score="${Math.round(v)}" role="button" tabindex="0">
+    return `<div class="momentum-col" data-date="${escAttr(visSessions[i].date)}" data-score="${Math.round(v)}" role="button" tabindex="0">
       <div class="momentum-bar ${cls}" style="height:${Math.round(h)}px"></div>
-      <span class="momentum-label">${labels[i]}</span>
+      <span class="momentum-label">${visLabels[i]}</span>
     </div>`;
   }).join('');
 
