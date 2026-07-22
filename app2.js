@@ -745,19 +745,22 @@ function dismissGreeting() { document.getElementById('greeting-wrap').classList.
 let _updateAvailable = false;
 function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); _updateAvailable = false; window.location.reload(true); }
 function checkForUpdate() {
-  if (_updateAvailable) return;
-  fetch('./app.js?v=' + Date.now(), { cache: 'no-store' })
-    .then(r => r.text())
-    .then(js => {
-      const match = js.match(/APP_VERSION\s*=\s*'(v\d+)'/);
-      if (match && match[1] !== APP_VERSION) {
-        _updateAvailable = true;
-        document.getElementById('update-banner').classList.add('show');
-      }
-    }).catch(() => {});
+  try {
+    if (_updateAvailable) return;
+    fetch('./app.js?v=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.text())
+      .then(js => {
+        const match = js.match(/APP_VERSION\s*=\s*'(v\d+)'/);
+        if (match && match[1] !== APP_VERSION) {
+          _updateAvailable = true;
+          const banner = document.getElementById('update-banner');
+          if (banner) banner.classList.add('show');
+        }
+      }).catch(() => {});
+  } catch (e) { /* never let update-checking break the app */ }
 }
-checkForUpdate();
-setInterval(checkForUpdate, 5 * 60 * 1000);
+try { checkForUpdate(); } catch (e) {}
+setInterval(() => { try { checkForUpdate(); } catch (e) {} }, 5 * 60 * 1000);
 
 /* ─── SERVICE WORKER ─── */
 if ('serviceWorker' in navigator) {

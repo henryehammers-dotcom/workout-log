@@ -357,31 +357,35 @@ function applyRestore() {
   loadLibrary();
 
   document.addEventListener('DOMContentLoaded', () => {
-    migrateIds();
-    currentUnits = localStorage.getItem(KEYS.units) || 'lbs';
+    try {
+      migrateIds();
+      currentUnits = localStorage.getItem(KEYS.units) || 'lbs';
 
-    // Sync visible toggles
-    document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
-    document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTheme));
+      // Sync visible toggles
+      document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
+      document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTheme));
 
-    updateAppTitle();
-    updateBwDisplay();
-    renderDayContent();
+      updateAppTitle();
+      updateBwDisplay();
+      renderDayContent();
 
-    // Dismiss day dropdown when clicking/tapping outside it
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.day-header')) closeDayPicker();
-    });
+      // Dismiss day dropdown when clicking/tapping outside it
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.day-header')) closeDayPicker();
+      });
 
-    const vEl = document.getElementById('settings-version');
-    if (vEl) vEl.textContent = APP_VERSION || '…';
-    loadAppVersion();
+      const vEl = document.getElementById('settings-version');
+      if (vEl) vEl.textContent = APP_VERSION || '…';
+      loadAppVersion();
 
-    // Music opt-in
-    if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float').classList.add('show');
+      // Music opt-in
+      if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float')?.classList.add('show');
 
-    if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
-    else maybeShowGreeting();
+      if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
+      else if (typeof maybeShowGreeting === 'function') maybeShowGreeting();
+    } catch (err) {
+      console.error('Tallymark init error:', err);
+    }
   });
 })();
 
