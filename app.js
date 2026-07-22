@@ -219,6 +219,19 @@ function finishWelcome() {
 }
 
 /* ─── EXPORT FOR AI ─── */
+/* ─── SHARE ─── */
+const APP_URL = 'https://henryehammers-dotcom.github.io/workout-log/';
+function shareApp() {
+  if (navigator.share) {
+    navigator.share({ title: 'Tallymark', text: 'Check out Tallymark — a workout tracker', url: APP_URL }).catch(() => {});
+    return;
+  }
+  navigator.clipboard.writeText(APP_URL).then(() => {
+    const btn = document.querySelector('[onclick="shareApp()"] .data-card-title');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Link copied!'; btn.style.color = 'var(--green)'; setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000); }
+  }).catch(() => alert(APP_URL));
+}
+
 function exportForAI() {
   const name = localStorage.getItem(KEYS.name) || 'User';
   const hist = getHistory();
