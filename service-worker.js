@@ -1,11 +1,10 @@
-const CACHE = 'tallymark-v44';
+const CACHE = 'tallymark-v45';
 const FILES = [
   './index.html',
   './app.js',
   './app2.js',
   './logo-anim.js',
-  './manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+  './manifest.json'
 ];
 
 // Install: cache all files and activate immediately so the next launch

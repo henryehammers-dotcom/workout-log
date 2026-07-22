@@ -13,7 +13,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 /* ──────────────────────────────────────────────────────────
    TOKENS — matched 1:1 to Tallymark Redesign
@@ -258,7 +257,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .stat-value{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
 .chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:14px}
 .chart-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px}
-.chart-area{height:180px;position:relative}
+.momentum-bars{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:10px}
+.momentum-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.momentum-bar{width:100%;border-radius:6px 6px 2px 2px;transition:height 0.2s ease}
+.bar-up{background:var(--green)}
+.bar-down{background:var(--red)}
+.bar-pr{background:var(--accent)}
+.momentum-label{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .session-history{display:flex;flex-direction:column;gap:8px}
 .session-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
 .session-row-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.12s, transform 0.08s}

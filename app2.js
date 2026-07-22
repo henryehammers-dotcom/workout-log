@@ -98,26 +98,25 @@ function renderHistory(selected) {
       <div class="stat-card"><div class="stat-label">Trend</div><div class="stat-value" style="color:${trendColor}">${trendStr}</div></div>
     </div>
     <div class="chart-wrap">
-      <div class="chart-title">Volume per session (${currentUnits})</div>
-      <div class="chart-area"><canvas id="vol-chart"></canvas></div>
+      <div class="chart-title">Session momentum (est. 1RM)</div>
+      <div class="momentum-bars" id="momentum-bars"></div>
     </div>
     <div class="session-history">${sessionRows}</div>`;
 
-  const gc = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
-  const lc = getComputedStyle(document.documentElement).getPropertyValue('--chart-tick').trim();
-  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-  try {
-    activeCharts.push(new Chart(document.getElementById('vol-chart'), {
-      type: 'line',
-      data: { labels, datasets: [{ data: volPerSession, borderColor: accent, backgroundColor: accent + '22', fill: true, borderWidth: 2, pointBackgroundColor: accent }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { grid: { color: gc }, ticks: { color: lc, font: { size: 11 }, maxTicksLimit: 6 } }, y: { grid: { color: gc }, ticks: { color: lc, font: { size: 11 } } } },
-        elements: { line: { tension: 0.3 }, point: { radius: 4, hoverRadius: 6 } },
-      },
-    }));
-  } catch (e) { console.error(e); }
+  const barsEl = document.getElementById('momentum-bars');
+  const minE = Math.min(...e1rmPerSession), maxE = Math.max(...e1rmPerSession);
+  const range = maxE - minE || 1;
+  const prMax = Math.max(...e1rmPerSession);
+  barsEl.innerHTML = e1rmPerSession.map((v, i) => {
+    const h = 24 + ((v - minE) / range) * 76;
+    const isPR = v === prMax;
+    const isUp = i === 0 || v >= e1rmPerSession[i-1];
+    const cls = isPR ? 'bar-pr' : (isUp ? 'bar-up' : 'bar-down');
+    return `<div class="momentum-col">
+      <div class="momentum-bar ${cls}" style="height:${Math.round(h)}px" title="${Math.round(v)} ${currentUnits} est."></div>
+      <span class="momentum-label">${labels[i]}</span>
+    </div>`;
+  }).join('');
 
   // Wire tappable session rows -> open edit sheet
   container.querySelectorAll('.session-row-tap').forEach(el => {
