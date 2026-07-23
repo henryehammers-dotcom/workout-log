@@ -5,6 +5,26 @@
 
 /* ─── HISTORY ─── */
 function destroyCharts() { activeCharts.forEach(c => { try { c.destroy(); } catch {} }); activeCharts = []; }
+// Parses "Wednesday, Jul 22, 2026" or legacy "Wednesday, Jul 22" (no year) into a real Date.
+// Legacy entries assume the most recent past occurrence of that month/day, since they predate
+// year-tagging and we can't know which year they were actually logged in.
+function parseSessionDate(str) {
+  const parts = str.split(',').map(s => s.trim());
+  const monthDay = parts[1] || '';
+  const yearPart = parts[2];
+  if (yearPart) {
+    const d = new Date(`${monthDay} ${yearPart}`);
+    if (!isNaN(d)) return d;
+  }
+  // Legacy, no year: try this year, and if that's in the future, assume last year instead
+  const now = new Date();
+  const guess = new Date(`${monthDay} ${now.getFullYear()}`);
+  if (!isNaN(guess)) {
+    if (guess > now) guess.setFullYear(guess.getFullYear() - 1);
+    return guess;
+  }
+  return new Date(0); // unparseable fallback, sorts first
+}
 function getExerciseIndex(hist) {
   const idx = {};
   Object.entries(hist).forEach(([date, entries]) => {
@@ -13,6 +33,9 @@ function getExerciseIndex(hist) {
       if (!idx[key]) idx[key] = { name: e.name, sessions: [] };
       idx[key].sessions.push({ date, sets: e.sets });
     });
+  });
+  Object.values(idx).forEach(entry => {
+    entry.sessions.sort((a, b) => parseSessionDate(a.date) - parseSessionDate(b.date));
   });
   return idx;
 }
@@ -80,11 +103,33 @@ function renderHistory(selected) {
     }
   }
 
-  const sessionRows = sessions.slice().reverse().map(s => {
-    const bestW = Math.max(...s.sets.map(x => Number(x.weight)||0));
-    return `<div class="session-row session-row-tap" data-exkey="${escAttr(selected)}" data-date="${escAttr(s.date)}" role="button" tabindex="0">
-      <div class="session-date">${escHtml(s.date.replace(/\w+,\s/,''))}<span class="session-edit-hint">tap to edit</span></div>
-      <div class="session-sets">${s.sets.map(x=>`<span class="pill${Number(x.weight)===bestW&&bestW>0?' pill-best':''}">${x.reps} × ${x.weight} ${currentUnits}</span>`).join('')}</div>
+  // Group sessions into month folders (most recent first), most recent month expanded by default
+  const monthGroups = []; // [{ key, label, rows: [sessionObj,...] }]
+  sessions.slice().reverse().forEach(s => {
+    const d = parseSessionDate(s.date);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    let group = monthGroups.find(g => g.key === key);
+    if (!group) { group = { key, label, rows: [] }; monthGroups.push(group); }
+    group.rows.push(s);
+  });
+
+  const sessionFolders = monthGroups.map((group, i) => {
+    const rowsHtml = group.rows.map(s => {
+      const bestW = Math.max(...s.sets.map(x => Number(x.weight)||0));
+      return `<div class="session-row session-row-tap" data-exkey="${escAttr(selected)}" data-date="${escAttr(s.date)}" role="button" tabindex="0">
+        <div class="session-date">${escHtml(s.date.replace(/\w+,\s/,''))}<span class="session-edit-hint">tap to edit</span></div>
+        <div class="session-sets">${s.sets.map(x=>`<span class="pill${Number(x.weight)===bestW&&bestW>0?' pill-best':''}">${x.reps} × ${x.weight} ${currentUnits}</span>`).join('')}</div>
+      </div>`;
+    }).join('');
+    const open = i === 0; // most recent month starts expanded
+    return `<div class="session-folder${open?' open':''}">
+      <button class="session-folder-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="session-folder-label">${escHtml(group.label)}</span>
+        <span class="session-folder-count">${group.rows.length}</span>
+        <svg class="session-folder-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="session-folder-body">${rowsHtml}</div>
     </div>`;
   }).join('');
 
@@ -105,7 +150,7 @@ function renderHistory(selected) {
       <div class="momentum-bars" id="momentum-bars"></div>
       <div class="momentum-detail" id="momentum-detail">Tap a bar to see that session</div>
     </div>
-    <div class="session-history">${sessionRows}</div>`;
+    <div class="session-history">${sessionFolders}</div>`;
 
   const barsEl = document.getElementById('momentum-bars');
   const detailEl = document.getElementById('momentum-detail');

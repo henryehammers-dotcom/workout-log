@@ -508,7 +508,7 @@ function renderDayContent() {
         }
 
         // Set number = (number of sets already logged today for this exercise) + 1
-        const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+        const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
         const histAll = getHistory();
         const todaysEntry = (histAll[today] || []).find(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
         const setNumber = (todaysEntry ? todaysEntry.sets.length : 0) + 1;
@@ -657,7 +657,7 @@ function logExercise(d, idx) {
   const data = getSetData(d, idx);
   const valid = data.sets.filter(s => s.reps !== '' || s.weight !== '');
   if (!valid.length) return;
-  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
   const hist = getHistory();
   if (!hist[today]) hist[today] = [];
   const ex = schedule[d].exercises[idx];
@@ -683,7 +683,7 @@ function undoLog(d, idx) {
   const data = getSetData(d, idx);
   data.logged = false;
   // Remove only the sets that were just appended (not earlier same-day logs)
-  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
   const hist = getHistory();
   const ex = schedule[d].exercises[idx];
   const removeCount = data.lastLoggedCount || 0;
