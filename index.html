@@ -454,6 +454,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* segmented controls */
 .segmented{display:flex;gap:0;background:var(--bg3);border-radius:var(--r-md);padding:3px}
+#theme-toggle, #welcome-theme{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+#theme-toggle .seg-opt, #welcome-theme .seg-opt{justify-content:center}
 .seg-opt{padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-radius:7px;display:flex;align-items:center;gap:6px;transition:all .15s;border:none;background:transparent;font-family:inherit}
 .seg-opt:hover{color:var(--text)}
 .seg-opt.active{background:var(--accent);color:var(--accent-text);font-weight:600}
