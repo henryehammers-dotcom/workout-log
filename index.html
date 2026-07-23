@@ -104,6 +104,33 @@
   --display:var(--mono);
 }
 [data-theme=matrix] body { font-family:var(--mono); }
+[data-theme=mdnt] {
+  --bg:#000000;
+  --bg2:#0a0a0a;
+  --bg3:#161616;
+  --bg4:#212121;
+  --border:rgba(255,255,255,0.12);
+  --border2:rgba(255,255,255,0.22);
+  --text:#ffffff;
+  --text2:#b8b8b8;
+  --text3:#707070;
+  --accent:#ff3b52;
+  --accent-dim:rgba(255,59,82,0.14);
+  --accent-border:rgba(255,59,82,0.45);
+  --accent-text:#ffffff;
+  --coral:#ff3b52;
+  --coral-text:#ffffff;
+  --coral-dim:rgba(255,59,82,0.16);
+  --coral-border:rgba(255,59,82,0.45);
+  --green:#3ec26a;
+  --green-dim:rgba(62,194,106,0.14);
+  --red:#b8202f;
+  --red-dim:rgba(184,32,47,0.16);
+  --red-border:rgba(184,32,47,0.45);
+  --blue:#5b9bd5;
+  --chart-grid:rgba(255,255,255,0.08);
+  --chart-tick:#707070;
+}
 [data-theme=matrix] .display { font-family:var(--mono) !important; letter-spacing:0; }
 
 /* ──────────────────────────────────────────────────────────
@@ -715,6 +742,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <span style="font-family:var(--mono);font-weight:700">&gt;_</span>
           Matrix
         </button>
+        <button class="seg-opt" data-val="mdnt" onclick="setTheme('mdnt');syncWelcomeTheme('mdnt')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+          MDNT
+        </button>
       </div>
     </div>
     <button class="welcome-cta" onclick="finishWelcome()">Get started</button>
@@ -772,6 +803,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <button class="seg-opt" data-val="matrix" onclick="setTheme('matrix')">
             <span style="font-family:var(--mono);font-weight:700">&gt;_</span>
             Matrix
+          </button>
+          <button class="seg-opt" data-val="mdnt" onclick="setTheme('mdnt')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+            MDNT
           </button>
         </div>
       </div>

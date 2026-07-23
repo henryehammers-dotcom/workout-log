@@ -145,7 +145,7 @@ function setUnits(u) {
   updateBwDisplay();
   renderDayContent();
 }
-const THEME_COLORS = { light: '#f4efe6', dark: '#0f1817', matrix: '#020503' };
+const THEME_COLORS = { light: '#f4efe6', dark: '#0f1817', matrix: '#020503', mdnt: '#000000' };
 function syncThemeColorMeta(t) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', THEME_COLORS[t] || THEME_COLORS.light);
