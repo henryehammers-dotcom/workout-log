@@ -1,10 +1,12 @@
-const CACHE = 'tallymark-v57';
+const CACHE = 'tallymark-v58';
 const FILES = [
   './index.html',
   './app.js',
   './app2.js',
   './logo-anim.js',
-  './manifest.json'
+  './manifest.json',
+  './Tallymark-icon-192.png',
+  './Tallymark-icon-512.png'
 ];
 
 // Install: cache all files and activate immediately so the next launch
