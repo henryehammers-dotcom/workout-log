@@ -159,15 +159,6 @@ function syncWelcomeTheme(t) {
   document.querySelectorAll('#welcome-theme .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
 }
 
-function setMusicEnabled(on) {
-  localStorage.setItem(KEYS.music, on ? '1' : '0');
-  document.querySelector('.music-float').classList.toggle('show', on);
-  if (!on) {
-    const a = document.getElementById('audio-player');
-    if (a && !a.paused) { a.pause(); muted = true; document.getElementById('mute-btn').textContent = '▶'; }
-  }
-}
-
 /* ─── ID MIGRATION ─── */
 function migrateIds() {
   let changed = false;
@@ -208,7 +199,6 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
-  document.getElementById('music-switch').checked = localStorage.getItem(KEYS.music) === '1';
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -384,9 +374,6 @@ function applyRestore() {
       const vEl = document.getElementById('settings-version');
       if (vEl) vEl.textContent = APP_VERSION || '…';
       loadAppVersion();
-
-      // Music opt-in
-      if (localStorage.getItem(KEYS.music) === '1') document.querySelector('.music-float')?.classList.add('show');
 
       if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
       else if (typeof maybeShowGreeting === 'function') maybeShowGreeting();

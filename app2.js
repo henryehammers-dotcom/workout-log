@@ -497,9 +497,17 @@ const audio = document.getElementById('audio-player');
 let muted = true;
 audio.src = 'mozart-on-meth.mp3';
 audio.volume = 0.5;
+function setMusicIcons(playing) {
+  const playIcon = document.getElementById('play-icon');
+  const pauseIcon = document.getElementById('pause-icon');
+  const eq = document.getElementById('eq-bars');
+  if (playIcon) playIcon.style.display = playing ? 'none' : '';
+  if (pauseIcon) pauseIcon.style.display = playing ? '' : 'none';
+  if (eq) eq.classList.toggle('playing', playing);
+}
 function toggleMute() {
-  if (muted) { audio.play().catch(()=>{}); muted = false; document.getElementById('mute-btn').textContent = '❚❚'; }
-  else { audio.pause(); muted = true; document.getElementById('mute-btn').textContent = '▶'; }
+  if (muted) { audio.play().catch(()=>{}); muted = false; setMusicIcons(true); }
+  else { audio.pause(); muted = true; setMusicIcons(false); }
 }
 function toggleTrackMenu() {
   const m = document.getElementById('track-menu');

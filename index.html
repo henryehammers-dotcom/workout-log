@@ -531,14 +531,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 @keyframes slideDown { from { transform: translate(-50%, -10px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
 
 /* ──────────────────────────────────────────────────────────
-   MUSIC PLAYER (opt-in)
+   MUSIC CARD (sidebar, above settings)
    ────────────────────────────────────────────────────────── */
-.music-float{position:fixed;bottom:20px;left:20px;z-index:80;display:none;align-items:center;gap:6px}
-.music-float.show{display:flex}
-.music-btn{width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
-.track-pill{height:38px;border-radius:var(--r-pill);background:var(--bg2);border:1px solid var(--border2);color:var(--text2);font-size:12px;display:flex;align-items:center;gap:6px;padding:0 14px;cursor:pointer;font-family:inherit;max-width:200px;overflow:hidden}
-.track-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.track-menu{position:absolute;bottom:48px;left:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.20);display:none}
+.music-card{position:relative;display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:14px;padding:8px 10px;margin-bottom:10px}
+.music-play-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-text);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s}
+.music-play-btn:active{transform:scale(0.92)}
+.music-info{flex:1;min-width:0;display:flex;align-items:center;gap:8px;cursor:pointer}
+.track-name{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-bars{display:flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;opacity:0.35}
+.eq-bars span{width:3px;background:var(--accent);border-radius:1px;height:4px}
+.eq-bars.playing{opacity:1}
+.eq-bars.playing span{animation:eqBounce 0.9s ease-in-out infinite}
+.eq-bars.playing span:nth-child(1){animation-delay:0s}
+.eq-bars.playing span:nth-child(2){animation-delay:0.2s}
+.eq-bars.playing span:nth-child(3){animation-delay:0.4s}
+@keyframes eqBounce{0%,100%{height:4px}50%{height:14px}}
+.track-menu{position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.20);display:none;z-index:50}
 .track-menu.show{display:block}
 .track-item{padding:8px 10px;font-size:12px;color:var(--text);cursor:pointer;border-radius:6px}
 .track-item:hover{background:var(--bg3)}
@@ -565,6 +573,31 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <button class="sidebar-nav-item" id="snav-history" onclick="switchTab('history')"><span class="sidebar-nav-dot"></span>History</button>
     <button class="sidebar-nav-item" id="snav-clock" onclick="switchTab('clock')"><span class="sidebar-nav-dot"></span>Clock</button>
   </div>
+
+  <!-- ── Music card ── -->
+  <div class="music-card">
+    <button class="music-play-btn" id="mute-btn" onclick="toggleMute()" aria-label="Play music">
+      <svg id="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+    </button>
+    <div class="music-info" id="track-btn" onclick="toggleTrackMenu()">
+      <span class="track-name" id="track-name">A Templar's Heaven</span>
+      <div class="eq-bars" id="eq-bars"><span></span><span></span><span></span></div>
+    </div>
+    <div class="track-menu" id="track-menu">
+      <div class="track-item" data-name="A Templar's Heaven" data-src="a-templars-heaven.mp3" onclick="selectTrack(this)">A Templar's Heaven</div>
+      <div class="track-item" data-name="Ludwig Lies" data-src="ludwig-lies.mp3" onclick="selectTrack(this)">Ludwig Lies</div>
+      <div class="track-item" data-name="Morbius" data-src="morbius.mp3" onclick="selectTrack(this)">Morbius</div>
+      <div class="track-item" data-name="Mozart on Meth" data-src="mozart-on-meth.mp3" onclick="selectTrack(this)">Mozart on Meth</div>
+      <div class="track-item" data-name="Set Fire to the Orchestra" data-src="set-fire-to-the-orchestra.mp3" onclick="selectTrack(this)">Set Fire to the Orchestra</div>
+      <div class="track-item" data-name="That Golden Fiddle" data-src="that-golden-fiddle.mp3" onclick="selectTrack(this)">That Golden Fiddle</div>
+      <div class="track-item" data-name="The Mountain's Violinist" data-src="the-mountains-violinist.mp3" onclick="selectTrack(this)">The Mountain's Violinist</div>
+      <div class="track-item" data-name="Time Keeps Crumbling" data-src="time-keeps-crumbling.mp3" onclick="selectTrack(this)">Time Keeps Crumbling</div>
+      <div class="track-item" data-name="Wands at the Ready" data-src="wands-at-the-ready.mp3" onclick="selectTrack(this)">Wands at the Ready</div>
+      <div class="track-item" data-name="War is Over" data-src="war-is-over.mp3" onclick="selectTrack(this)">War is Over</div>
+    </div>
+  </div>
+
   <div class="sidebar-footer">
     <button class="cog-btn" onclick="closeSidebar();openSettings(false)" aria-label="Settings">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -730,16 +763,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <button class="seg-opt" data-val="kg" onclick="setUnits('kg')">kg</button>
         </div>
       </div>
-      <div class="settings-block-row">
-        <div class="settings-block-text">
-          <div class="settings-block-title">Background music</div>
-          <div class="settings-block-sub">Play ambient tracks while you train</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="music-switch" onchange="setMusicEnabled(this.checked)">
-          <span class="switch-slider"></span>
-        </label>
-      </div>
     </div>
 
     <div class="section-label">Share</div>
@@ -883,28 +906,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <button class="timer-skip" onclick="skipTimer()">Skip</button>
 </div>
 
-<!-- ── Music player (opt-in) ── -->
+<!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
-<div class="music-float">
-  <button class="music-btn" id="mute-btn" onclick="toggleMute()">▶</button>
-  <div style="position:relative">
-    <button class="track-pill" id="track-btn" onclick="toggleTrackMenu()">
-      <span class="track-name" id="track-name">A Templar's Heaven</span>
-    </button>
-    <div class="track-menu" id="track-menu">
-      <div class="track-item" data-name="A Templar's Heaven" data-src="a-templars-heaven.mp3" onclick="selectTrack(this)">A Templar's Heaven</div>
-      <div class="track-item" data-name="Ludwig Lies" data-src="ludwig-lies.mp3" onclick="selectTrack(this)">Ludwig Lies</div>
-      <div class="track-item" data-name="Morbius" data-src="morbius.mp3" onclick="selectTrack(this)">Morbius</div>
-      <div class="track-item" data-name="Mozart on Meth" data-src="mozart-on-meth.mp3" onclick="selectTrack(this)">Mozart on Meth</div>
-      <div class="track-item" data-name="Set Fire to the Orchestra" data-src="set-fire-to-the-orchestra.mp3" onclick="selectTrack(this)">Set Fire to the Orchestra</div>
-      <div class="track-item" data-name="That Golden Fiddle" data-src="that-golden-fiddle.mp3" onclick="selectTrack(this)">That Golden Fiddle</div>
-      <div class="track-item" data-name="The Mountain's Violinist" data-src="the-mountains-violinist.mp3" onclick="selectTrack(this)">The Mountain's Violinist</div>
-      <div class="track-item" data-name="Time Keeps Crumbling" data-src="time-keeps-crumbling.mp3" onclick="selectTrack(this)">Time Keeps Crumbling</div>
-      <div class="track-item" data-name="Wands at the Ready" data-src="wands-at-the-ready.mp3" onclick="selectTrack(this)">Wands at the Ready</div>
-      <div class="track-item" data-name="War is Over" data-src="war-is-over.mp3" onclick="selectTrack(this)">War is Over</div>
-    </div>
-  </div>
-</div>
 
 <script src="logo-anim.js"></script>
 <script src="app.js"></script>
