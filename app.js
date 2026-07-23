@@ -376,9 +376,9 @@ function applyRestore() {
       updateBwDisplay();
       renderDayContent();
 
-      // Dismiss day dropdown when clicking/tapping outside it
+      // Dismiss day dropdown / day menu when clicking/tapping outside them
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.day-header')) closeDayPicker();
+        if (!e.target.closest('.day-header')) { closeDayPicker(); closeDayMenu(); }
       });
 
       const vEl = document.getElementById('settings-version');
@@ -438,6 +438,7 @@ function toggleDayPicker() {
   const dd = document.getElementById('day-dropdown');
   const picker = document.getElementById('day-picker-btn');
   if (!dd) return;
+  closeDayMenu();
   const opening = !dd.classList.contains('show');
   dd.classList.toggle('show', opening);
   picker.classList.toggle('open', opening);
@@ -449,6 +450,17 @@ function closeDayPicker() {
   if (picker) picker.classList.remove('open');
 }
 function selectDay(d) { flushInputs(); currentDay = d; closeDayPicker(); renderDayContent(); }
+
+function toggleDayMenu() {
+  const dd = document.getElementById('day-menu-dropdown');
+  if (!dd) return;
+  closeDayPicker();
+  dd.classList.toggle('show');
+}
+function closeDayMenu() {
+  const dd = document.getElementById('day-menu-dropdown');
+  if (dd) dd.classList.remove('show');
+}
 
 function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -472,11 +484,14 @@ function renderDayContent() {
       <div class="day-dropdown" id="day-dropdown">${dayDropdownItems}</div>
       <input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
         oninput="schedule['${d}'].label=FULL_DAYS['${d}']+' — '+this.value;saveSchedule()">
-    </div>
-    <div class="day-actions">
-      <button class="btn" onclick="toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
-      <button class="btn" onclick="confirmCopyDay()">Copy to all days</button>
-      <button class="btn" onclick="confirmClearSession()">Clear session</button>
+      <button class="day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+      <div class="day-menu-dropdown" id="day-menu-dropdown">
+        <button class="day-menu-item" onclick="closeDayMenu();toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
+        <button class="day-menu-item" onclick="closeDayMenu();confirmCopyDay()">Copy to all days</button>
+        <button class="day-menu-item" onclick="closeDayMenu();confirmClearSession()">Clear session</button>
+      </div>
     </div>`;
 
   if (day.restDay) {

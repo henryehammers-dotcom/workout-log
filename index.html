@@ -204,12 +204,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 [data-theme=matrix] .day-title-input{font-family:var(--mono);letter-spacing:0;font-weight:700}
 
 /* ──────────────────────────────────────────────────────────
-   DAY ACTIONS — small bordered rounded buttons
+   DAY MENU — overflow (···) button + dropdown for day-level actions
    ────────────────────────────────────────────────────────── */
-.day-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.day-actions .btn{padding:7px 14px;font-size:13px;border-radius:var(--r-pill);border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit;font-weight:500}
-.day-actions .btn:hover{background:var(--bg3);border-color:var(--text3)}
-.day-actions .btn:active{transform:scale(0.97)}
+.day-menu-btn{position:absolute;top:2px;right:0;width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+.day-menu-btn:hover{background:var(--bg3)}
+.day-menu-btn:active{transform:scale(0.96)}
+.day-menu-dropdown{position:absolute;top:38px;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.20);z-index:40;display:none}
+.day-menu-dropdown.show{display:block}
+.day-menu-item{display:block;width:100%;padding:9px 12px;font-size:13px;font-weight:500;color:var(--text);background:transparent;border:none;border-radius:6px;text-align:left;cursor:pointer;font-family:inherit;white-space:nowrap}
+.day-menu-item:hover{background:var(--bg3)}
+
 
 /* ──────────────────────────────────────────────────────────
    EXERCISE CARD
