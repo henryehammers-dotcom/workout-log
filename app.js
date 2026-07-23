@@ -100,6 +100,7 @@ const DEFAULT_LIBRARY = [
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
 let library  = JSON.parse(JSON.stringify(DEFAULT_LIBRARY));
 let currentDay = DAY_NAMES[new Date().getDay()];
+let dayEditMode = false;
 let sessionSets = {};
 let timerInterval = null, timerSeconds = 0;
 // Per-exercise rest timers — keyed by `${day}-${idx}`. Each: { secsLeft, total, intervalId }
@@ -436,7 +437,7 @@ function closeDayPicker() {
   if (dd) dd.classList.remove('show');
   if (picker) picker.classList.remove('open');
 }
-function selectDay(d) { flushInputs(); currentDay = d; closeDayPicker(); renderDayContent(); }
+function selectDay(d) { flushInputs(); currentDay = d; dayEditMode = false; closeDayPicker(); renderDayContent(); }
 
 function toggleDayMenu() {
   const dd = document.getElementById('day-menu-dropdown');
@@ -447,6 +448,11 @@ function toggleDayMenu() {
 function closeDayMenu() {
   const dd = document.getElementById('day-menu-dropdown');
   if (dd) dd.classList.remove('show');
+}
+function toggleDayEditMode() {
+  flushInputs();
+  dayEditMode = !dayEditMode;
+  renderDayContent();
 }
 
 function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
@@ -462,6 +468,11 @@ function renderDayContent() {
     `<div class="day-dropdown-item${dn===d?' active':''}${schedule[dn].restDay?' rest-day':''}" onclick="selectDay('${dn}')">${FULL_DAYS[dn]}</div>`
   ).join('');
 
+  const titleHtml = dayEditMode
+    ? `<input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
+        oninput="schedule['${d}'].label=FULL_DAYS['${d}']+' — '+this.value;saveSchedule()">`
+    : `<div class="day-title-input day-title-readonly">${labelSuffix ? escHtml(labelSuffix) : '<span class="day-title-placeholder">Add workout title…</span>'}</div>`;
+
   const top = `
     <div class="day-header">
       <button class="day-picker" id="day-picker-btn" onclick="toggleDayPicker()">
@@ -469,12 +480,13 @@ function renderDayContent() {
         <svg class="day-picker-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="day-dropdown" id="day-dropdown">${dayDropdownItems}</div>
-      <input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
-        oninput="schedule['${d}'].label=FULL_DAYS['${d}']+' — '+this.value;saveSchedule()">
+      ${titleHtml}
+      ${dayEditMode ? '<div class="edit-mode-badge">Editing</div>' : ''}
       <button class="day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
       <div class="day-menu-dropdown" id="day-menu-dropdown">
+        <button class="day-menu-item" onclick="closeDayMenu();toggleDayEditMode()">${dayEditMode?'Done editing':'Edit workout'}</button>
         <button class="day-menu-item" onclick="closeDayMenu();toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
         <button class="day-menu-item" onclick="closeDayMenu();confirmCopyDay()">Copy to all days</button>
         <button class="day-menu-item" onclick="closeDayMenu();confirmClearSession()">Clear session</button>
@@ -487,7 +499,9 @@ function renderDayContent() {
   }
 
   const exCards = day.exercises.length === 0
-    ? '<div class="empty">No exercises yet — tap “+ Add exercise” below to pick one from your library.</div>'
+    ? (dayEditMode
+        ? '<div class="empty">No exercises yet — tap “+ Add exercise” below to pick one from your library.</div>'
+        : '<div class="empty">No exercises yet — tap the ••• menu above and choose “Edit workout” to add some.</div>')
     : day.exercises.map((ex, i) => {
         const data = getSetData(d, i);
         const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', (ex.type==='custom'&&ex.duration) ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
@@ -496,13 +510,13 @@ function renderDayContent() {
         if (ex.type === 'custom') {
           return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
             <div class="ex-head">
-              <span class="ex-drag">⠿</span>
+              ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
               <div class="ex-head-text">
                 <div class="ex-name">${escHtml(ex.name)}</div>
                 ${meta?`<div class="ex-meta">${meta}</div>`:''}
                 ${noteHtml}
               </div>
-              <button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>
+              ${dayEditMode?`<button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>`:''}
             </div>
           </div>`;
         }
@@ -534,13 +548,13 @@ function renderDayContent() {
 
         return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
           <div class="ex-head">
-            <span class="ex-drag">⠿</span>
+            ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
             <div class="ex-head-text">
               <div class="ex-name">${escHtml(ex.name)}</div>
               ${meta?`<div class="ex-meta">${meta}</div>`:''}
               ${noteHtml}
             </div>
-            <button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>
+            ${dayEditMode?`<button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>`:''}
           </div>
           <div class="sets-table">
             <div class="sets-thead">
@@ -557,7 +571,7 @@ function renderDayContent() {
         </div>`;
       }).join('');
 
-  const addBtn = `<button class="add-exercise-btn" onclick="openLibSheet('${d}')">+ Add exercise</button>`;
+  const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibSheet('${d}')">+ Add exercise</button>` : '';
   container.innerHTML = top + `<div id="drag-zone">${exCards}</div>` + addBtn;
   initDrag(d);
 }

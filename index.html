@@ -201,7 +201,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .day-dropdown-item.rest-day::after{content:'';width:3px;height:3px;border-radius:50%;background:var(--text3)}
 .day-title-input{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-0.02em;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0;line-height:1.1;text-align:center}
 .day-title-input::placeholder{color:var(--text3);font-weight:700}
+.day-title-readonly{cursor:default;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day-title-placeholder{color:var(--text3)}
 [data-theme=matrix] .day-title-input{font-family:var(--mono);letter-spacing:0;font-weight:700}
+.edit-mode-badge{display:inline-block;margin-top:8px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r-pill)}
 
 /* ──────────────────────────────────────────────────────────
    DAY MENU — overflow (···) button + dropdown for day-level actions
