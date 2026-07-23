@@ -534,18 +534,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    MUSIC CARD (sidebar, above settings)
    ────────────────────────────────────────────────────────── */
 .music-card{position:relative;display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:14px;padding:8px 10px;margin-bottom:10px}
-.music-play-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-text);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s}
+.music-play-btn{width:32px;height:32px;border-radius:50%;background:transparent;color:var(--text2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s}
+.music-play-btn:hover{background:var(--bg2)}
 .music-play-btn:active{transform:scale(0.92)}
 .music-info{flex:1;min-width:0;display:flex;align-items:center;gap:8px;cursor:pointer}
 .track-name{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.eq-bars{display:flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;opacity:0.35}
-.eq-bars span{width:3px;background:var(--accent);border-radius:1px;height:4px}
+.eq-bars{display:flex;align-items:center;gap:3px;height:16px;flex-shrink:0;opacity:0.4}
+.eq-bars span{width:3px;background:var(--accent);border-radius:1.5px;height:5px}
+.eq-bars span:nth-child(1){height:8px}
+.eq-bars span:nth-child(2){height:14px}
+.eq-bars span:nth-child(3){height:6px}
 .eq-bars.playing{opacity:1}
-.eq-bars.playing span{animation:eqBounce 0.9s ease-in-out infinite}
+.eq-bars.playing span{animation:eqBounce 0.85s ease-in-out infinite}
 .eq-bars.playing span:nth-child(1){animation-delay:0s}
-.eq-bars.playing span:nth-child(2){animation-delay:0.2s}
-.eq-bars.playing span:nth-child(3){animation-delay:0.4s}
-@keyframes eqBounce{0%,100%{height:4px}50%{height:14px}}
+.eq-bars.playing span:nth-child(2){animation-delay:0.25s}
+.eq-bars.playing span:nth-child(3){animation-delay:0.12s}
+@keyframes eqBounce{0%,100%{height:4px}50%{height:16px}}
 .track-menu{position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.20);display:none;z-index:50}
 .track-menu.show{display:block}
 .track-item{padding:8px 10px;font-size:12px;color:var(--text);cursor:pointer;border-radius:6px}
