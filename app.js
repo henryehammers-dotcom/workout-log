@@ -661,7 +661,11 @@ function logExercise(d, idx) {
   const hist = getHistory();
   if (!hist[today]) hist[today] = [];
   const ex = schedule[d].exercises[idx];
-  const newSets = valid.map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
+  const bw = ex.type === 'bodyweight' ? getCleanBw() : null;
+  const newSets = valid.map(s => {
+    const weight = s.weight !== '' ? Number(s.weight)||0 : (bw != null ? bw : 0);
+    return { reps: Number(s.reps)||0, weight };
+  });
   const existing = hist[today].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
   if (existing >= 0) {
     // Append to today's existing entry so multiple log presses on the same day merge
