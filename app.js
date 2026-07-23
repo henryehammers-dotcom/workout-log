@@ -144,10 +144,16 @@ function setUnits(u) {
   updateBwDisplay();
   renderDayContent();
 }
+const THEME_COLORS = { light: '#f4efe6', dark: '#0f1817', matrix: '#020503' };
+function syncThemeColorMeta(t) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLORS[t] || THEME_COLORS.light);
+}
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem(KEYS.theme, t);
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
+  syncThemeColorMeta(t);
 }
 function syncWelcomeTheme(t) {
   document.querySelectorAll('#welcome-theme .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
@@ -353,6 +359,7 @@ function applyRestore() {
 (function init() {
   const savedTheme = localStorage.getItem(KEYS.theme) || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
+  syncThemeColorMeta(savedTheme);
   loadSchedule();
   loadLibrary();
 

@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tallymark">
+<meta name="theme-color" content="#f4efe6">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="Tallymark-icon-192.png">
 <title>Tallymark</title>
@@ -123,6 +124,17 @@ body{
   min-height:100dvh;
 }
 input, button, select, textarea { font-family:inherit; color:inherit }
+/* Explicitly paint the safe-area strip behind the status bar/notch —
+   works around inconsistent iOS PWA background rendering in that region. */
+body::before{
+  content:'';
+  position:fixed;
+  top:0; left:0; right:0;
+  height:env(safe-area-inset-top);
+  background:var(--bg);
+  z-index:70;
+  pointer-events:none;
+}
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
