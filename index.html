@@ -171,8 +171,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    TOP BAR (hamburger + logo, sidebar closed)
    ────────────────────────────────────────────────────────── */
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.hamburger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+.top-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:18px}
+.hamburger-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .hamburger-btn:hover{background:var(--bg3)}
 .hamburger-btn:active{transform:scale(0.96)}
 
