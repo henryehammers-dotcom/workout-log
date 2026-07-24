@@ -55,13 +55,15 @@ function getRepRangeForExercise(nameOrId) {
 function renderHistory(selected) {
   destroyCharts();
   const container = document.getElementById('history-container');
+  const backBtn = document.getElementById('log-back-btn');
   let hist, index;
   try { hist = getHistory(); index = getExerciseIndex(hist); }
-  catch { container.innerHTML = '<div class="empty">Could not load history.</div>'; return; }
+  catch { container.innerHTML = '<div class="empty">Could not load history.</div>'; if (backBtn) backBtn.classList.remove('show'); return; }
   const exercises = Object.keys(index);
-  if (!exercises.length) { container.innerHTML = '<div class="empty">No history yet. Log a workout to see it here.</div>'; return; }
+  if (!exercises.length) { container.innerHTML = '<div class="empty">No history yet. Log a workout to see it here.</div>'; if (backBtn) backBtn.classList.remove('show'); return; }
 
   if (!selected) {
+    if (backBtn) backBtn.classList.remove('show');
     const list = getHistoryDisplayNames(index);
     container.innerHTML = `<div class="history-section-label">All exercises · ${list.length}</div>` +
       list.map(({key, name}) => {
@@ -82,6 +84,7 @@ function renderHistory(selected) {
   }
 
   const entry = index[selected]; if (!entry) { renderHistory(); return; }
+  if (backBtn) backBtn.classList.add('show');
   const sessions = entry.sessions;
   const labels = sessions.map(s => s.date.replace(/\w+,\s/, ''));
   const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));

@@ -416,9 +416,15 @@ function switchTab(tab) {
   document.getElementById('snav-' + tab).classList.add('active');
   ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
-  else if (tab === 'clock') ensureClockBuilt();
-  else destroyCharts();
+  else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
+  else { destroyCharts(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   closeSidebar();
+}
+function openExerciseHistory(key) {
+  document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('snav-history').classList.add('active');
+  ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === 'history' ? '' : 'none'; });
+  renderHistory(key);
 }
 
 /* ─── DAY PICKER / CONTENT ─── */
@@ -512,7 +518,7 @@ function renderDayContent() {
             <div class="ex-head">
               ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
               <div class="ex-head-text">
-                <div class="ex-name">${escHtml(ex.name)}</div>
+              <div class="ex-name" onclick="openExerciseHistory('${escAttr(ex.exId || ex.name)}')">${escHtml(ex.name)}</div>
                 ${meta?`<div class="ex-meta">${meta}</div>`:''}
                 ${noteHtml}
               </div>
@@ -550,7 +556,7 @@ function renderDayContent() {
           <div class="ex-head">
             ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
             <div class="ex-head-text">
-              <div class="ex-name">${escHtml(ex.name)}</div>
+              <div class="ex-name" onclick="openExerciseHistory('${escAttr(ex.exId || ex.name)}')">${escHtml(ex.name)}</div>
               ${meta?`<div class="ex-meta">${meta}</div>`:''}
               ${noteHtml}
             </div>
