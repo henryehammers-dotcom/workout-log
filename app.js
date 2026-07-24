@@ -418,6 +418,7 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
   else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   else { destroyCharts(); document.getElementById('log-back-btn')?.classList.remove('show'); }
+  window.scrollTo(0, 0);
   closeSidebar();
 }
 function openExerciseHistory(key) {
@@ -425,6 +426,7 @@ function openExerciseHistory(key) {
   document.getElementById('snav-history').classList.add('active');
   ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === 'history' ? '' : 'none'; });
   renderHistory(key);
+  window.scrollTo(0, 0);
 }
 
 /* ─── DAY PICKER / CONTENT ─── */
