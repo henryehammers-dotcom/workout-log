@@ -490,7 +490,7 @@ function renderLibV2() {
   const tilesEl = document.getElementById('libv2-tiles');
 
   groupRow.innerHTML = MUSCLE_GROUPS_V2.map(g =>
-    `<button class="libv2-chip${g.key===libv2ActiveGroup?' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
+    `<button class="libv2-chip libv2-tint-${g.color}${g.key===libv2ActiveGroup?' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
   ).join('');
 
   // Sub-row: show only the active group's subs if one is selected, otherwise
@@ -502,7 +502,7 @@ function renderLibV2() {
 
   subRow.innerHTML = subsToShow.map(({sub, color}) =>
     `<button class="libv2-chip libv2-chip-sub libv2-tint-${color}${sub===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(sub)}')">${escHtml(sub)}</button>`
-  ).join('') || '<div style="padding:20px;background:yellow;color:red;font-weight:900;border:4px solid red">DEBUG: subsToShow was EMPTY (length ' + subsToShow.length + ')</div>';
+  ).join('');
 
   // Exercise grid: show everything by default, narrowing as filters are applied.
   let filtered = DEFAULT_LIBRARY_V2;
