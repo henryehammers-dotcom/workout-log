@@ -102,13 +102,13 @@ const DEFAULT_LIBRARY = [
    Filtering later will match on group OR group+sub together.
    ═══════════════════════════════════════════════════════════ */
 const MUSCLE_GROUPS_V2 = [
-  { key:'chest',     label:'Chest',     subs:['Upper chest','Mid chest','Lower chest'] },
-  { key:'back',      label:'Back',      subs:['Lats','Traps','Lower back','Rhomboids'] },
-  { key:'shoulders', label:'Shoulders', subs:['Front delts','Side delts','Rear delts'] },
-  { key:'arms',      label:'Arms',      subs:['Biceps','Triceps','Forearms'] },
-  { key:'core',      label:'Core',      subs:['Upper abs','Lower abs','Obliques'] },
-  { key:'legs',      label:'Legs',      subs:['Quads','Hamstrings','Glutes','Calves','Adductors','Abductors'] },
-  { key:'other',     label:'Other',     subs:['Neck','Hip flexors'] },
+  { key:'chest',     label:'Chest',     color:'coral',  subs:['Upper chest','Mid chest','Lower chest'] },
+  { key:'back',      label:'Back',      color:'blue',   subs:['Lats','Traps','Lower back','Rhomboids'] },
+  { key:'shoulders', label:'Shoulders', color:'amber',  subs:['Front delts','Side delts','Rear delts'] },
+  { key:'arms',      label:'Arms',      color:'purple', subs:['Biceps','Triceps','Forearms'] },
+  { key:'core',      label:'Core',      color:'green',  subs:['Upper abs','Lower abs','Obliques'] },
+  { key:'legs',      label:'Legs',      color:'teal',   subs:['Quads','Hamstrings','Glutes','Calves','Adductors','Abductors'] },
+  { key:'other',     label:'Other',     color:'gray',   subs:['Neck','Hip flexors'] },
 ];
 
 // A handful of real entries per sub-region to prove out the filter UI.
@@ -473,7 +473,15 @@ function libv2SelectGroup(key) {
   renderLibV2();
 }
 function libv2SelectSub(sub) {
-  libv2ActiveSub = (libv2ActiveSub === sub) ? null : sub;
+  if (libv2ActiveSub === sub) {
+    libv2ActiveSub = null;
+  } else {
+    libv2ActiveSub = sub;
+    // Auto-select the parent gross group, so tapping a sub-tile directly
+    // highlights its gross group and narrows the sub-row to match.
+    const parent = MUSCLE_GROUPS_V2.find(g => g.subs.includes(sub));
+    if (parent) libv2ActiveGroup = parent.key;
+  }
   renderLibV2();
 }
 function renderLibV2() {
@@ -485,17 +493,18 @@ function renderLibV2() {
     `<button class="libv2-chip${g.key===libv2ActiveGroup?' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
   ).join('');
 
+  // Sub-row: show only the active group's subs if one is selected, otherwise
+  // every sub-region across every group, tinted by its parent group's color.
   const activeGroupObj = MUSCLE_GROUPS_V2.find(g => g.key === libv2ActiveGroup);
-  if (activeGroupObj) {
-    subRow.style.display = '';
-    subRow.innerHTML = activeGroupObj.subs.map(s =>
-      `<button class="libv2-chip libv2-chip-sub${s===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(s)}')">${escHtml(s)}</button>`
-    ).join('');
-  } else {
-    subRow.style.display = 'none';
-    subRow.innerHTML = '';
-  }
+  const subsToShow = activeGroupObj
+    ? activeGroupObj.subs.map(s => ({ sub: s, color: activeGroupObj.color }))
+    : MUSCLE_GROUPS_V2.flatMap(g => g.subs.map(s => ({ sub: s, color: g.color })));
 
+  subRow.innerHTML = subsToShow.map(({sub, color}) =>
+    `<button class="libv2-chip libv2-chip-sub libv2-tint-${color}${sub===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(sub)}')">${escHtml(sub)}</button>`
+  ).join('');
+
+  // Exercise grid: show everything by default, narrowing as filters are applied.
   let filtered = DEFAULT_LIBRARY_V2;
   if (libv2ActiveGroup) filtered = filtered.filter(ex => ex.group === libv2ActiveGroup);
   if (libv2ActiveSub) filtered = filtered.filter(ex => ex.sub === libv2ActiveSub);
