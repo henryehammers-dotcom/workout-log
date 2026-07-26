@@ -96,6 +96,58 @@ const DEFAULT_LIBRARY = [
   ]},
 ];
 
+/* ═══════════════════════════════════════════════════════════
+   LIBRARY V2 — PREVIEW ONLY, NOT WIRED TO ANYTHING YET
+   Two-tier tag system: group (gross) + sub (sub-region).
+   Filtering later will match on group OR group+sub together.
+   ═══════════════════════════════════════════════════════════ */
+const MUSCLE_GROUPS_V2 = [
+  { key:'chest',     label:'Chest',     subs:['Upper chest','Mid chest','Lower chest'] },
+  { key:'back',      label:'Back',      subs:['Lats','Traps','Lower back','Rhomboids'] },
+  { key:'shoulders', label:'Shoulders', subs:['Front delts','Side delts','Rear delts'] },
+  { key:'arms',      label:'Arms',      subs:['Biceps','Triceps','Forearms'] },
+  { key:'core',      label:'Core',      subs:['Upper abs','Lower abs','Obliques'] },
+  { key:'legs',      label:'Legs',      subs:['Quads','Hamstrings','Glutes','Calves','Adductors','Abductors'] },
+  { key:'other',     label:'Other',     subs:['Neck','Hip flexors'] },
+];
+
+// A handful of real entries per sub-region to prove out the filter UI.
+// Will expand toward the full ~101-exercise target once the design is confirmed.
+const DEFAULT_LIBRARY_V2 = [
+  {name:'Incline barbell bench press', group:'chest', sub:'Upper chest', reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Incline dumbbell press',      group:'chest', sub:'Upper chest', reps:'8-12', rest:'2 min', restSecs:120, type:'dumbbell'},
+  {name:'Barbell bench press',         group:'chest', sub:'Mid chest',   reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Push-up',                     group:'chest', sub:'Mid chest',   reps:'10-20',rest:'60 sec',restSecs:60,  type:'bodyweight'},
+  {name:'Decline barbell bench press', group:'chest', sub:'Lower chest', reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Dips',                        group:'chest', sub:'Lower chest', reps:'8-15', rest:'90 sec',restSecs:90,  type:'bodyweight'},
+
+  {name:'Lat pulldown',                group:'back', sub:'Lats',      reps:'8-12', rest:'90 sec',restSecs:90,  type:'gym'},
+  {name:'Pull-up',                     group:'back', sub:'Lats',      reps:'5-10', rest:'2 min', restSecs:120, type:'bodyweight'},
+  {name:'Barbell shrug',               group:'back', sub:'Traps',     reps:'10-15',rest:'60 sec',restSecs:60,  type:'gym'},
+  {name:'Barbell deadlift',            group:'back', sub:'Lower back',reps:'4-8',  rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Barbell bent-over row',       group:'back', sub:'Rhomboids', reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+
+  {name:'Barbell overhead press',      group:'shoulders', sub:'Front delts', reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Dumbbell lateral raise',      group:'shoulders', sub:'Side delts',  reps:'12-15',rest:'60 sec',restSecs:60,  type:'dumbbell'},
+  {name:'Face pull',                   group:'shoulders', sub:'Rear delts',  reps:'12-15',rest:'60 sec',restSecs:60,  type:'gym'},
+
+  {name:'Barbell curl',                group:'arms', sub:'Biceps',   reps:'8-12', rest:'60 sec',restSecs:60, type:'gym'},
+  {name:'Cable tricep pushdown',       group:'arms', sub:'Triceps',  reps:'10-15',rest:'60 sec',restSecs:60, type:'gym'},
+  {name:'Dumbbell wrist curl',         group:'arms', sub:'Forearms', reps:'12-20',rest:'45 sec',restSecs:45, type:'dumbbell'},
+
+  {name:'Cable crunch',                group:'core', sub:'Upper abs', reps:'12-15',    rest:'60 sec',restSecs:60, type:'gym'},
+  {name:'Hanging leg raise',           group:'core', sub:'Lower abs', reps:'10-15',    rest:'60 sec',restSecs:60, type:'bodyweight'},
+  {name:'Dumbbell side bend',          group:'core', sub:'Obliques',  reps:'12-15',    rest:'45 sec',restSecs:45, type:'dumbbell'},
+
+  {name:'Barbell squat',               group:'legs', sub:'Quads',      reps:'6-10', rest:'2 min', restSecs:120, type:'gym'},
+  {name:'Dumbbell RDL',                group:'legs', sub:'Hamstrings', reps:'8-12', rest:'90 sec',restSecs:90,  type:'dumbbell'},
+  {name:'Glute bridge',                group:'legs', sub:'Glutes',     reps:'15-20',rest:'60 sec',restSecs:60,  type:'bodyweight'},
+  {name:'Dumbbell calf raise',         group:'legs', sub:'Calves',     reps:'15-20',rest:'45 sec',restSecs:45,  type:'dumbbell'},
+
+  {name:'Standing neck extension',     group:'other', sub:'Neck',        reps:'12-15',rest:'45 sec',restSecs:45, type:'bodyweight'},
+  {name:'Hanging hip flexor raise',    group:'other', sub:'Hip flexors', reps:'10-15',rest:'60 sec',restSecs:60, type:'bodyweight'},
+];
+
 /* ─── STATE ─── */
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
 let library  = JSON.parse(JSON.stringify(DEFAULT_LIBRARY));
@@ -411,6 +463,68 @@ function closeSidebar() {
 }
 
 /* ─── TAB SWITCHING ─── */
+/* ─── LIBRARY V2 PREVIEW (unhooked) ─── */
+let libv2ActiveGroup = null;
+let libv2ActiveSub = null;
+
+function openLibV2Preview() {
+  ['tab-log','tab-history','tab-clock','tab-libv2'].forEach(id => {
+    document.getElementById(id).style.display = id === 'tab-libv2' ? '' : 'none';
+  });
+  document.getElementById('log-back-btn')?.classList.remove('show');
+  libv2ActiveGroup = null;
+  libv2ActiveSub = null;
+  renderLibV2();
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+}
+function closeLibV2Preview() {
+  switchTab('log');
+}
+function libv2SelectGroup(key) {
+  libv2ActiveGroup = (libv2ActiveGroup === key) ? null : key;
+  libv2ActiveSub = null; // reset sub-filter when gross group changes
+  renderLibV2();
+}
+function libv2SelectSub(sub) {
+  libv2ActiveSub = (libv2ActiveSub === sub) ? null : sub;
+  renderLibV2();
+}
+function renderLibV2() {
+  const groupRow = document.getElementById('libv2-group-row');
+  const subRow = document.getElementById('libv2-sub-row');
+  const tilesEl = document.getElementById('libv2-tiles');
+
+  groupRow.innerHTML = MUSCLE_GROUPS_V2.map(g =>
+    `<button class="libv2-chip${g.key===libv2ActiveGroup?' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
+  ).join('');
+
+  const activeGroupObj = MUSCLE_GROUPS_V2.find(g => g.key === libv2ActiveGroup);
+  if (activeGroupObj) {
+    subRow.style.display = '';
+    subRow.innerHTML = activeGroupObj.subs.map(s =>
+      `<button class="libv2-chip libv2-chip-sub${s===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(s)}')">${escHtml(s)}</button>`
+    ).join('');
+  } else {
+    subRow.style.display = 'none';
+    subRow.innerHTML = '';
+  }
+
+  let filtered = DEFAULT_LIBRARY_V2;
+  if (libv2ActiveGroup) filtered = filtered.filter(ex => ex.group === libv2ActiveGroup);
+  if (libv2ActiveSub) filtered = filtered.filter(ex => ex.sub === libv2ActiveSub);
+
+  if (!filtered.length) {
+    tilesEl.innerHTML = '<div class="empty">No exercises match this filter yet.</div>';
+    return;
+  }
+  tilesEl.innerHTML = filtered.map(ex => `
+    <div class="libv2-tile">
+      <div class="libv2-tile-name">${escHtml(ex.name)}</div>
+      <div class="libv2-tile-tags">${escHtml(ex.sub)} · ${escHtml(ex.reps)} reps · ${escHtml(ex.rest)} rest</div>
+    </div>
+  `).join('');
+}
+
 function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
