@@ -463,23 +463,10 @@ function closeSidebar() {
 }
 
 /* ─── TAB SWITCHING ─── */
-/* ─── LIBRARY V2 PREVIEW (unhooked) ─── */
+/* ─── LIBRARY (V2) — not yet wired to day-logging ─── */
 let libv2ActiveGroup = null;
 let libv2ActiveSub = null;
 
-function openLibV2Preview() {
-  ['tab-log','tab-history','tab-clock','tab-libv2'].forEach(id => {
-    document.getElementById(id).style.display = id === 'tab-libv2' ? '' : 'none';
-  });
-  document.getElementById('log-back-btn')?.classList.remove('show');
-  libv2ActiveGroup = null;
-  libv2ActiveSub = null;
-  renderLibV2();
-  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
-}
-function closeLibV2Preview() {
-  switchTab('log');
-}
 function libv2SelectGroup(key) {
   libv2ActiveGroup = (libv2ActiveGroup === key) ? null : key;
   libv2ActiveSub = null; // reset sub-filter when gross group changes
@@ -528,8 +515,9 @@ function renderLibV2() {
 function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
-  ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
+  ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
+  else if (tab === 'library') { renderLibV2(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   else { destroyCharts(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));

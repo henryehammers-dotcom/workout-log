@@ -638,6 +638,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <div class="sidebar-nav">
     <button class="sidebar-nav-item active" id="snav-log" onclick="switchTab('log')"><span class="sidebar-nav-dot"></span>Log</button>
     <button class="sidebar-nav-item" id="snav-history" onclick="switchTab('history')"><span class="sidebar-nav-dot"></span>History</button>
+    <button class="sidebar-nav-item" id="snav-library" onclick="switchTab('library')"><span class="sidebar-nav-dot"></span>Library</button>
     <button class="sidebar-nav-item" id="snav-clock" onclick="switchTab('clock')"><span class="sidebar-nav-dot"></span>Clock</button>
   </div>
 
@@ -742,9 +743,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
-<!-- ── Library V2 PREVIEW (unhooked, temporary access only) ── -->
-<div id="tab-libv2" style="display:none">
-  <button class="back-btn" onclick="closeLibV2Preview()">‹ Back to Log</button>
+<!-- ── Library tab ── -->
+<div id="tab-library" style="display:none">
   <div class="libv2-group-row" id="libv2-group-row"></div>
   <div class="libv2-sub-row" id="libv2-sub-row"></div>
   <div class="libv2-tiles" id="libv2-tiles"></div>
@@ -852,12 +852,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         </div>
       </div>
     </div>
-
-    <div class="section-label">Preview (dev only)</div>
-    <button class="data-card" onclick="closeSettings();openLibV2Preview()">
-      <div class="data-card-title">Library V2 preview</div>
-      <div class="data-card-sub">Not wired to anything yet — just a look</div>
-    </button>
 
     <div class="section-label">Share</div>
     <button class="data-card" onclick="shareApp()">
