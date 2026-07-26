@@ -65,7 +65,7 @@ function renderHistory(selected) {
   if (!selected) {
     if (backBtn) backBtn.classList.remove('show');
     const list = getHistoryDisplayNames(index);
-    container.innerHTML = `<div class="page-title">History</div><div class="history-section-label">All exercises · ${list.length}</div>` +
+    container.innerHTML =
       list.map(({key, name}) => {
         const entry = index[key];
         const sessions = entry.sessions;
