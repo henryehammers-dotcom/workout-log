@@ -502,7 +502,7 @@ function renderLibV2() {
 
   subRow.innerHTML = subsToShow.map(({sub, color}) =>
     `<button class="libv2-chip libv2-chip-sub libv2-tint-${color}${sub===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(sub)}')">${escHtml(sub)}</button>`
-  ).join('');
+  ).join('') || '<div style="padding:20px;background:yellow;color:red;font-weight:900;border:4px solid red">DEBUG: subsToShow was EMPTY (length ' + subsToShow.length + ')</div>';
 
   // Exercise grid: show everything by default, narrowing as filters are applied.
   let filtered = DEFAULT_LIBRARY_V2;
@@ -526,7 +526,11 @@ function switchTab(tab) {
   document.getElementById('snav-' + tab).classList.add('active');
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
-  else if (tab === 'library') { renderLibV2(); document.getElementById('log-back-btn')?.classList.remove('show'); }
+  else if (tab === 'library') {
+    renderLibV2();
+    document.getElementById('log-back-btn')?.classList.remove('show');
+    requestAnimationFrame(() => renderLibV2()); // safety re-render once tab is actually visible
+  }
   else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   else { destroyCharts(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
