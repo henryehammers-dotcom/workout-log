@@ -412,15 +412,32 @@ function syncWelcomeTheme(t) {
 // already have an exId are left untouched.
 function migrateIds() {
   const nameToId = {};
-  DEFAULT_LIBRARY_V2.forEach(ex => { nameToId[ex.name] = ex.id; });
+  const fuzzyToId = {}; // normalized (lowercase, trimmed, trailing-s stripped) -> id
+  function normalize(n) {
+    return (n || '').trim().toLowerCase().replace(/s$/, '');
+  }
+  DEFAULT_LIBRARY_V2.forEach(ex => {
+    nameToId[ex.name] = ex.id;
+    fuzzyToId[normalize(ex.name)] = ex.id;
+  });
   const validIds = new Set(DEFAULT_LIBRARY_V2.map(ex => ex.id));
   // Fixes an exId in place if it's missing, or if it's set but doesn't match any
   // current Library V2 entry (a leftover from the old, pre-fix id system) while
   // the name still matches something in the library — safe to repair since the
-  // name is the more reliable signal in that case. Never touches the name itself.
+  // name is the more reliable signal in that case. Never touches the name itself,
+  // except when only a fuzzy (case/plural-insensitive) match is found, in which
+  // case the name is also corrected to the library's exact current spelling so
+  // future exact matches work without relying on the fuzzy fallback again.
   function fixExId(entry) {
     if (entry.exId && validIds.has(entry.exId)) return false;
     if (nameToId[entry.name]) { entry.exId = nameToId[entry.name]; return true; }
+    const fuzzyId = fuzzyToId[normalize(entry.name)];
+    if (fuzzyId) {
+      entry.exId = fuzzyId;
+      const libEx = DEFAULT_LIBRARY_V2.find(e => e.id === fuzzyId);
+      if (libEx) entry.name = libEx.name;
+      return true;
+    }
     return false;
   }
   let schedChanged = false;
@@ -659,10 +676,20 @@ function getSetData(d, i) {
 // everywhere it's scheduled. Falls back to matching by name (for exercises added
 // before live-linking existed, or with a missing/stale exId), then finally to
 // the day's own stored copy if nothing in the Library matches at all.
+function normalizeExName(n) {
+  return (n || '').trim().toLowerCase().replace(/s$/, '');
+}
 function resolveScheduledExercise(ex) {
   let libEx = null;
   if (ex.exId) libEx = DEFAULT_LIBRARY_V2.find(e => e.id === ex.exId);
   if (!libEx && ex.name) libEx = DEFAULT_LIBRARY_V2.find(e => e.name === ex.name);
+  // Final fallback: case/trailing-s-insensitive match, so a rename that only
+  // differs by capitalization or a trailing "s" still displays live instead of
+  // silently falling back to the stale stored copy.
+  if (!libEx && ex.name) {
+    const norm = normalizeExName(ex.name);
+    libEx = DEFAULT_LIBRARY_V2.find(e => normalizeExName(e.name) === norm);
+  }
   if (libEx) {
     return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type };
   }
@@ -939,8 +966,28 @@ function saveLibV2Form() {
         EXERCISE_BLURBS[name] = EXERCISE_BLURBS[_libv2FormEditingName];
         delete EXERCISE_BLURBS[_libv2FormEditingName];
       }
+      const oldName = ex.name;
       ex.name = name; ex.group = group; ex.type = type; ex.reps = reps; ex.rest = restRaw; ex.restSecs = restSecs;
       if (sub !== undefined) ex.sub = sub; else delete ex.sub;
+      // Relink any schedule/history entries still holding the OLD name (matched
+      // exactly, since we know precisely what it was a moment ago) so the rename
+      // shows up everywhere immediately, instead of waiting on the next app load's
+      // fuzzy-match migration to catch it.
+      if (oldName !== name) {
+        let schedTouched = false;
+        DAY_NAMES.forEach(d => {
+          schedule[d].exercises.forEach(se => {
+            if (se.name === oldName) { se.exId = ex.id; se.name = ex.name; schedTouched = true; }
+          });
+        });
+        if (schedTouched) saveSchedule();
+        const hist = getHistory();
+        let histTouched = false;
+        Object.values(hist).forEach(entries => entries.forEach(he => {
+          if (he.name === oldName) { he.exId = ex.id; he.name = ex.name; histTouched = true; }
+        }));
+        if (histTouched) saveHistory(hist);
+      }
     }
   } else {
     const newEx = { name, group, type, reps, rest: restRaw, restSecs, id: genLibV2Id() };
