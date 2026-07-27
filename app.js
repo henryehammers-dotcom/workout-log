@@ -721,11 +721,14 @@ function renderLibV2() {
     return;
   }
   tilesEl.innerHTML = filtered.map(ex => `
-    <div class="libv2-tile" onclick="openExerciseDetail('${escAttr(ex.name).replace(/'/g, "\\'")}')">
+    <div class="libv2-tile" data-exname="${escAttr(ex.name)}">
       <div class="libv2-tile-name">${escHtml(ex.name)}</div>
       <div class="libv2-tile-tags">${escHtml(ex.sub)} · ${escHtml(ex.reps)} reps · ${escHtml(ex.rest)} rest</div>
     </div>
   `).join('');
+  tilesEl.querySelectorAll('.libv2-tile').forEach(tile => {
+    tile.addEventListener('click', () => openExerciseDetail(tile.dataset.exname));
+  });
 }
 
 /* ─── EXERCISE DETAIL POPUP ─── */
