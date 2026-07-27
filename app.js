@@ -490,7 +490,7 @@ function renderLibV2() {
   const tilesEl = document.getElementById('libv2-tiles');
 
   groupRow.innerHTML = MUSCLE_GROUPS_V2.map(g =>
-    `<button class="libv2-chip libv2-tint-${g.color}${g.key===libv2ActiveGroup?' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
+    `<button class="libv2-chip${g.key===libv2ActiveGroup?' libv2-tint-'+g.color+' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
   ).join('');
 
   // Sub-row: show only the active group's subs if one is selected, otherwise
