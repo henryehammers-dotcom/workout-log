@@ -18,6 +18,7 @@ const KEYS = {
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
   libraryV2: 'wl_library_v2',
+  blurbsV2:  'wl_blurbs_v2',
 };
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
@@ -240,18 +241,18 @@ function loadLibraryV2() {
 // Sister-variant chains: same movement, different equipment. Clicking "See X version"
 // on any exercise in a chain advances to the next one, wrapping back to the first.
 const SISTER_CHAINS = [
-  ["Incline barbell bench press", "Incline dumbbell press"],
+  ["Incline barbell bench press", "Dumbbell Incline Bench Press"],
   ["Barbell bench press", "Dumbbell bench press"],
   ["Decline barbell bench press", "Decline dumbbell press"],
   ["Barbell shrug", "Dumbbell shrug"],
-  ["Barbell overhead press", "Dumbbell shoulder press"],
+  ["Barbell overhead press", "Dumbbell Shoulder Press"],
   ["Barbell hip thrust", "Dumbbell Hip Thrust"],
-  ["Bodyweight calf raise", "Seated calf raise"],
+  ["Bodyweight Calf Raise", "Seated calf raise"],
   ["Sit-up", "Weighted Sit-up"],
   ["Barbell squat", "Dumbbell goblet squat", "Bodyweight squat"],
-  ["Cable lateral raise", "Dumbbell lateral raise", "Machine lateral raise"],
+  ["Cable lateral raise", "Dumbbell Lateral Raise", "Machine lateral raise"],
   ["Barbell curl", "Dumbbell curl", "Hammer curl", "Cable curl"],
-  ["Barbell row", "Single-arm dumbbell row", "Seated cable row", "Chest-supported row"],
+  ["Barbell row", "Dumbbell Row", "Seated cable row", "Chest-supported row"],
 ];
 function getSisterOf(name) {
   for (const chain of SISTER_CHAINS) {
@@ -370,6 +371,15 @@ const EXERCISE_BLURBS = {
   "Thread the needle": "Get on all fours. Slide one arm underneath your body and through the gap between your other arm and leg, lowering your shoulder to the floor. Hold, then switch sides.",
   "Barbell hip thrust": "Sit on the floor with your upper back against a bench, a bar resting across your hips. Push through your heels to lift your hips up, then lower back down.",
 };
+function saveBlurbsV2() {
+  try { localStorage.setItem(KEYS.blurbsV2, JSON.stringify(EXERCISE_BLURBS)); } catch {}
+}
+function loadBlurbsV2() {
+  try {
+    const saved = localStorage.getItem(KEYS.blurbsV2);
+    if (saved) Object.assign(EXERCISE_BLURBS, JSON.parse(saved));
+  } catch {}
+}
 
 /* ─── STATE ─── */
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
@@ -629,6 +639,7 @@ function applyRestore() {
   loadSchedule();
   loadLibrary();
   loadLibraryV2();
+  loadBlurbsV2();
 
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -690,6 +701,32 @@ function closeSidebar() {
 /* ─── LIBRARY (V2) — not yet wired to day-logging ─── */
 let libv2ActiveGroup = null;
 let libv2ActiveSub = null;
+let libv2SearchQuery = '';
+
+function openLibV2Search() {
+  document.getElementById('libv2-title').style.display = 'none';
+  document.getElementById('libv2-search-btn').style.display = 'none';
+  const pill = document.getElementById('libv2-search-pill');
+  pill.classList.add('show');
+  const input = document.getElementById('libv2-search-input');
+  input.value = '';
+  libv2SearchQuery = '';
+  document.querySelectorAll('.libv2-scroll-wrap').forEach(el => el.style.display = 'none');
+  setTimeout(() => input.focus(), 50);
+  renderLibV2();
+}
+function closeLibV2Search() {
+  document.getElementById('libv2-title').style.display = '';
+  document.getElementById('libv2-search-btn').style.display = '';
+  document.getElementById('libv2-search-pill').classList.remove('show');
+  document.querySelectorAll('.libv2-scroll-wrap').forEach(el => el.style.display = '');
+  libv2SearchQuery = '';
+  renderLibV2();
+}
+function libv2Search(query) {
+  libv2SearchQuery = query.trim();
+  renderLibV2();
+}
 
 function libv2SelectGroup(key) {
   libv2ActiveGroup = (libv2ActiveGroup === key) ? null : key;
@@ -728,13 +765,19 @@ function renderLibV2() {
     `<button class="libv2-chip libv2-chip-sub libv2-tint-${color}${sub===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(sub)}')">${escHtml(sub)}</button>`
   ).join('');
 
-  // Exercise grid: show everything by default, narrowing as filters are applied.
+  // Exercise grid: search overrides group/sub filters when active; otherwise
+  // show everything by default, narrowing as group/sub filters are applied.
   let filtered = DEFAULT_LIBRARY_V2;
-  if (libv2ActiveGroup) filtered = filtered.filter(ex => ex.group === libv2ActiveGroup);
-  if (libv2ActiveSub) filtered = filtered.filter(ex => ex.sub === libv2ActiveSub);
+  if (libv2SearchQuery) {
+    const q = libv2SearchQuery.toLowerCase();
+    filtered = filtered.filter(ex => ex.name.toLowerCase().includes(q));
+  } else {
+    if (libv2ActiveGroup) filtered = filtered.filter(ex => ex.group === libv2ActiveGroup);
+    if (libv2ActiveSub) filtered = filtered.filter(ex => ex.sub === libv2ActiveSub);
+  }
 
   if (!filtered.length) {
-    tilesEl.innerHTML = '<div class="empty">No exercises match this filter yet.</div>';
+    tilesEl.innerHTML = `<div class="empty">${libv2SearchQuery ? 'No exercises match your search.' : 'No exercises match this filter yet.'}</div>`;
     return;
   }
   tilesEl.innerHTML = filtered.map(ex => `
@@ -859,6 +902,7 @@ function openLibV2AddForm() {
   document.getElementById('lv2f-reps').value = '';
   document.getElementById('lv2f-rest').value = '';
   document.getElementById('lv2f-type').value = 'gym';
+  document.getElementById('lv2f-instructions').value = '';
   libv2PopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
   libv2FormSyncSubs();
   document.getElementById('libv2-form-wrap').classList.add('show');
@@ -872,6 +916,7 @@ function openLibV2EditForm(name) {
   document.getElementById('lv2f-reps').value = ex.reps || '';
   document.getElementById('lv2f-rest').value = ex.rest || '';
   document.getElementById('lv2f-type').value = ex.type || 'gym';
+  document.getElementById('lv2f-instructions').value = EXERCISE_BLURBS[ex.name] || '';
   libv2PopulateGroupSelect(ex.group);
   libv2FormSyncSubs();
   if (ex.sub) document.getElementById('lv2f-sub').value = ex.sub;
@@ -889,6 +934,7 @@ function saveLibV2Form() {
   const type = document.getElementById('lv2f-type').value;
   const reps = document.getElementById('lv2f-reps').value.trim() || '8-12';
   const restRaw = document.getElementById('lv2f-rest').value.trim() || '60 sec';
+  const instructions = document.getElementById('lv2f-instructions').value.trim();
   const restSecsMatch = restRaw.match(/(\d+)\s*min/);
   const restSecsMatchSec = restRaw.match(/(\d+)\s*sec/);
   const restSecs = restSecsMatch ? parseInt(restSecsMatch[1]) * 60 : (restSecsMatchSec ? parseInt(restSecsMatchSec[1]) : 60);
@@ -896,6 +942,11 @@ function saveLibV2Form() {
   if (_libv2FormEditingName) {
     const ex = DEFAULT_LIBRARY_V2.find(e => e.name === _libv2FormEditingName);
     if (ex) {
+      // If the name changed, move the instructions entry over to the new name
+      if (_libv2FormEditingName !== name && EXERCISE_BLURBS[_libv2FormEditingName] !== undefined) {
+        EXERCISE_BLURBS[name] = EXERCISE_BLURBS[_libv2FormEditingName];
+        delete EXERCISE_BLURBS[_libv2FormEditingName];
+      }
       ex.name = name; ex.group = group; ex.type = type; ex.reps = reps; ex.rest = restRaw; ex.restSecs = restSecs;
       if (sub !== undefined) ex.sub = sub; else delete ex.sub;
     }
@@ -904,7 +955,10 @@ function saveLibV2Form() {
     if (sub !== undefined) newEx.sub = sub;
     DEFAULT_LIBRARY_V2.push(newEx);
   }
+  if (instructions) EXERCISE_BLURBS[name] = instructions;
+  else delete EXERCISE_BLURBS[name];
   saveLibraryV2();
+  saveBlurbsV2();
   closeLibV2Form();
   renderLibV2();
 }
