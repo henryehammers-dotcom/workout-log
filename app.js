@@ -787,7 +787,7 @@ function closeExerciseDetail() {
   document.getElementById('ex-detail-wrap').classList.remove('show');
 }
 function addExerciseToDayFromLibrary(ex) {
-  const d = currentDay;
+  const d = _libv2PickingDay || currentDay;
   const already = schedule[d].exercises.some(e => e.name === ex.name);
   const doAdd = () => {
     schedule[d].exercises.push({
@@ -822,7 +822,15 @@ function addExerciseToDayFromLibrary(ex) {
   }
 }
 
+// Opens the Library tab specifically to add an exercise into the given day —
+// called from the "+ Add exercise" button on the Log tab (edit mode).
+function openLibV2ForDay(day) {
+  _libv2PickingDay = day;
+  switchTab('library');
+}
+
 /* ─── LIBRARY V2 ADD/EDIT FORM ─── */
+let _libv2PickingDay = null; // set when Library is opened from a specific day's "+ Add exercise" button
 let _libv2FormEditingName = null; // null = adding new; otherwise the name of the exercise being edited
 
 function libv2PopulateGroupSelect(selectedGroupKey) {
@@ -904,6 +912,7 @@ function saveLibV2Form() {
 function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
+  if (tab !== 'library') _libv2PickingDay = null;
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
   else if (tab === 'library') {
@@ -1074,7 +1083,7 @@ function renderDayContent() {
         </div>`;
       }).join('');
 
-  const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibSheet('${d}')">+ Add exercise</button>` : '';
+  const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibV2ForDay('${d}')">+ Add exercise</button>` : '';
   container.innerHTML = top + `<div id="drag-zone">${exCards}</div>` + addBtn;
   initDrag(d);
 }
