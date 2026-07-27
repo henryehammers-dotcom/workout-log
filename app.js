@@ -12,7 +12,6 @@ const KEYS = {
   theme:     'wl_theme',
   units:     'wl_units',
   welcomed:  'wl_welcomed',
-  library:   'wl_library',
   hideWarn:  'wl_hide_warn',
   greetDate: 'wl_greet_date',
   greetOrder:'wl_greet_order',
@@ -50,54 +49,6 @@ const DEFAULT_DAYS = {
   Fri:{label:'Friday',   restDay:false,exercises:[]},
   Sat:{label:'Saturday', restDay:false,exercises:[]},
 };
-const DEFAULT_LIBRARY = [
-  {group:'Chest',exercises:[
-    {name:'Barbell bench press',  reps:'6-10',  rest:'2 min', restSecs:120,type:'gym'},
-    {name:'Dumbbell bench press', reps:'8-12',  rest:'2 min', restSecs:120,type:'dumbbell'},
-    {name:'Push-up',              reps:'10-20', rest:'60 sec',restSecs:60, type:'bodyweight'},
-  ]},
-  {group:'Back',exercises:[
-    {name:'Barbell bent-over row', reps:'6-10',  rest:'2 min', restSecs:120,type:'gym'},
-    {name:'Dumbbell bent-over row',reps:'8-12',  rest:'90 sec',restSecs:90, type:'dumbbell'},
-    {name:'Pull-up',               reps:'5-10',  rest:'2 min', restSecs:120,type:'bodyweight'},
-  ]},
-  {group:'Shoulders',exercises:[
-    {name:'Barbell overhead press',reps:'6-10',  rest:'2 min', restSecs:120,type:'gym'},
-    {name:'Dumbbell lateral raise',reps:'12-15', rest:'60 sec',restSecs:60, type:'dumbbell'},
-    {name:'Pike push-up',          reps:'8-15',  rest:'60 sec',restSecs:60, type:'bodyweight'},
-  ]},
-  {group:'Biceps',exercises:[
-    {name:'Barbell curl',          reps:'8-12',  rest:'60 sec',restSecs:60, type:'gym'},
-    {name:'Dumbbell bicep curl',   reps:'10-12', rest:'60 sec',restSecs:60, type:'dumbbell'},
-    {name:'Chin-up',               reps:'5-10',  rest:'2 min', restSecs:120,type:'bodyweight'},
-  ]},
-  {group:'Triceps',exercises:[
-    {name:'Cable tricep pushdown',    reps:'10-15',rest:'60 sec',restSecs:60,type:'gym'},
-    {name:'Overhead tricep extension',reps:'10-12',rest:'60 sec',restSecs:60,type:'dumbbell'},
-    {name:'Diamond push-up',          reps:'8-15', rest:'60 sec',restSecs:60,type:'bodyweight'},
-  ]},
-  {group:'Quads',exercises:[
-    {name:'Barbell squat',         reps:'6-10',  rest:'2 min', restSecs:120,type:'gym'},
-    {name:'Dumbbell goblet squat', reps:'10-15', rest:'90 sec',restSecs:90, type:'dumbbell'},
-    {name:'Bodyweight squat',      reps:'15-25', rest:'60 sec',restSecs:60, type:'bodyweight'},
-  ]},
-  {group:'Hamstrings & glutes',exercises:[
-    {name:'Barbell deadlift',      reps:'4-8',   rest:'2 min', restSecs:120,type:'gym'},
-    {name:'Dumbbell RDL',          reps:'8-12',  rest:'90 sec',restSecs:90, type:'dumbbell'},
-    {name:'Glute bridge',          reps:'15-20', rest:'60 sec',restSecs:60, type:'bodyweight'},
-  ]},
-  {group:'Calves',exercises:[
-    {name:'Seated calf raise machine',reps:'12-20',rest:'60 sec',restSecs:60,type:'gym'},
-    {name:'Dumbbell calf raise',      reps:'15-20',rest:'45 sec',restSecs:45,type:'dumbbell'},
-    {name:'Bodyweight calf raise',    reps:'20-30',rest:'45 sec',restSecs:45,type:'bodyweight'},
-  ]},
-  {group:'Core',exercises:[
-    {name:'Cable crunch',          reps:'12-15',    rest:'60 sec',restSecs:60,type:'gym'},
-    {name:'Dumbbell side bend',    reps:'12-15',    rest:'45 sec',restSecs:45,type:'dumbbell'},
-    {name:'Plank',                 reps:'30-60 sec',rest:'60 sec',restSecs:60,type:'bodyweight'},
-  ]},
-];
-
 /* ═══════════════════════════════════════════════════════════
    LIBRARY V2 — PREVIEW ONLY, NOT WIRED TO ANYTHING YET
    Two-tier tag system: group (gross) + sub (sub-region).
@@ -395,7 +346,6 @@ function loadBlurbsV2() {
 
 /* ─── STATE ─── */
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
-let library  = JSON.parse(JSON.stringify(DEFAULT_LIBRARY));
 let currentDay = DAY_NAMES[new Date().getDay()];
 let dayEditMode = false;
 let sessionSets = {};
@@ -408,8 +358,6 @@ let currentUnits = 'lbs';
 /* ─── STORAGE ─── */
 function saveSchedule() { try { localStorage.setItem(KEYS.schedule, JSON.stringify(schedule)); } catch {} }
 function loadSchedule() { try { const s = localStorage.getItem(KEYS.schedule); if (s) schedule = JSON.parse(s); } catch {} }
-function saveLibrary()  { try { localStorage.setItem(KEYS.library,  JSON.stringify(library));  } catch {} }
-function loadLibrary()  { try { const s = localStorage.getItem(KEYS.library);  if (s) library  = JSON.parse(s); } catch {} }
 function getHistory()   { try { return JSON.parse(localStorage.getItem(KEYS.history) || '{}'); } catch { return {}; } }
 function saveHistory(h) { try { localStorage.setItem(KEYS.history, JSON.stringify(h)); } catch {} }
 
@@ -458,20 +406,31 @@ function syncWelcomeTheme(t) {
 }
 
 /* ─── ID MIGRATION ─── */
+// Stamps exId onto any schedule/history entries that don't have one yet, using
+// the current Library V2 as the source of truth (matched by name). This only
+// backfills legacy entries created before live-linking existed; entries that
+// already have an exId are left untouched.
 function migrateIds() {
-  let changed = false;
-  library.forEach(g => g.exercises.forEach(ex => { if (!ex.id) { ex.id = genId(); changed = true; } }));
-  if (changed) saveLibrary();
   const nameToId = {};
-  library.forEach(g => g.exercises.forEach(ex => { nameToId[ex.name] = ex.id; }));
+  DEFAULT_LIBRARY_V2.forEach(ex => { nameToId[ex.name] = ex.id; });
+  const validIds = new Set(DEFAULT_LIBRARY_V2.map(ex => ex.id));
+  // Fixes an exId in place if it's missing, or if it's set but doesn't match any
+  // current Library V2 entry (a leftover from the old, pre-fix id system) while
+  // the name still matches something in the library — safe to repair since the
+  // name is the more reliable signal in that case. Never touches the name itself.
+  function fixExId(entry) {
+    if (entry.exId && validIds.has(entry.exId)) return false;
+    if (nameToId[entry.name]) { entry.exId = nameToId[entry.name]; return true; }
+    return false;
+  }
   let schedChanged = false;
   DAY_NAMES.forEach(d => {
-    schedule[d].exercises.forEach(ex => { if (!ex.exId && nameToId[ex.name]) { ex.exId = nameToId[ex.name]; schedChanged = true; } });
+    schedule[d].exercises.forEach(ex => { if (fixExId(ex)) schedChanged = true; });
   });
   if (schedChanged) saveSchedule();
   const hist = getHistory();
   let histChanged = false;
-  Object.values(hist).forEach(entries => entries.forEach(e => { if (!e.exId && nameToId[e.name]) { e.exId = nameToId[e.name]; histChanged = true; } }));
+  Object.values(hist).forEach(entries => entries.forEach(e => { if (fixExId(e)) histChanged = true; }));
   if (histChanged) saveHistory(hist);
 }
 
@@ -581,7 +540,8 @@ function saveFile() {
     data: {
       history:  localStorage.getItem(KEYS.history)  || '{}',
       schedule: localStorage.getItem(KEYS.schedule) || '',
-      library:  localStorage.getItem(KEYS.library)  || '',
+      libraryV2: localStorage.getItem(KEYS.libraryV2) || '',
+      blurbsV2:  localStorage.getItem(KEYS.blurbsV2)  || '',
       name:     localStorage.getItem(KEYS.name)     || '',
       bw:       localStorage.getItem(KEYS.bw)       || '',
       units:    localStorage.getItem(KEYS.units)    || 'lbs',
@@ -629,7 +589,12 @@ function applyRestore() {
     }
     set(KEYS.history,  d.history);
     set(KEYS.schedule, d.schedule);
-    set(KEYS.library,  d.library);
+    // libraryV2/blurbsV2: new backups have these directly. Older backups (from
+    // before this fix) only saved the legacy 'library' key, which the app no
+    // longer reads — nothing meaningful to restore from those for the library,
+    // so we just leave the current library in place in that case.
+    if (d.libraryV2) set(KEYS.libraryV2, d.libraryV2);
+    if (d.blurbsV2)  set(KEYS.blurbsV2,  d.blurbsV2);
     set(KEYS.name,     d.name);
     set(KEYS.bw,       d.bw);
     set(KEYS.units,    d.units);
@@ -649,7 +614,6 @@ function applyRestore() {
   document.documentElement.setAttribute('data-theme', savedTheme);
   syncThemeColorMeta(savedTheme);
   loadSchedule();
-  loadLibrary();
   loadLibraryV2();
   loadBlurbsV2();
 
@@ -724,7 +688,7 @@ function closeSidebar() {
 }
 
 /* ─── TAB SWITCHING ─── */
-/* ─── LIBRARY (V2) — not yet wired to day-logging ─── */
+/* ─── LIBRARY (V2) — live-linked to day-logging via exId, see resolveScheduledExercise ─── */
 let libv2ActiveGroup = null;
 let libv2ActiveSub = null;
 let libv2SearchQuery = '';
