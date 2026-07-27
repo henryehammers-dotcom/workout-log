@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v103';
+const CACHE = 'tallymark-v106';
 const FILES = [
   './index.html',
   './app.js',
