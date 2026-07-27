@@ -17,6 +17,7 @@ const KEYS = {
   greetDate: 'wl_greet_date',
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
+  libraryV2: 'wl_library_v2',
 };
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
@@ -113,7 +114,7 @@ const MUSCLE_GROUPS_V2 = [
 ];
 
 // Full merged library: boilerplate defaults + Henry personal exercises (IDs preserved)
-const DEFAULT_LIBRARY_V2 = [
+const DEFAULT_LIBRARY_V2_BASE = [
   {name:"Incline barbell bench press", group:"chest", sub:"Upper chest", reps:"6-10", rest:"2 min", restSecs:120, type:"gym"},
   {name:"Low-to-high cable fly", group:"chest", sub:"Upper chest", reps:"12-15", rest:"60 sec", restSecs:60, type:"gym"},
   {name:"Barbell bench press", group:"chest", sub:"Mid chest", reps:"6-10", rest:"2 min", restSecs:120, type:"gym"},
@@ -220,6 +221,21 @@ const DEFAULT_LIBRARY_V2 = [
   {name:"Seated Single Leg Stretch", group:"mobility", reps:"30-60 sec", rest:"30 sec", restSecs:30, type:"bodyweight", id:"9ta3l"},
   {name:"Thread the needle", group:"mobility", reps:"30-60 sec", rest:"30 sec", restSecs:30, type:"bodyweight", id:"ih0qk"},
 ];
+
+// Live, mutable working copy of the library — this is what the rest of the app reads
+// from and writes to. Starts as a fresh copy of the hardcoded defaults, then any saved
+// edits/additions are merged on top at load time (see loadLibraryV2 below).
+let DEFAULT_LIBRARY_V2 = JSON.parse(JSON.stringify(DEFAULT_LIBRARY_V2_BASE));
+
+function saveLibraryV2() {
+  try { localStorage.setItem(KEYS.libraryV2, JSON.stringify(DEFAULT_LIBRARY_V2)); } catch {}
+}
+function loadLibraryV2() {
+  try {
+    const saved = localStorage.getItem(KEYS.libraryV2);
+    if (saved) DEFAULT_LIBRARY_V2 = JSON.parse(saved);
+  } catch {}
+}
 
 // Sister-variant chains: same movement, different equipment. Clicking "See X version"
 // on any exercise in a chain advances to the next one, wrapping back to the first.
@@ -612,6 +628,7 @@ function applyRestore() {
   syncThemeColorMeta(savedTheme);
   loadSchedule();
   loadLibrary();
+  loadLibraryV2();
 
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -763,14 +780,125 @@ function openExerciseDetail(name) {
     sisterBtn.style.visibility = 'hidden';
   }
   document.getElementById('ex-detail-add-btn').onclick = () => addExerciseToDayFromLibrary(ex);
+  document.getElementById('ex-detail-gear-btn').onclick = () => { closeExerciseDetail(); openLibV2EditForm(ex.name); };
   document.getElementById('ex-detail-wrap').classList.add('show');
 }
 function closeExerciseDetail() {
   document.getElementById('ex-detail-wrap').classList.remove('show');
 }
 function addExerciseToDayFromLibrary(ex) {
-  // Placeholder — actual "add to current day" wiring comes later.
-  closeExerciseDetail();
+  const d = currentDay;
+  const already = schedule[d].exercises.some(e => e.name === ex.name);
+  const doAdd = () => {
+    schedule[d].exercises.push({
+      exId: ex.id || '',
+      name: ex.name,
+      reps: ex.reps,
+      sets: 0,
+      duration: ex.type === 'custom' ? (ex.reps || '') : '',
+      note: '',
+      rest: ex.rest,
+      restSecs: ex.restSecs,
+      type: ex.type,
+    });
+    saveSchedule();
+    if (currentDay === d) renderDayContent();
+  };
+  if (already) {
+    closeExerciseDetail();
+    showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
+      doAdd();
+      closeModal();
+    });
+    return;
+  }
+  doAdd();
+  const btn = document.getElementById('ex-detail-add-btn');
+  if (btn) {
+    btn.textContent = `✓ Added to ${d}`;
+    setTimeout(() => { closeExerciseDetail(); btn.textContent = 'Add to Day'; }, 700);
+  } else {
+    closeExerciseDetail();
+  }
+}
+
+/* ─── LIBRARY V2 ADD/EDIT FORM ─── */
+let _libv2FormEditingName = null; // null = adding new; otherwise the name of the exercise being edited
+
+function libv2PopulateGroupSelect(selectedGroupKey) {
+  const sel = document.getElementById('lv2f-group');
+  sel.innerHTML = MUSCLE_GROUPS_V2.map(g =>
+    `<option value="${g.key}"${g.key === selectedGroupKey ? ' selected' : ''}>${g.label}</option>`
+  ).join('');
+}
+function libv2FormSyncSubs() {
+  const groupKey = document.getElementById('lv2f-group').value;
+  const groupObj = MUSCLE_GROUPS_V2.find(g => g.key === groupKey);
+  const subSel = document.getElementById('lv2f-sub');
+  const subs = groupObj ? groupObj.subs : [];
+  if (subs.length) {
+    subSel.style.display = '';
+    subSel.innerHTML = subs.map(s => `<option value="${escAttr(s)}">${escHtml(s)}</option>`).join('');
+  } else {
+    subSel.style.display = 'none';
+    subSel.innerHTML = '';
+  }
+}
+function openLibV2AddForm() {
+  _libv2FormEditingName = null;
+  document.getElementById('libv2-form-title').textContent = 'Add exercise';
+  document.getElementById('lv2f-name').value = '';
+  document.getElementById('lv2f-reps').value = '';
+  document.getElementById('lv2f-rest').value = '';
+  document.getElementById('lv2f-type').value = 'gym';
+  libv2PopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
+  libv2FormSyncSubs();
+  document.getElementById('libv2-form-wrap').classList.add('show');
+}
+function openLibV2EditForm(name) {
+  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
+  if (!ex) return;
+  _libv2FormEditingName = name;
+  document.getElementById('libv2-form-title').textContent = 'Edit exercise';
+  document.getElementById('lv2f-name').value = ex.name;
+  document.getElementById('lv2f-reps').value = ex.reps || '';
+  document.getElementById('lv2f-rest').value = ex.rest || '';
+  document.getElementById('lv2f-type').value = ex.type || 'gym';
+  libv2PopulateGroupSelect(ex.group);
+  libv2FormSyncSubs();
+  if (ex.sub) document.getElementById('lv2f-sub').value = ex.sub;
+  document.getElementById('libv2-form-wrap').classList.add('show');
+}
+function closeLibV2Form() {
+  document.getElementById('libv2-form-wrap').classList.remove('show');
+}
+function saveLibV2Form() {
+  const name = document.getElementById('lv2f-name').value.trim();
+  if (!name) { document.getElementById('lv2f-name').focus(); return; }
+  const group = document.getElementById('lv2f-group').value;
+  const subSelect = document.getElementById('lv2f-sub');
+  const sub = subSelect.style.display !== 'none' ? subSelect.value : undefined;
+  const type = document.getElementById('lv2f-type').value;
+  const reps = document.getElementById('lv2f-reps').value.trim() || '8-12';
+  const restRaw = document.getElementById('lv2f-rest').value.trim() || '60 sec';
+  const restSecsMatch = restRaw.match(/(\d+)\s*min/);
+  const restSecsMatchSec = restRaw.match(/(\d+)\s*sec/);
+  const restSecs = restSecsMatch ? parseInt(restSecsMatch[1]) * 60 : (restSecsMatchSec ? parseInt(restSecsMatchSec[1]) : 60);
+
+  if (_libv2FormEditingName) {
+    const ex = DEFAULT_LIBRARY_V2.find(e => e.name === _libv2FormEditingName);
+    if (ex) {
+      ex.name = name; ex.group = group; ex.type = type; ex.reps = reps; ex.rest = restRaw; ex.restSecs = restSecs;
+      if (sub !== undefined) ex.sub = sub; else delete ex.sub;
+    }
+  } else {
+    const newEx = { name, group, type, reps, rest: restRaw, restSecs, id: genId() };
+    if (sub !== undefined) newEx.sub = sub;
+    DEFAULT_LIBRARY_V2.push(newEx);
+  }
+  saveLibraryV2();
+  closeLibV2Form();
+  renderLibV2();
 }
 
 function switchTab(tab) {

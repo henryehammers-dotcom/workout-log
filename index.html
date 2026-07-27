@@ -389,6 +389,29 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .ex-detail-btn-row{display:flex;gap:10px}
 .ex-detail-btn{flex:1;padding:12px 10px;border-radius:999px;border:none;background:#ffffff;color:#000000;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .ex-detail-btn:active{transform:scale(0.97)}
+
+/* Library header row (title + add button) */
+.libv2-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.libv2-add-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.libv2-add-btn:active{transform:scale(0.95)}
+
+/* Gear icon on exercise detail popup */
+.ex-detail-gear{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ex-detail-gear:active{transform:scale(0.93)}
+.ex-detail-card{position:relative}
+
+/* Add/edit exercise form modal */
+.libv2-form-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:810;display:none;align-items:center;justify-content:center;padding:24px}
+.libv2-form-wrap.show{display:flex}
+.libv2-form-card{background:var(--bg);border-radius:20px;padding:22px 20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto}
+.libv2-form-title{font-family:var(--display);font-weight:700;font-size:18px;color:var(--text);margin-bottom:16px}
+.libv2-form-btn-row{display:flex;gap:10px;margin-top:6px}
+.libv2-form-btn-row .ex-detail-btn{background:var(--bg3);color:var(--text)}
+.libv2-form-btn-row .ex-detail-btn-primary{background:var(--accent);color:var(--accent-text)}
+
+/* Scroll-hint chevrons on the two horizontal filter rows */
+.libv2-scroll-wrap{position:relative}
+.libv2-scroll-hint{position:absolute;right:0;top:0;bottom:0;width:28px;display:flex;align-items:center;justify-content:flex-end;background:linear-gradient(to right, transparent, var(--bg) 65%);pointer-events:none;color:var(--text3)}
 .ex-detail-name{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
 .ex-detail-count{font-size:13px;color:var(--text2);margin-bottom:14px}
 
@@ -807,20 +830,66 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Library tab ── -->
 <div id="tab-library" style="display:none;min-height:200px">
-  <div class="page-title">Library</div>
-  <div class="libv2-group-row" id="libv2-group-row"></div>
-  <div class="libv2-sub-row" id="libv2-sub-row"></div>
+  <div class="libv2-header-row">
+    <div class="page-title" style="margin-bottom:0">Library</div>
+    <button class="libv2-add-btn" onclick="openLibV2AddForm()" aria-label="Add custom exercise">+</button>
+  </div>
+  <div class="libv2-scroll-wrap">
+    <div class="libv2-group-row" id="libv2-group-row"></div>
+    <div class="libv2-scroll-hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div>
+  </div>
+  <div class="libv2-scroll-wrap">
+    <div class="libv2-sub-row" id="libv2-sub-row"></div>
+    <div class="libv2-scroll-hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div>
+  </div>
   <div class="libv2-tiles" id="libv2-tiles"></div>
 </div>
 
 <!-- ── Exercise detail popup ── -->
 <div class="ex-detail-wrap" id="ex-detail-wrap" onclick="if(event.target===this) closeExerciseDetail()">
   <div class="ex-detail-card">
+    <button class="ex-detail-gear" id="ex-detail-gear-btn" aria-label="Edit exercise">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
     <div class="ex-detail-title" id="ex-detail-title"></div>
     <div class="ex-detail-blurb" id="ex-detail-blurb"></div>
     <div class="ex-detail-btn-row">
       <button class="ex-detail-btn" id="ex-detail-sister-btn"></button>
       <button class="ex-detail-btn ex-detail-btn-primary" id="ex-detail-add-btn">Add to Day</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Library exercise add/edit form ── -->
+<div class="libv2-form-wrap" id="libv2-form-wrap" onclick="if(event.target===this) closeLibV2Form()">
+  <div class="libv2-form-card">
+    <div class="libv2-form-title" id="libv2-form-title">Add exercise</div>
+    <div class="field-group"><span class="field-hint">Name</span><input class="field-input" id="lv2f-name" type="text" placeholder="e.g. Cable row"></div>
+    <div class="field-grid">
+      <div class="field-group">
+        <span class="field-hint">Muscle group</span>
+        <select class="field-select" id="lv2f-group" onchange="libv2FormSyncSubs()"></select>
+      </div>
+      <div class="field-group">
+        <span class="field-hint">Sub-region</span>
+        <select class="field-select" id="lv2f-sub"></select>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field-group"><span class="field-hint">Equipment</span>
+        <select class="field-select" id="lv2f-type">
+          <option value="gym">Gym</option>
+          <option value="dumbbell">Dumbbell</option>
+          <option value="bodyweight">Bodyweight</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="field-group"><span class="field-hint">Reps</span><input class="field-input" id="lv2f-reps" type="text" placeholder="8-12"></div>
+    </div>
+    <div class="field-group"><span class="field-hint">Rest</span><input class="field-input" id="lv2f-rest" type="text" placeholder="60 sec"></div>
+    <div class="libv2-form-btn-row">
+      <button class="ex-detail-btn" onclick="closeLibV2Form()">Cancel</button>
+      <button class="ex-detail-btn ex-detail-btn-primary" onclick="saveLibV2Form()">Save</button>
     </div>
   </div>
 </div>
