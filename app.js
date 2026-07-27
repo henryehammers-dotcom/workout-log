@@ -726,9 +726,6 @@ function renderLibV2() {
       <div class="libv2-tile-tags">${escHtml(ex.sub)} · ${escHtml(ex.reps)} reps · ${escHtml(ex.rest)} rest</div>
     </div>
   `).join('');
-  tilesEl.querySelectorAll('.libv2-tile').forEach(tile => {
-    tile.addEventListener('click', () => openExerciseDetail(tile.dataset.exname));
-  });
 }
 
 /* ─── EXERCISE DETAIL POPUP ─── */
@@ -739,6 +736,17 @@ function sisterLabel(name) {
   }
   return name.split(' ')[0];
 }
+// Delegated, document-level click handler for library exercise tiles.
+// Attached immediately at script parse time — does not depend on DOMContentLoaded
+// or any other init step succeeding first, and survives any number of re-renders
+// of the tiles grid since it's attached once to the document, not per-tile.
+document.addEventListener('click', function(e) {
+  const tile = e.target.closest('.libv2-tile');
+  if (tile && tile.dataset.exname) {
+    openExerciseDetail(tile.dataset.exname);
+  }
+});
+
 function openExerciseDetail(name) {
   const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
   if (!ex) return;
