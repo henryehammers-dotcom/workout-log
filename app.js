@@ -465,6 +465,7 @@ function closeSidebar() {
 /* ─── TAB SWITCHING ─── */
 /* ─── LIBRARY (V2) — not yet wired to day-logging ─── */
 let libv2ActiveGroup = null;
+let historyBackTarget = 'log'; // 'log' if arrived via tapping an exercise name on Log, 'history-list' if arrived via History tab
 let libv2ActiveSub = null;
 
 function libv2SelectGroup(key) {
@@ -525,7 +526,7 @@ function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
-  if (tab === 'history') renderHistory();
+  if (tab === 'history') { historyBackTarget = 'history-list'; renderHistory(); }
   else if (tab === 'library') {
     renderLibV2();
     document.getElementById('log-back-btn')?.classList.remove('show');
@@ -540,8 +541,13 @@ function openExerciseHistory(key) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-history').classList.add('active');
   ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === 'history' ? '' : 'none'; });
+  historyBackTarget = 'log';
   renderHistory(key);
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+}
+function handleHistoryBack() {
+  if (historyBackTarget === 'log') switchTab('log');
+  else { renderHistory(); requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0))); }
 }
 
 /* ─── DAY PICKER / CONTENT ─── */
