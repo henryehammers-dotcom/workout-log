@@ -1041,7 +1041,7 @@ function switchTab(tab) {
     requestAnimationFrame(() => renderLibV2()); // safety re-render once tab is actually visible
   }
   else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
-  else { destroyCharts(); document.getElementById('log-back-btn')?.classList.remove('show'); }
+  else { destroyCharts(); renderDayContent(); document.getElementById('log-back-btn')?.classList.remove('show'); }
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
   closeSidebar();
 }
