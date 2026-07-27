@@ -692,14 +692,15 @@ function getSetData(d, i) {
 }
 // Resolves a scheduled exercise's display fields (name/reps/rest/type) from the
 // current Library entry when it has an exId, so editing the Library updates it
-// everywhere it's scheduled. Falls back to the day's own stored copy if there's
-// no exId, or if the Library entry it pointed to has since been deleted.
+// everywhere it's scheduled. Falls back to matching by name (for exercises added
+// before live-linking existed, or with a missing/stale exId), then finally to
+// the day's own stored copy if nothing in the Library matches at all.
 function resolveScheduledExercise(ex) {
-  if (ex.exId) {
-    const libEx = DEFAULT_LIBRARY_V2.find(e => e.id === ex.exId);
-    if (libEx) {
-      return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type };
-    }
+  let libEx = null;
+  if (ex.exId) libEx = DEFAULT_LIBRARY_V2.find(e => e.id === ex.exId);
+  if (!libEx && ex.name) libEx = DEFAULT_LIBRARY_V2.find(e => e.name === ex.name);
+  if (libEx) {
+    return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type };
   }
   return ex;
 }
