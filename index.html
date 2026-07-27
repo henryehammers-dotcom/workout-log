@@ -414,6 +414,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .libv2-form-btn-row{display:flex;gap:10px;margin-top:6px}
 .libv2-form-btn-row .ex-detail-btn{background:var(--bg3);color:var(--text)}
 .libv2-form-btn-row .ex-detail-btn-primary{background:var(--accent);color:var(--accent-text)}
+.libv2-delete-btn{width:100%;margin-top:10px;padding:11px;border-radius:12px;border:1px solid var(--red-border);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.libv2-delete-btn:active{transform:scale(0.98)}
 
 /* Scroll-hint chevrons on the two horizontal filter rows */
 .libv2-scroll-wrap{position:relative}
@@ -881,6 +883,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <button class="ex-detail-btn" onclick="closeLibV2Form()">Cancel</button>
       <button class="ex-detail-btn ex-detail-btn-primary" onclick="saveLibV2Form()">Save</button>
     </div>
+    <button class="libv2-delete-btn" id="lv2f-delete-btn" onclick="deleteLibV2Exercise()" style="display:none">Delete exercise</button>
   </div>
 </div>
 

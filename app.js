@@ -690,6 +690,19 @@ function getSetData(d, i) {
   if (!sessionSets[k]) sessionSets[k] = { sets: [{reps:'', weight:''}], logged: false };
   return sessionSets[k];
 }
+// Resolves a scheduled exercise's display fields (name/reps/rest/type) from the
+// current Library entry when it has an exId, so editing the Library updates it
+// everywhere it's scheduled. Falls back to the day's own stored copy if there's
+// no exId, or if the Library entry it pointed to has since been deleted.
+function resolveScheduledExercise(ex) {
+  if (ex.exId) {
+    const libEx = DEFAULT_LIBRARY_V2.find(e => e.id === ex.exId);
+    if (libEx) {
+      return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type };
+    }
+  }
+  return ex;
+}
 function flushInputs() {
   document.querySelectorAll('[data-reps],[data-weight]').forEach(el => {
     const d = el.dataset.day, i = parseInt(el.dataset.ex), si = parseInt(el.dataset.si);
@@ -915,6 +928,7 @@ function openLibV2AddForm() {
   document.getElementById('lv2f-rest').value = '';
   document.getElementById('lv2f-type').value = 'gym';
   document.getElementById('lv2f-instructions').value = '';
+  document.getElementById('lv2f-delete-btn').style.display = 'none';
   libv2PopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
   libv2FormSyncSubs();
   document.getElementById('libv2-form-wrap').classList.add('show');
@@ -929,6 +943,7 @@ function openLibV2EditForm(name) {
   document.getElementById('lv2f-rest').value = ex.rest || '';
   document.getElementById('lv2f-type').value = ex.type || 'gym';
   document.getElementById('lv2f-instructions').value = EXERCISE_BLURBS[ex.name] || '';
+  document.getElementById('lv2f-delete-btn').style.display = '';
   libv2PopulateGroupSelect(ex.group);
   libv2FormSyncSubs();
   if (ex.sub) document.getElementById('lv2f-sub').value = ex.sub;
@@ -973,6 +988,45 @@ function saveLibV2Form() {
   saveBlurbsV2();
   closeLibV2Form();
   renderLibV2();
+}
+
+function deleteLibV2Exercise() {
+  if (!_libv2FormEditingName) return;
+  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === _libv2FormEditingName);
+  if (!ex) return;
+
+  // Find every day currently scheduling this exercise (matched by exId).
+  const daysUsingIt = DAY_NAMES.filter(d =>
+    schedule[d].exercises.some(e => ex.id && e.exId === ex.id)
+  ).map(d => FULL_DAYS[d]);
+
+  const doDelete = () => {
+    const idx = DEFAULT_LIBRARY_V2.findIndex(e => e.id === ex.id);
+    if (idx !== -1) DEFAULT_LIBRARY_V2.splice(idx, 1);
+    delete EXERCISE_BLURBS[ex.name];
+    // Remove it from every day that had it scheduled, since keeping it there
+    // would be a dead entry with no way to log new history against it.
+    DAY_NAMES.forEach(d => {
+      schedule[d].exercises = schedule[d].exercises.filter(e => !(ex.id && e.exId === ex.id));
+    });
+    saveLibraryV2();
+    saveBlurbsV2();
+    saveSchedule();
+    closeLibV2Form();
+    renderLibV2();
+    if (schedule[currentDay]) renderDayContent();
+  };
+
+  if (daysUsingIt.length) {
+    const dayList = daysUsingIt.join(', ');
+    showModal(
+      'Delete exercise?',
+      `"${ex.name}" is currently in ${dayList}. Deleting it from the library will also remove it from ${daysUsingIt.length > 1 ? 'those days' : 'that day'}, and you won't be able to log any more history for it. This can't be undone.`,
+      () => { doDelete(); closeModal(); }
+    );
+  } else {
+    showModal('Delete exercise?', `Delete "${ex.name}" from the library? This can't be undone.`, () => { doDelete(); closeModal(); });
+  }
 }
 
 function switchTab(tab) {
@@ -1080,7 +1134,8 @@ function renderDayContent() {
     ? (dayEditMode
         ? '<div class="empty">No exercises yet — tap “+ Add exercise” below to pick one from your library.</div>'
         : '<div class="empty">No exercises yet — tap the ••• menu above and choose “Edit workout” to add some.</div>')
-    : day.exercises.map((ex, i) => {
+    : day.exercises.map((rawEx, i) => {
+        const ex = resolveScheduledExercise(rawEx);
         const data = getSetData(d, i);
         const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', (ex.type==='custom'&&ex.duration) ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
         const noteHtml = ex.note ? `<div class="ex-note">${escHtml(ex.note)}</div>` : '';
