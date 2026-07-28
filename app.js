@@ -1044,7 +1044,13 @@ function deleteLibV2Exercise() {
 function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
-  if (tab !== 'library') _libv2PickingDay = null;
+  if (tab !== 'library') {
+    _libv2PickingDay = null;
+    if (document.getElementById('libv2-search-pill')?.classList.contains('show')) closeLibV2Search();
+    libv2ActiveGroup = null;
+    libv2ActiveSub = null;
+    libv2SearchQuery = '';
+  }
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
   else if (tab === 'library') {
