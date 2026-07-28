@@ -251,7 +251,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    EXERCISE CARD
    ────────────────────────────────────────────────────────── */
-.exercise-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px;transition:border-color .15s, opacity .15s}
+.exercise-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px;transition:border-color .15s, opacity .15s;position:relative}
+.ex-info-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3,var(--bg));color:var(--text3);font-size:12px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.ex-info-btn:active{transform:scale(0.92)}
 .exercise-card.is-logged{background:var(--accent-dim);border-color:var(--accent-border)}
 .ex-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
 .ex-head-text{flex:1;min-width:0}
@@ -386,6 +388,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .ex-detail-card{background:#000000;border-radius:24px;padding:32px 28px;max-width:400px;width:100%;text-align:center}
 .ex-detail-title{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:0.02em;color:#ffffff;text-transform:uppercase;margin-bottom:24px}
 .ex-detail-blurb{font-size:15px;line-height:1.5;color:#ffffff;margin-bottom:28px}
+.ex-instr-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
+.ex-instr-wrap.show{display:flex}
+.ex-instr-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:26px 24px;max-width:380px;width:100%}
+.ex-instr-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;line-height:1}
+.ex-instr-title{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);margin-bottom:14px;padding-right:20px}
+.ex-instr-body{font-size:14px;line-height:1.55;color:var(--text2,var(--text))}
 .ex-detail-btn-row{display:flex;gap:10px}
 .ex-detail-btn{flex:1;padding:12px 10px;border-radius:999px;border:none;background:#ffffff;color:#000000;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .ex-detail-btn:active{transform:scale(0.97)}
@@ -554,6 +562,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .settings-input.wide{width:200px;text-align:left;font-weight:500}
 .settings-input.narrow{width:80px}
 .settings-row-unit{font-size:12px;color:var(--text3)}
+.tm-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.tm-switch-track{position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:background .15s}
+.tm-switch-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,0.25)}
+.tm-switch.on .tm-switch-track{background:var(--accent,#4ca626)}
+.tm-switch.on .tm-switch-thumb{transform:translateX(18px)}
 
 /* settings stand-alone rows (toggle / segmented control) */
 .settings-block{padding:6px 0}
@@ -851,6 +864,15 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
+<!-- ── Log-page instructions popup (lightweight, no actions) ── -->
+<div class="ex-instr-wrap" id="ex-instr-wrap" onclick="if(event.target===this) closeExerciseInstructions()">
+  <div class="ex-instr-card">
+    <button class="ex-instr-close" onclick="closeExerciseInstructions()" aria-label="Close">✕</button>
+    <div class="ex-instr-title" id="ex-instr-title"></div>
+    <div class="ex-instr-body" id="ex-instr-body"></div>
+  </div>
+</div>
+
 <!-- ── Library exercise add/edit form ── -->
 <div class="libv2-form-wrap" id="libv2-form-wrap" onclick="if(event.target===this) closeLibV2Form()">
   <div class="libv2-form-card">
@@ -986,6 +1008,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <div class="segmented" id="units-toggle">
           <button class="seg-opt active" data-val="lbs" onclick="setUnits('lbs')">lbs</button>
           <button class="seg-opt" data-val="kg" onclick="setUnits('kg')">kg</button>
+        </div>
+      </div>
+      <div class="settings-block-row">
+        <span class="settings-block-title">Show instructions icon</span>
+        <div class="tm-switch" id="instr-icons-toggle" onclick="toggleInstructionsIcons(!showInstructionsIcons)">
+          <div class="tm-switch-track"></div>
+          <div class="tm-switch-thumb"></div>
         </div>
       </div>
     </div>

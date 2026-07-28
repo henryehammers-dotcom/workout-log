@@ -18,6 +18,7 @@ const KEYS = {
   music:     'wl_music_enabled',
   libraryV2: 'wl_library_v2',
   blurbsV2:  'wl_blurbs_v2',
+  showInstr: 'wl_show_instr_icons',
 };
 // APP_VERSION is read from the service worker's cache name at runtime,
 // so the only place to update the version is service-worker.js.
@@ -354,6 +355,7 @@ let timerInterval = null, timerSeconds = 0;
 let exerciseTimers = {};
 let activeCharts = [];
 let currentUnits = 'lbs';
+let showInstructionsIcons = false;
 
 /* ─── STORAGE ─── */
 function saveSchedule() { try { localStorage.setItem(KEYS.schedule, JSON.stringify(schedule)); } catch {} }
@@ -400,6 +402,12 @@ function setTheme(t) {
   localStorage.setItem(KEYS.theme, t);
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
   syncThemeColorMeta(t);
+}
+function toggleInstructionsIcons(on) {
+  showInstructionsIcons = !!on;
+  localStorage.setItem(KEYS.showInstr, showInstructionsIcons ? '1' : '0');
+  document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
+  renderDayContent();
 }
 function syncWelcomeTheme(t) {
   document.querySelectorAll('#welcome-theme .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
@@ -473,6 +481,7 @@ function openSettings(isFirstLaunch) {
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
+  document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -638,6 +647,7 @@ function applyRestore() {
     try {
       migrateIds();
       currentUnits = localStorage.getItem(KEYS.units) || 'lbs';
+      showInstructionsIcons = localStorage.getItem(KEYS.showInstr) === '1';
 
       // Sync visible toggles
       document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
@@ -845,6 +855,17 @@ function openExerciseDetail(name) {
 }
 function closeExerciseDetail() {
   document.getElementById('ex-detail-wrap').classList.remove('show');
+}
+
+function openExerciseInstructions(name) {
+  const blurb = EXERCISE_BLURBS[name];
+  if (!blurb) return;
+  document.getElementById('ex-instr-title').textContent = name;
+  document.getElementById('ex-instr-body').textContent = blurb;
+  document.getElementById('ex-instr-wrap').classList.add('show');
+}
+function closeExerciseInstructions() {
+  document.getElementById('ex-instr-wrap').classList.remove('show');
 }
 function addExerciseToDayFromLibrary(ex) {
   const d = _libv2PickingDay || currentDay;
@@ -1157,9 +1178,14 @@ function renderDayContent() {
         const data = getSetData(d, i);
         const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', (ex.type==='custom'&&ex.duration) ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
         const noteHtml = ex.note ? `<div class="ex-note">${escHtml(ex.note)}</div>` : '';
+        const hasBlurb = !!(EXERCISE_BLURBS[ex.name] && EXERCISE_BLURBS[ex.name].trim());
+        const infoHtml = (showInstructionsIcons && hasBlurb)
+          ? `<button class="ex-info-btn" onclick="event.stopPropagation();openExerciseInstructions('${escAttr(ex.name).replace(/'/g, "\\'")}')" aria-label="View instructions">?</button>`
+          : '';
 
         if (ex.type === 'custom') {
           return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
+            ${!dayEditMode?infoHtml:''}
             <div class="ex-head">
               ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
               <div class="ex-head-text">
@@ -1198,6 +1224,7 @@ function renderDayContent() {
         }
 
         return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
+          ${!dayEditMode?infoHtml:''}
           <div class="ex-head">
             ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
             <div class="ex-head-text">
