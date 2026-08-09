@@ -6,7 +6,7 @@
   "background_color": "#f4efe6",
   "theme_color": "#1f4f47",
   "icons": [
-    { "src": "Tallyup-icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "Tallyup-icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "Tallyup-Icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "Tallyup-Icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
