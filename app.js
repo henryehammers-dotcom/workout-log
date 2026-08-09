@@ -347,6 +347,9 @@ function loadBlurbsV2() {
 
 /* ─── STATE ─── */
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
+// currentDay tracks the day-of-week of whatever date the calendar is currently
+// viewing (see calendar.js / viewedDate) — it's what schedule-editing actions
+// (rest-day toggle, copy-to-all-days, add-exercise) operate on.
 let currentDay = DAY_NAMES[new Date().getDay()];
 let dayEditMode = false;
 let sessionSets = {};
@@ -675,7 +678,14 @@ function applyRestore() {
 })();
 
 /* ─── SESSION DATA ─── */
-function sk(d, i) { return d + '_' + i; }
+// Keyed by (viewed date + exercise index) rather than just day-of-week, so that
+// e.g. logging Wednesday's leg day on one Wednesday doesn't leave every other
+// Wednesday viewed later in the same session stuck showing "already logged".
+// Falls back to plain day-of-week if calendar.js hasn't loaded (shouldn't happen).
+function sk(d, i) {
+  const dateTag = (typeof viewedDate !== 'undefined' && typeof formatISODate === 'function') ? formatISODate(viewedDate) : '';
+  return d + '_' + i + (dateTag ? '_' + dateTag : '');
+}
 function getSetData(d, i) {
   const k = sk(d, i);
   if (!sessionSets[k]) sessionSets[k] = { sets: [{reps:'', weight:''}], logged: false };
@@ -849,7 +859,19 @@ function openExerciseDetail(name) {
   } else {
     sisterBtn.style.visibility = 'hidden';
   }
-  document.getElementById('ex-detail-add-btn').onclick = () => addExerciseToDayFromLibrary(ex);
+  const addBtn = document.getElementById('ex-detail-add-btn');
+  if (typeof _customLogPicking !== 'undefined' && _customLogPicking) {
+    addBtn.textContent = 'Add to Custom Log';
+    addBtn.onclick = () => {
+      _customLogPicking = false;
+      closeExerciseDetail();
+      switchTab('log');
+      customLogReceiveExercise(ex);
+    };
+  } else {
+    addBtn.textContent = 'Add to Day';
+    addBtn.onclick = () => addExerciseToDayFromLibrary(ex);
+  }
   document.getElementById('ex-detail-gear-btn').onclick = () => { closeExerciseDetail(); openLibV2EditForm(ex.name); };
   document.getElementById('ex-detail-wrap').classList.add('show');
 }
@@ -1072,6 +1094,12 @@ function switchTab(tab) {
     libv2ActiveSub = null;
     libv2SearchQuery = '';
   }
+  // Leaving to a tab that isn't Library or Log (where the Custom Log sheet lives)
+  // means the user abandoned the picker — don't leave "Add to Custom Log" stuck
+  // as the exercise-detail button label for a future normal "Add to Day" visit.
+  if (tab !== 'library' && tab !== 'log' && typeof _customLogPicking !== 'undefined') {
+    _customLogPicking = false;
+  }
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
   if (tab === 'history') renderHistory();
   else if (tab === 'library') {
@@ -1129,129 +1157,13 @@ function toggleDayEditMode() {
 function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// Legacy entry point — kept because lots of code (rest-day toggle, copy-day,
+// clear-session, timers, unit/theme switches, etc.) calls this to refresh the
+// Log tab. It now just keeps currentDay in sync with the calendar's viewed
+// date and delegates actual rendering to the calendar system (calendar.js).
 function renderDayContent() {
-  const d = currentDay, day = schedule[d];
-  const container = document.getElementById('day-content');
-  const labelSuffix = day.label.includes('—') ? day.label.replace(/^.+?—\s*/, '') : '';
-  const u = currentUnits;
-
-  const dayDropdownItems = DAY_NAMES.map(dn =>
-    `<div class="day-dropdown-item${dn===d?' active':''}${schedule[dn].restDay?' rest-day':''}" onclick="selectDay('${dn}')">${FULL_DAYS[dn]}</div>`
-  ).join('');
-
-  const titleHtml = dayEditMode
-    ? `<input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
-        oninput="schedule['${d}'].label=FULL_DAYS['${d}']+' — '+this.value;saveSchedule()">`
-    : `<div class="day-title-input day-title-readonly">${labelSuffix ? escHtml(labelSuffix) : '<span class="day-title-placeholder">Add workout title…</span>'}</div>`;
-
-  const top = `
-    <div class="day-header">
-      <button class="day-picker" id="day-picker-btn" onclick="toggleDayPicker()">
-        <span class="day-abbr">${FULL_DAYS[d]}</span>
-        <svg class="day-picker-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="day-dropdown" id="day-dropdown">${dayDropdownItems}</div>
-      ${titleHtml}
-      ${dayEditMode ? '<div class="edit-mode-badge">Editing</div>' : ''}
-      <button class="day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-      </button>
-      <div class="day-menu-dropdown" id="day-menu-dropdown">
-        <button class="day-menu-item" onclick="closeDayMenu();toggleDayEditMode()">${dayEditMode?'Done editing':'Edit workout'}</button>
-        <button class="day-menu-item" onclick="closeDayMenu();toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
-        <button class="day-menu-item" onclick="closeDayMenu();confirmCopyDay()">Copy to all days</button>
-        <button class="day-menu-item" onclick="closeDayMenu();confirmClearSession()">Clear session</button>
-      </div>
-    </div>`;
-
-  if (day.restDay) {
-    container.innerHTML = top + `<div class="rest-screen"><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
-    return;
-  }
-
-  const exCards = day.exercises.length === 0
-    ? (dayEditMode
-        ? '<div class="empty">No exercises yet — tap “+ Add exercise” below to pick one from your library.</div>'
-        : '<div class="empty">No exercises yet — tap the ••• menu above and choose “Edit workout” to add some.</div>')
-    : day.exercises.map((rawEx, i) => {
-        const ex = resolveScheduledExercise(rawEx);
-        const data = getSetData(d, i);
-        const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', (ex.type==='custom'&&ex.duration) ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
-        const noteHtml = ex.note ? `<div class="ex-note">${escHtml(ex.note)}</div>` : '';
-        const hasBlurb = !!(EXERCISE_BLURBS[ex.name] && EXERCISE_BLURBS[ex.name].trim());
-        const infoHtml = (showInstructionsIcons && hasBlurb)
-          ? `<button class="ex-info-btn" onclick="event.stopPropagation();openExerciseInstructions('${escAttr(ex.name).replace(/'/g, "\\'")}')" aria-label="View instructions">?</button>`
-          : '';
-
-        if (ex.type === 'custom') {
-          return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
-            ${!dayEditMode?infoHtml:''}
-            <div class="ex-head">
-              ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
-              <div class="ex-head-text">
-              <div class="ex-name" onclick="openExerciseHistory('${escAttr(ex.exId || ex.name).replace(/'/g, "\\'")}')">${escHtml(ex.name)}</div>
-                ${meta?`<div class="ex-meta">${meta}</div>`:''}
-                ${noteHtml}
-              </div>
-              ${dayEditMode?`<button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>`:''}
-            </div>
-          </div>`;
-        }
-
-        // Set number = (number of sets already logged today for this exercise) + 1
-        const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
-        const histAll = getHistory();
-        const todaysEntry = (histAll[today] || []).find(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
-        const setNumber = (todaysEntry ? todaysEntry.sets.length : 0) + 1;
-
-        const rows = data.sets.map((s, si) => `
-          <div class="set-row">
-            <span class="set-num">${setNumber}</span>
-            <input class="set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-day="${d}" data-ex="${i}" data-si="${si}" data-reps="1" ${data.logged?'disabled':''}>
-            <input class="set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-day="${d}" data-ex="${i}" data-si="${si}" data-weight="1" ${data.logged?'disabled':''}>
-            <button class="del-set" onclick="clearSet('${d}',${i},${si})" ${data.logged?'disabled':''} aria-label="Clear">✕</button>
-          </div>`).join('');
-
-        const timerKey = d + '-' + i;
-        const timer = exerciseTimers[timerKey];
-        let logBtnHtml;
-        if (timer && timer.secsLeft > 0) {
-          const m = Math.floor(timer.secsLeft/60), s = timer.secsLeft%60;
-          const display = m + ':' + String(s).padStart(2,'0');
-          logBtnHtml = `<button class="log-sets-btn timing" id="logbtn-${d}-${i}" onclick="skipExerciseTimer('${d}',${i})">Rest <span class="timer-count">${display}</span></button>`;
-        } else {
-          logBtnHtml = `<button class="log-sets-btn" onclick="logExercise('${d}',${i})">Log sets</button>`;
-        }
-
-        return `<div class="exercise-card${data.logged?' is-logged':''}" data-idx="${i}">
-          ${!dayEditMode?infoHtml:''}
-          <div class="ex-head">
-            ${dayEditMode?'<span class="ex-drag">⠿</span>':''}
-            <div class="ex-head-text">
-              <div class="ex-name" onclick="openExerciseHistory('${escAttr(ex.exId || ex.name).replace(/'/g, "\\'")}')">${escHtml(ex.name)}</div>
-              ${meta?`<div class="ex-meta">${meta}</div>`:''}
-              ${noteHtml}
-            </div>
-            ${dayEditMode?`<button class="ex-x" onclick="removeExercise('${d}',${i})" aria-label="Remove">✕</button>`:''}
-          </div>
-          <div class="sets-table">
-            <div class="sets-thead">
-              <span class="sets-thead-cell center">Set</span>
-              <span class="sets-thead-cell center">Reps</span>
-              <span class="sets-thead-cell center">Weight (${u})</span>
-              <span></span>
-            </div>
-            ${rows}
-          </div>
-          <div class="card-footer">
-            ${logBtnHtml}
-          </div>
-        </div>`;
-      }).join('');
-
-  const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibV2ForDay('${d}')">+ Add exercise</button>` : '';
-  container.innerHTML = top + `<div id="drag-zone">${exCards}</div>` + addBtn;
-  initDrag(d);
+  currentDay = DAY_NAMES[viewedDate.getDay()];
+  renderCalendarRoot();
 }
 
 /* ─── DRAG ─── */
@@ -1327,10 +1239,12 @@ function removeExercise(d, idx) {
     schedule[d].exercises.splice(idx, 1);
     const n = {};
     Object.keys(sessionSets).forEach(k => {
-      const [kd, ki] = [k.split('_')[0], parseInt(k.split('_')[1])];
+      const parts = k.split('_');
+      const kd = parts[0], ki = parseInt(parts[1]), dateTag = parts.slice(2).join('_');
+      const suffix = dateTag ? '_' + dateTag : '';
       if (kd !== d) { n[k] = sessionSets[k]; return; }
       if (ki < idx) n[k] = sessionSets[k];
-      else if (ki > idx) n[kd+'_'+(ki-1)] = sessionSets[k];
+      else if (ki > idx) n[kd+'_'+(ki-1)+suffix] = sessionSets[k];
     });
     sessionSets = n; saveSchedule(); closeModal(); renderDayContent();
   });
@@ -1414,16 +1328,28 @@ function confirmCopyDay() {
   });
 }
 function confirmClearSession() {
-  showModal('Clear session?', 'All logged sets for today will be cleared from this view. Your saved history is kept.', () => {
-    Object.keys(sessionSets).forEach(k => { if (k.startsWith(currentDay + '_')) delete sessionSets[k]; });
+  showModal('Clear session?', 'All logged sets for this day will be cleared from this view. Your saved history is kept.', () => {
+    const dateTag = (typeof formatISODate === 'function') ? formatISODate(viewedDate) : '';
+    const prefix = currentDay + '_';
+    const suffix = dateTag ? '_' + dateTag : '';
+    Object.keys(sessionSets).forEach(k => {
+      if (k.startsWith(prefix) && (!suffix || k.endsWith(suffix))) delete sessionSets[k];
+    });
     closeModal(); renderDayContent();
   });
 }
 
 /* ─── REST TIMER (per exercise, lives in the Log button) ─── */
-function startTimer(secs, d, idx) {
+// Timer key includes the date being logged against, so a rest timer started
+// while viewing one date doesn't bleed into another date that happens to share
+// the same day-of-week (e.g. two different Wednesdays navigated to in one session).
+function timerKeyFor(d, idx, isoDate) {
+  const tag = isoDate || ((typeof viewedDate !== 'undefined' && typeof formatISODate === 'function') ? formatISODate(viewedDate) : '');
+  return d + '-' + idx + (tag ? '-' + tag : '');
+}
+function startTimer(secs, d, idx, isoDate) {
   if (typeof d === 'undefined' || typeof idx === 'undefined') return;
-  const key = d + '-' + idx;
+  const key = timerKeyFor(d, idx, isoDate);
   if (exerciseTimers[key] && exerciseTimers[key].intervalId) {
     clearInterval(exerciseTimers[key].intervalId);
   }
@@ -1435,7 +1361,7 @@ function startTimer(secs, d, idx) {
     t.secsLeft--;
     if (t.secsLeft <= 0) {
       clearInterval(t.intervalId);
-      finishTimer(d, idx);
+      finishTimer(d, idx, isoDate);
     } else {
       // Update only the button text — no full re-render so any other inputs stay focused
       const btn = document.getElementById('logbtn-' + key);
@@ -1447,8 +1373,8 @@ function startTimer(secs, d, idx) {
     }
   }, 1000);
 }
-function finishTimer(d, idx) {
-  const key = d + '-' + idx;
+function finishTimer(d, idx, isoDate) {
+  const key = timerKeyFor(d, idx, isoDate);
   delete exerciseTimers[key];
   // Clear input row and unlock so button reverts to "Log sets"
   const data = getSetData(d, idx);
@@ -1456,11 +1382,11 @@ function finishTimer(d, idx) {
   data.sets = [{reps:'',weight:''}];
   renderDayContent();
 }
-function skipExerciseTimer(d, idx) {
-  const key = d + '-' + idx;
+function skipExerciseTimer(d, idx, isoDate) {
+  const key = timerKeyFor(d, idx, isoDate);
   const t = exerciseTimers[key];
   if (t && t.intervalId) clearInterval(t.intervalId);
-  finishTimer(d, idx);
+  finishTimer(d, idx, isoDate);
 }
 
 /* ─── MODAL ─── */

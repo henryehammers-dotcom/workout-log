@@ -1,8 +1,10 @@
-const CACHE = 'tallymark-v114';
+const CACHE = 'tallymark-v115';
 const FILES = [
   './index.html',
   './app.js',
   './app2.js',
+  './calendar.js',
+  './custom-log.js',
   './logo-anim.js',
   './manifest.json',
   './Tallymark-icon-192.png',

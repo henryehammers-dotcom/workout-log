@@ -213,6 +213,8 @@ function openEditSession(exKey, date) {
   _editSession = {
     exKey,
     date,
+    _openedFromDate: date,
+    dateChanged: false,
     name: entry.name,
     exId: entry.exId || '',
     sets: entry.sets.map(s => ({ reps: String(s.reps ?? ''), weight: String(s.weight ?? '') })),
@@ -224,10 +226,39 @@ function closeEditSession() {
   _editSession = null;
   document.getElementById('edit-session-wrap').classList.remove('show');
 }
+// Renders the session date as a big, tappable element. Tapping swaps it for a
+// native date input; changing that input stages a new date on _editSession
+// (actually moving the history entry happens on Save, in saveEditSession).
+function renderEditSessionDate() {
+  const el = document.getElementById('edit-session-date');
+  if (!el || !_editSession) return;
+  const d = parseSessionDate(_editSession.date);
+  const display = _editSession.date.replace(/\w+,\s/, '');
+  el.innerHTML = `<span class="edit-session-date-big" id="edit-session-date-display" onclick="editSessionDateEditToggle()">${escHtml(display)}
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+  </span>`;
+}
+function editSessionDateEditToggle() {
+  if (!_editSession) return;
+  const el = document.getElementById('edit-session-date');
+  const d = parseSessionDate(_editSession.date);
+  const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  el.innerHTML = `<input type="date" class="edit-session-date-input-big" id="edit-session-date-input" value="${iso}">`;
+  const input = document.getElementById('edit-session-date-input');
+  input.addEventListener('change', () => {
+    if (!input.value) { renderEditSessionDate(); return; }
+    const [y,m,dd] = input.value.split('-').map(Number);
+    const newDate = new Date(y, m-1, dd);
+    _editSession.date = formatHistoryDate(newDate);
+    _editSession.dateChanged = true;
+    renderEditSessionDate();
+  });
+  input.focus();
+}
 function renderEditSession() {
   if (!_editSession) return;
   document.getElementById('edit-session-title').textContent = _editSession.name;
-  document.getElementById('edit-session-date').textContent = _editSession.date.replace(/\w+,\s/, '');
+  renderEditSessionDate();
   const rows = _editSession.sets.map((s, i) => `
     <div class="edit-set-row">
       <div class="edit-set-num">Set ${i+1}</div>
@@ -256,17 +287,33 @@ function saveEditSession() {
     .map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
   const exKey = _editSession.exKey;
   const hist = getHistory();
-  const dayEntries = hist[_editSession.date];
+  // The entry always still lives under the date it was originally opened from —
+  // find and remove it from there first, then re-insert under the (possibly new) date.
+  const fromDate = _editSession._openedFromDate;
+  const dayEntries = hist[fromDate];
   if (!dayEntries) { closeEditSession(); renderHistory(); return; }
   const i = dayEntries.findIndex(e => (e.exId || e.name) === exKey);
   if (i < 0) { closeEditSession(); renderHistory(); return; }
-  if (!cleanSets.length) {
-    // All sets cleared -> remove this session entirely
-    dayEntries.splice(i, 1);
-    if (!dayEntries.length) delete hist[_editSession.date];
-  } else {
-    dayEntries[i].sets = cleanSets;
+  const entry = dayEntries[i];
+  dayEntries.splice(i, 1);
+  if (!dayEntries.length) delete hist[fromDate];
+
+  if (cleanSets.length) {
+    entry.sets = cleanSets;
+    const toDate = _editSession.date;
+    if (!hist[toDate]) hist[toDate] = [];
+    // Merge into an existing entry for the same exercise on the target date, if any
+    const existingIdx = hist[toDate].findIndex(e => (e.exId || e.name) === exKey);
+    if (existingIdx >= 0 && toDate !== fromDate) {
+      hist[toDate][existingIdx].sets = hist[toDate][existingIdx].sets.concat(cleanSets);
+    } else if (existingIdx >= 0) {
+      hist[toDate][existingIdx] = entry;
+    } else {
+      hist[toDate].push(entry);
+    }
   }
+  // else: all sets cleared -> entry stays removed (deleted)
+
   saveHistory(hist);
   closeEditSession();
   // If exercise still has any sessions across history, stay on its detail view; otherwise fall back to list
@@ -276,7 +323,7 @@ function saveEditSession() {
 function deleteSession() {
   if (!_editSession) return;
   const exKey = _editSession.exKey;
-  const date = _editSession.date;
+  const date = _editSession._openedFromDate;
   const name = _editSession.name;
   showModal('Delete this session?', `Permanently remove the ${date.replace(/\w+,\s/, '')} session for ${name}?`, () => {
     const hist = getHistory();

@@ -173,6 +173,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    TOP BAR (hamburger + logo, sidebar closed)
    ────────────────────────────────────────────────────────── */
 .top-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:18px}
+.custom-log-btn{height:34px;padding:0 16px;border-radius:var(--r-pill);border:1px solid var(--accent-border);background:var(--accent-dim);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.custom-log-btn:hover{filter:brightness(0.97)}
+.custom-log-btn:active{transform:scale(0.97)}
 .hamburger-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .log-back-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(64px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .log-back-btn.show{display:flex}
@@ -187,7 +190,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));transform:translateX(-100%);transition:transform .25s ease}
 .sidebar.show{transform:translateX(0)}
 .sidebar-header{margin-bottom:20px}
-.sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:12px}
+.sidebar-header-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:0}
 .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
 .sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;border:none;background:transparent;color:var(--text2);font-size:15px;font-weight:500;cursor:pointer;text-align:left;transition:background .15s,color .15s;font-family:inherit}
 .sidebar-nav-item:hover{background:var(--bg3)}
@@ -235,6 +239,69 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .day-title-placeholder{color:var(--text3)}
 [data-theme=matrix] .day-title-input{font-family:var(--mono);letter-spacing:0;font-weight:700}
 .edit-mode-badge{display:inline-block;margin-top:8px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r-pill)}
+
+/* ──────────────────────────────────────────────────────────
+   CALENDAR — Day / Week / Month / Year
+   ────────────────────────────────────────────────────────── */
+.cal-wrap{width:100%}
+.cal-pill{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--bg3);border-radius:var(--r-pill);padding:3px;margin:0 auto 18px;max-width:320px}
+.cal-pill-opt{position:relative;z-index:1;background:transparent;border:none;padding:8px 0;font-size:12px;font-weight:700;letter-spacing:0.02em;color:var(--text2);cursor:pointer;font-family:inherit;border-radius:var(--r-pill);transition:color .2s}
+.cal-pill-opt.active{color:var(--accent-text)}
+.cal-pill-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(25% - 3px);background:var(--accent);border-radius:var(--r-pill);transition:transform .22s cubic-bezier(.5,0,.2,1);z-index:0}
+.cal-pill-thumb-week{transform:translateX(100%)}
+.cal-pill-thumb-month{transform:translateX(200%)}
+.cal-pill-thumb-year{transform:translateX(300%)}
+
+.cal-nav-arrows{position:absolute;top:0;right:0;display:flex;gap:2px}
+.cal-nav-arrow{width:28px;height:28px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.cal-nav-arrow:hover{background:var(--bg3)}
+.cal-nav-arrow:active{transform:scale(0.94)}
+
+.cal-day-header{position:relative;padding-top:2px}
+.cal-day-date{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-0.02em;color:var(--text);margin-bottom:4px}
+.cal-today-btn{display:inline-block;vertical-align:middle;margin-left:6px;padding:3px 10px;font-size:11px;font-weight:700;border-radius:var(--r-pill);border:1px solid var(--accent-border);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:inherit}
+.cal-day-menu-btn{top:2px}
+
+.cal-card-header{position:relative;margin-bottom:14px;min-height:32px}
+.cal-title{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-0.02em;color:var(--text);cursor:default;display:flex;align-items:baseline;gap:6px}
+.cal-title-accent{color:var(--accent)}
+#cal-month-title{cursor:pointer}
+.cal-title-caret{color:var(--text3);flex-shrink:0}
+.cal-month-dropdown{display:none;position:absolute;top:100%;left:0;margin-top:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;max-height:260px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.20);z-index:40;min-width:160px}
+.cal-month-dropdown.show{display:block}
+.cal-month-dropdown-item{padding:8px 10px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-radius:6px}
+.cal-month-dropdown-item:hover{background:var(--bg3);color:var(--text)}
+.cal-month-dropdown-item.active{color:var(--accent);font-weight:700}
+
+.cal-mode-toggles{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.cal-mode-toggle{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:11px;color:var(--text2);font-weight:600}
+.cal-mode-toggle .tm-switch{transform:scale(0.8);transform-origin:right center}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;text-align:left;padding-left:2px;padding-bottom:2px}
+.cal-cell{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:6px;min-height:58px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;flex-direction:column}
+.cal-cell:hover{border-color:var(--border2);background:var(--bg3)}
+.cal-cell-dim{opacity:0.35}
+.cal-cell-today{border-color:var(--accent);border-width:2px;padding:5px}
+.cal-cell-top{display:flex;align-items:flex-start;justify-content:space-between;line-height:1}
+.cal-cell-date{font-size:12px;font-weight:700;color:var(--text)}
+.cal-cell-today .cal-cell-date{color:var(--accent)}
+.cal-cell-badge{font-size:12px;line-height:1;flex-shrink:0}
+.cal-cell-check{color:var(--text)}
+.cal-cell-pr{color:#d4a017}
+.cal-cell-label{margin-top:auto;font-size:9px;font-weight:600;color:var(--text2);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-cell-trend{margin-top:auto;display:flex;justify-content:center}
+.cal-trend-up{color:var(--green)}
+.cal-trend-down{color:var(--red)}
+.cal-trend-flat{color:#c9a227}
+
+.cal-grid-week .cal-cell{min-height:90px}
+
+.cal-year-header{display:flex;justify-content:center;margin-bottom:10px}
+.cal-year-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cal-year-item{padding:16px 10px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);cursor:pointer;text-align:center}
+.cal-year-item:hover{border-color:var(--border2);background:var(--bg3)}
+.cal-year-item:active{transform:scale(0.98)}
 
 /* ──────────────────────────────────────────────────────────
    DAY MENU — overflow (···) button + dropdown for day-level actions
@@ -478,6 +545,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .edit-session-header{margin-bottom:14px}
 .edit-session-title{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:2px}
 .edit-session-date{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.custom-log-date-input{margin-left:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:3px 8px;font-size:12px;color:var(--text);font-family:inherit;text-transform:none;letter-spacing:normal}
+/* Editable big date on the History edit-session sheet */
+.edit-session-date-big{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-0.01em;color:var(--text);text-transform:none;cursor:pointer;display:flex;align-items:center;gap:8px}
+.edit-session-date-big:hover{color:var(--accent)}
+.edit-session-date-input-big{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-0.01em;color:var(--text);background:var(--bg3);border:1px solid var(--accent-border);border-radius:var(--r-sm);padding:2px 8px}
 .edit-session-sets{display:flex;flex-direction:column;gap:8px;overflow-y:auto;margin-bottom:16px;padding-right:2px}
 .edit-set-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:8px;align-items:center}
 .edit-set-num{font-size:12px;color:var(--text3);font-weight:600}
@@ -706,7 +778,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Sidebar ── -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-title" id="sidebar-title">Workout log</div>
+    <div class="sidebar-header-row">
+      <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
+      <div class="sidebar-title" id="sidebar-title">Workout log</div>
+    </div>
     <button class="bw-chip" onclick="closeSidebar();openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
       <span class="bw-chip-label">BW</span>
       <span class="bw-chip-value" id="bw-display">—</span>
@@ -766,7 +841,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
-  <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
+  <button class="custom-log-btn" onclick="openCustomLog()">Custom log</button>
 </div>
 
 <!-- ── Log tab ── -->
@@ -1093,6 +1168,28 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
+<!-- ── Custom log sheet ── -->
+<div class="edit-session-wrap" id="custom-log-wrap">
+  <div class="edit-session">
+    <div class="edit-session-header">
+      <div class="edit-session-title">Custom log</div>
+      <div class="edit-session-date">
+        <span id="custom-log-date-display"></span>
+        <input type="date" id="custom-log-date-input" class="custom-log-date-input" oninput="customLogSetDate(this.value)">
+      </div>
+    </div>
+    <div id="custom-log-entries"></div>
+    <button class="add-exercise-btn" onclick="customLogAddExercise()">+ Add exercise</button>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base" onclick="closeCustomLog()">Cancel</button>
+        <button class="btn-base primary" onclick="saveCustomLog()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Update banner ── -->
 <div class="update-banner" id="update-banner" onclick="applyUpdate()">New version available — tap to update</div>
 
@@ -1111,5 +1208,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <script src="logo-anim.js"></script>
 <script src="app.js"></script>
 <script src="app2.js"></script>
+<script src="calendar.js"></script>
+<script src="custom-log.js"></script>
 </body>
 </html>
