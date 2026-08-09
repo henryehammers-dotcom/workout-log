@@ -1137,7 +1137,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 </div>
 
 <!-- ── Edit session sheet ── -->
-<div class="edit-session-wrap" id="edit-session-wrap">
+<div class="edit-session-wrap" id="edit-session-wrap" onclick="if(event.target===this) closeEditSession()">
   <div class="edit-session">
     <div class="edit-session-header">
       <div class="edit-session-title" id="edit-session-title"></div>
@@ -1155,7 +1155,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 </div>
 
 <!-- ── Restore (paste backup) sheet ── -->
-<div class="edit-session-wrap" id="restore-wrap">
+<div class="edit-session-wrap" id="restore-wrap" onclick="if(event.target===this) closeRestoreSheet()">
   <div class="edit-session">
     <div class="edit-session-header">
       <div class="edit-session-title">Paste backup file</div>
@@ -1173,7 +1173,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 </div>
 
 <!-- ── Custom log sheet ── -->
-<div class="edit-session-wrap" id="custom-log-wrap">
+<div class="edit-session-wrap" id="custom-log-wrap" onclick="if(event.target===this) closeCustomLog()">
   <div class="edit-session custom-log-sheet">
     <div class="edit-session-header">
       <div class="edit-session-title">Custom log</div>
