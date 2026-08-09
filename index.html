@@ -186,7 +186,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    SIDEBAR
    ────────────────────────────────────────────────────────── */
-.sidebar-overlay{position:fixed;inset:0;background:rgba(15,47,42,0.45);z-index:500;display:none}
+.sidebar-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(15,47,42,0.45);z-index:500;display:none}
 .sidebar-overlay.show{display:block}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));transform:translateX(-100%);transition:transform .25s ease}
 .sidebar.show{transform:translateX(0)}
@@ -198,16 +198,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .sidebar-nav-item.active{color:var(--text);font-weight:600}
 .sidebar-nav-dot{width:7px;height:7px;border-radius:50%;background:transparent;flex-shrink:0;transition:background .15s}
 .sidebar-nav-item.active .sidebar-nav-dot{background:var(--accent)}
-.sidebar-footer{padding-top:12px;border-top:1px solid var(--border)}
+.sidebar-footer{padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
 
 /* ──────────────────────────────────────────────────────────
    LOGO (top-right, sidebar closed)
    ────────────────────────────────────────────────────────── */
 .app-logo{width:34px;height:34px;border-radius:8px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.10);background:#ff9999;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0;-webkit-appearance:none;appearance:none;opacity:1}
 .app-logo svg, .welcome-logo svg{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:1}
-.cog-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
-.cog-btn:hover{background:var(--bg3);border-color:var(--border2)}
-.cog-btn:active{transform:scale(0.96)}
+.settings-trigger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+.settings-trigger-btn:hover{background:var(--bg3);border-color:var(--border2)}
+.settings-trigger-btn:active{transform:scale(0.96)}
 
 /* ──────────────────────────────────────────────────────────
    BW chip (used inside sidebar header)
@@ -454,12 +454,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    EXERCISE DETAIL POPUP
    ────────────────────────────────────────────────────────── */
-.ex-detail-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
+.ex-detail-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
 .ex-detail-wrap.show{display:flex}
 .ex-detail-card{background:#000000;border-radius:24px;padding:32px 28px;max-width:400px;width:100%;text-align:center}
 .ex-detail-title{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:0.02em;color:#ffffff;text-transform:uppercase;margin-bottom:24px}
 .ex-detail-blurb{font-size:15px;line-height:1.5;color:#ffffff;margin-bottom:28px}
-.ex-instr-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
+.ex-instr-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
 .ex-instr-wrap.show{display:flex}
 .ex-instr-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:26px 24px;max-width:380px;width:100%}
 .ex-instr-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;line-height:1}
@@ -486,7 +486,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .ex-detail-card{position:relative}
 
 /* Add/edit exercise form modal */
-.libv2-form-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:810;display:none;align-items:center;justify-content:center;padding:24px}
+.libv2-form-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.45);z-index:810;display:none;align-items:center;justify-content:center;padding:24px}
 .libv2-form-wrap.show{display:flex}
 .libv2-form-card{background:var(--bg);border-radius:20px;padding:22px 20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto}
 .libv2-form-title{font-family:var(--display);font-weight:700;font-size:18px;color:var(--text);margin-bottom:16px}
@@ -543,7 +543,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .session-folder.open .session-folder-body{display:flex}
 
 /* Edit-session sheet */
-.edit-session-wrap{position:fixed;inset:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
+.edit-session-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
 .edit-session-wrap.show{display:flex}
 .edit-session{background:var(--bg);border-radius:16px;padding:20px;max-width:380px;width:100%;border:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
 .custom-log-sheet{max-width:520px;width:100%;height:auto;max-height:85vh}
@@ -618,7 +618,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    MODALS / SHEETS
    ────────────────────────────────────────────────────────── */
-.modal-wrap{position:fixed;inset:0;background:rgba(15,47,42,0.45);backdrop-filter:blur(2px);z-index:1000;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(15,47,42,0.45);backdrop-filter:blur(2px);z-index:1000;display:none;align-items:flex-end;justify-content:center;padding:0}
 .modal-wrap.show{display:flex}
 .modal{background:var(--bg);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 20px 28px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
@@ -682,7 +682,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .version-line{text-align:center;color:var(--text3);font-size:11px;margin-top:18px}
 
 /* confirm modal (centered, smaller) */
-.confirm-wrap{position:fixed;inset:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
+.confirm-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
 .confirm-wrap.show{display:flex}
 .confirm{background:var(--bg);border-radius:16px;padding:20px;max-width:340px;width:100%;border:1px solid var(--border)}
 .confirm-title{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:6px}
@@ -696,7 +696,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    WELCOME / ONBOARDING
    ────────────────────────────────────────────────────────── */
-.welcome-wrap{position:fixed;inset:0;background:var(--bg);z-index:900;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;overflow-y:auto}
+.welcome-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);z-index:900;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;overflow-y:auto}
 .welcome-wrap.show{display:flex}
 .welcome-logo{width:104px;height:104px;border-radius:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.10);background:#ff9999;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0}
 .welcome-title{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-0.02em;color:var(--text);margin-bottom:10px;text-align:center;line-height:1.1}
@@ -712,7 +712,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    GREETING
    ────────────────────────────────────────────────────────── */
-.greeting-wrap{position:fixed;inset:0;background:rgba(6,20,15,0.55);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);z-index:950;display:none;align-items:center;justify-content:center;padding:24px}
+.greeting-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,20,15,0.55);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);z-index:950;display:none;align-items:center;justify-content:center;padding:24px}
 .greeting-wrap.show{display:flex}
 .greeting{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;max-width:380px;width:100%}
 .greeting-day{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-0.01em;margin-bottom:8px}
@@ -823,7 +823,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 
   <div class="sidebar-footer">
-    <button class="cog-btn" onclick="closeSidebar();openSettings(false)" aria-label="Settings">
+    <button class="settings-trigger-btn" onclick="closeSidebar();openSettings(false)" aria-label="Settings">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>

@@ -469,29 +469,32 @@ function applySettingsName(val) { localStorage.setItem(KEYS.name, val); updateAp
 
 /* ─── SETTINGS SHEET ─── */
 function openSettings(isFirstLaunch) {
-  try {
-    if (isFirstLaunch) {
-      const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      syncWelcomeTheme(theme);
-      document.getElementById('welcome-wrap')?.classList.add('show');
-      setTimeout(() => document.getElementById('welcome-name')?.focus(), 300);
-      return;
-    }
-    const modal = document.getElementById('settings-modal');
-    if (!modal) return;
-    modal.classList.add('show');
-    const nameEl = document.getElementById('settings-name');
-    if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
-    const bw = getCleanBw();
-    const bwEl = document.getElementById('settings-bw');
-    if (bwEl) bwEl.value = bw != null ? bw : '';
-    document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
+  if (isFirstLaunch) {
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
-    document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
-  } catch (err) {
-    console.error('openSettings failed:', err);
+    syncWelcomeTheme(theme);
+    document.getElementById('welcome-wrap')?.classList.add('show');
+    setTimeout(() => document.getElementById('welcome-name')?.focus(), 300);
+    return;
   }
+  const modal = document.getElementById('settings-modal');
+  if (!modal) { console.error('openSettings: #settings-modal not found in DOM'); return; }
+  modal.classList.add('show');
+  // Belt-and-suspenders: force the overlay's geometry inline so it can never
+  // render collapsed even if a browser mishandles the CSS `inset` shorthand.
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.right = '0';
+  modal.style.bottom = '0';
+  modal.style.left = '0';
+  const nameEl = document.getElementById('settings-name');
+  if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
+  const bw = getCleanBw();
+  const bwEl = document.getElementById('settings-bw');
+  if (bwEl) bwEl.value = bw != null ? bw : '';
+  document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
+  document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
 }
 function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
 
