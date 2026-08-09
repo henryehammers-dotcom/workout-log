@@ -222,7 +222,7 @@ function renderDayView() {
         const data = getSetData(dn, i);
         const meta = [ex.reps ? ex.reps + ' reps' : '', ex.sets ? ex.sets + ' sets' : '', (ex.type==='custom'&&ex.duration) ? ex.duration : '', ex.rest ? ex.rest + ' rest' : ''].filter(Boolean).join(' · ');
         const noteHtml = ex.note ? `<div class="ex-note">${escHtml(ex.note)}</div>` : '';
-        const hasBlurb = !!(EXERCISE_BLURBS[ex.name] && EXERCISE_BLURBS[ex.name].trim());
+        const hasBlurb = !!(ex.blurb && ex.blurb.trim());
         const infoHtml = (showInstructionsIcons && hasBlurb)
           ? `<button class="ex-info-btn" onclick="event.stopPropagation();openExerciseInstructions('${escAttr(ex.name).replace(/'/g, "\\'")}')" aria-label="View instructions">?</button>`
           : '';

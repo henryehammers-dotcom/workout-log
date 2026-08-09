@@ -1,4 +1,4 @@
-const CACHE = 'tallyup-v134';
+const CACHE = 'tallyup-v135';
 const FILES = [
   './index.html',
   './app.js',

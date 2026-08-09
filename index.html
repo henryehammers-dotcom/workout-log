@@ -412,95 +412,133 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .back-btn{background:transparent;border:none;color:var(--text2);font-size:13px;cursor:pointer;padding:0 0 12px;font-family:inherit}
 
 /* ──────────────────────────────────────────────────────────
-   LIBRARY V2 PREVIEW (unhooked, dev-only)
+   LIBRARY — landing view (muscle group tiles)
    ────────────────────────────────────────────────────────── */
-.libv2-group-row{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;margin-bottom:4px;-webkit-overflow-scrolling:touch}
-.libv2-group-row::-webkit-scrollbar{display:none}
-.libv2-sub-row{display:flex;gap:6px;overflow-x:auto;padding:0 0 14px;-webkit-overflow-scrolling:touch}
-.libv2-sub-row::-webkit-scrollbar{display:none}
-.libv2-chip{flex-shrink:0;width:100px;height:100px;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px;font-weight:700;border-radius:18px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:var(--display);transition:all .15s}
-.libv2-chip-sub{width:78px;height:78px;font-size:12px;font-weight:600;border-radius:14px;background:var(--bg3)}
+.lib-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+.lib-header-btns{display:flex;align-items:center;gap:8px}
+.lib-header-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.lib-header-btn:active{transform:scale(0.95)}
+.lib-back-btn{width:34px;height:34px;border-radius:10px;border:none;background:transparent;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.lib-back-btn:active{transform:scale(0.92)}
+.lib-section-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:0 0 8px 2px}
+.lib-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.lib-group-tile{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:14px;cursor:pointer;text-align:left}
+.lib-group-tile:active{transform:scale(0.98)}
+.lib-group-tile.active{border:2px solid var(--accent);padding:13px}
+.lib-group-tile-dot{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--text2)}
+.lib-group-tile.active .lib-group-tile-dot{border-color:var(--accent)}
+.lib-group-tile-name{font-family:var(--display);font-weight:700;font-size:14px;color:var(--text);margin-top:8px}
+.lib-group-tile.active .lib-group-tile-name{color:var(--accent)}
+.lib-group-tile-count{font-size:11px;color:var(--text3);margin-top:2px}
 
-/* Base (unselected) sub-tile tints — muted, theme-appropriate, one per gross group */
-.libv2-chip-sub.libv2-tint-coral{background:rgba(216,90,48,0.16);color:#8a3a1e;border-color:rgba(216,90,48,0.22)}
-.libv2-chip-sub.libv2-tint-blue{background:rgba(55,138,221,0.16);color:#1c5a8a;border-color:rgba(55,138,221,0.22)}
-.libv2-chip-sub.libv2-tint-amber{background:rgba(239,159,39,0.18);color:#8a5a0e;border-color:rgba(239,159,39,0.24)}
-.libv2-chip-sub.libv2-tint-purple{background:rgba(127,119,221,0.18);color:#4c4499;border-color:rgba(127,119,221,0.24)}
-.libv2-chip-sub.libv2-tint-green{background:rgba(99,153,34,0.18);color:#3d5c14;border-color:rgba(99,153,34,0.24)}
-.libv2-chip-sub.libv2-tint-teal{background:rgba(29,158,117,0.16);color:#146349;border-color:rgba(29,158,117,0.22)}
-.libv2-chip-sub.libv2-tint-gray{background:rgba(136,135,128,0.18);color:#55544f;border-color:rgba(136,135,128,0.24)}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-coral{color:#f0997b}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-blue{color:#85b7eb}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-amber{color:#f0b955}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-purple{color:#afa9ec}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-green{color:#97c459}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-teal{color:#5dcaa5}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-gray{color:#b4b2a9}
-
-/* Active state: deepen the SAME tint color, don't switch to a generic accent */
-.libv2-chip.active.libv2-tint-coral,.libv2-chip-sub.active.libv2-tint-coral{background:#d85a30;color:#ffffff;border-color:#d85a30}
-.libv2-chip.active.libv2-tint-blue,.libv2-chip-sub.active.libv2-tint-blue{background:#378add;color:#ffffff;border-color:#378add}
-.libv2-chip.active.libv2-tint-amber,.libv2-chip-sub.active.libv2-tint-amber{background:#ef9f27;color:#412402;border-color:#ef9f27}
-.libv2-chip.active.libv2-tint-purple,.libv2-chip-sub.active.libv2-tint-purple{background:#7f77dd;color:#ffffff;border-color:#7f77dd}
-.libv2-chip.active.libv2-tint-green,.libv2-chip-sub.active.libv2-tint-green{background:#639922;color:#ffffff;border-color:#639922}
-.libv2-chip.active.libv2-tint-teal,.libv2-chip-sub.active.libv2-tint-teal{background:#1d9e75;color:#ffffff;border-color:#1d9e75}
-.libv2-chip.active.libv2-tint-gray,.libv2-chip-sub.active.libv2-tint-gray{background:#888780;color:#ffffff;border-color:#888780}
-
-.libv2-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.libv2-tile{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:11px 12px;min-width:0;min-height:78px;display:flex;flex-direction:column;justify-content:center}
-.libv2-tile-name{font-family:var(--display);font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.libv2-tile-tags{font-size:11px;color:var(--text3)}
-.libv2-tile{cursor:pointer}
+/* ──────────────────────────────────────────────────────────
+   LIBRARY — category view (filter chips + exercise cards)
+   ────────────────────────────────────────────────────────── */
+.lib-category-count{font-size:13px;color:var(--text3);margin:0 0 12px 44px}
+.lib-scroll-wrap{position:relative}
+.lib-filter-row{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch}
+.lib-filter-row::-webkit-scrollbar{display:none}
+.lib-filter-chip{flex-shrink:0;padding:6px 13px;font-size:12px;font-weight:600;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.lib-filter-chip.active{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.lib-exercise-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:9px;cursor:pointer}
+.lib-exercise-card:active{transform:scale(0.98)}
+.lib-exercise-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.lib-exercise-card-name{font-family:var(--display);font-weight:700;font-size:14px;color:var(--text)}
+.lib-exercise-card-desc{font-size:12px;color:var(--text2);line-height:1.4}
+.lib-diff-badge{flex-shrink:0;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.lib-diff-beginner{background:var(--green-dim);color:var(--green)}
+.lib-diff-intermediate{background:var(--accent-dim);color:var(--accent)}
+.lib-diff-advanced{background:var(--red-dim);color:var(--red)}
 
 /* ──────────────────────────────────────────────────────────
    EXERCISE DETAIL POPUP
    ────────────────────────────────────────────────────────── */
-.ex-detail-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
+.ex-detail-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.45);z-index:800;display:none;align-items:flex-end;justify-content:center;padding:0}
 .ex-detail-wrap.show{display:flex}
-.ex-detail-card{background:#000000;border-radius:24px;padding:32px 28px;max-width:400px;width:100%;text-align:center}
-.ex-detail-title{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:0.02em;color:#ffffff;text-transform:uppercase;margin-bottom:24px}
-.ex-detail-blurb{font-size:15px;line-height:1.5;color:#ffffff;margin-bottom:28px}
+.ex-detail-card{position:relative;background:var(--bg);border-radius:20px 20px 0 0;padding:22px 20px 24px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;text-align:left}
+.ex-detail-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+.ex-detail-title{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-0.01em;color:var(--text);line-height:1.25;flex:1}
+.ex-detail-gear{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.ex-detail-gear:active{transform:scale(0.93)}
+.ex-detail-badges{display:flex;gap:6px;margin-bottom:12px}
+.ex-detail-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
+.ex-detail-badge-neutral{background:var(--bg3);color:var(--text2)}
+.ex-detail-blurb{font-size:14px;line-height:1.55;color:var(--text2);margin-bottom:16px}
+.ex-detail-stats{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:16px;border-top:1px solid var(--border);padding-top:10px}
+.ex-detail-stats td{padding:6px 0;border-bottom:none}
+.ex-detail-stats td:first-child{color:var(--text3);width:42%}
+.ex-detail-stats td:last-child{text-align:right;color:var(--text)}
+.ex-detail-stats svg{vertical-align:-2px;margin-right:5px}
+.ex-detail-btn-row{display:flex;flex-direction:column;gap:8px}
+.ex-detail-btn{width:100%;padding:12px 10px;border-radius:12px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.ex-detail-btn:active{transform:scale(0.98)}
+.ex-detail-btn-primary{background:var(--accent);color:var(--accent-text);border:none}
+
 .ex-instr-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.55);z-index:800;display:none;align-items:center;justify-content:center;padding:24px}
 .ex-instr-wrap.show{display:flex}
 .ex-instr-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:26px 24px;max-width:380px;width:100%}
 .ex-instr-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;line-height:1}
 .ex-instr-title{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);margin-bottom:14px;padding-right:20px}
 .ex-instr-body{font-size:14px;line-height:1.55;color:var(--text2,var(--text))}
-.ex-detail-btn-row{display:flex;gap:10px}
-.ex-detail-btn{flex:1;padding:12px 10px;border-radius:999px;border:none;background:#ffffff;color:#000000;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
-.ex-detail-btn:active{transform:scale(0.97)}
 
-/* Library header row (title + add button) */
-.libv2-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative}
-.libv2-header-btns{display:flex;align-items:center;gap:8px}
-.libv2-search-pill{position:absolute;right:0;top:0;height:34px;background:var(--bg2);border:1px solid var(--border2);border-radius:17px;display:none;align-items:center;gap:8px;padding:0 14px;width:0;overflow:hidden;transition:width .2s ease;z-index:5;color:var(--text3)}
-.libv2-search-pill.show{display:flex;width:min(78vw,340px)}
+/* ──────────────────────────────────────────────────────────
+   SIMILAR EXERCISES POPUP
+   ────────────────────────────────────────────────────────── */
+.lib-similar-sub{font-size:13px;color:var(--text3);margin:0 0 16px 44px}
+.lib-similar-cat{border-radius:14px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:9px;border:1px solid var(--border2);background:var(--bg2)}
+.lib-similar-cat:active{transform:scale(0.98)}
+.lib-similar-cat.active{border:2px solid var(--accent);padding:12px 13px}
+.lib-similar-cat-name{font-family:var(--display);font-weight:700;font-size:14px;color:var(--text)}
+.lib-similar-cat-hint{font-size:11px;color:var(--text3);margin-top:2px}
+.lib-similar-cat-count{font-size:13px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px}
+.lib-similar-group-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:16px 0 8px 2px;border-top:1px solid var(--border);padding-top:14px}
+.lib-similar-result{background:var(--bg3);border-radius:12px;padding:10px 12px;margin-bottom:7px;cursor:pointer}
+.lib-similar-result-name{font-size:13px;font-weight:700;color:var(--text)}
+.lib-similar-result-desc{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ──────────────────────────────────────────────────────────
+   ADD TO DAY POPUP (calendar + repeat)
+   ────────────────────────────────────────────────────────── */
+.lib-field-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin:14px 0 6px 2px}
+.lib-field-label:first-of-type{margin-top:4px}
+.lib-cal-wrap{background:var(--bg2);border-radius:14px;padding:12px}
+.lib-cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--text)}
+.lib-cal-nav-btn{width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.lib-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.lib-cal-dow{font-size:10px;color:var(--text3);padding:3px 0}
+.lib-cal-day{font-size:12px;padding:7px 0;border-radius:8px;cursor:pointer;color:var(--text)}
+.lib-cal-day:active{transform:scale(0.92)}
+.lib-cal-day.selected{background:var(--accent);color:var(--accent-text);font-weight:700}
+.lib-cal-day.empty{cursor:default}
+.lib-cal-selected-count{font-size:11px;color:var(--text3);margin-top:8px}
+.lib-repeat-row{display:flex;gap:6px;flex-wrap:wrap}
+.lib-repeat-chip{padding:6px 12px;font-size:12px;font-weight:600;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit}
+.lib-repeat-chip.active{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+
+/* ──────────────────────────────────────────────────────────
+   ADD / EDIT EXERCISE FORM
+   ────────────────────────────────────────────────────────── */
+.lib-form-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;margin-bottom:12px}
+.lib-form-input:focus{outline:none;border-color:var(--accent)}
+.lib-form-textarea{height:72px;resize:vertical;line-height:1.4}
+.lib-form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lib-form-row-2 .lib-form-input{margin-bottom:12px}
+.lib-form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.lib-form-row-3 .lib-form-input{margin-bottom:0}
+.lib-tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lib-tag-pill{font-size:12px;padding:5px 10px 5px 12px;background:var(--bg3);border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--text)}
+.lib-tag-pill button{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:0;display:flex;font-size:12px}
+.lib-form-btn-row{display:flex;gap:10px;margin-top:6px}
+
+/* Scroll-hint chevrons on horizontal filter rows */
+.libv2-scroll-hint{position:absolute;right:0;top:0;bottom:0;width:28px;display:flex;align-items:center;justify-content:flex-end;background:linear-gradient(to right, transparent, var(--bg) 65%);pointer-events:none;color:var(--text3)}
+.libv2-search-pill{position:relative;height:38px;background:var(--bg2);border:1px solid var(--border2);border-radius:19px;display:none;align-items:center;gap:8px;padding:0 14px;width:0;overflow:hidden;transition:width .2s ease;z-index:5;color:var(--text3)}
+.libv2-search-pill.show{display:flex;width:100%}
 .libv2-search-pill input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:16px;color:var(--text);font-family:inherit}
 .libv2-search-pill input::placeholder{color:var(--text3)}
 .libv2-search-close{flex-shrink:0;background:transparent;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px;line-height:1}
-.libv2-add-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.libv2-add-btn:active{transform:scale(0.95)}
-
-/* Gear icon on exercise detail popup */
-.ex-detail-gear{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.ex-detail-gear:active{transform:scale(0.93)}
-.ex-detail-card{position:relative}
-
-/* Add/edit exercise form modal */
-.libv2-form-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.45);z-index:810;display:none;align-items:center;justify-content:center;padding:24px}
-.libv2-form-wrap.show{display:flex}
-.libv2-form-card{background:var(--bg);border-radius:20px;padding:22px 20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto}
-.libv2-form-title{font-family:var(--display);font-weight:700;font-size:18px;color:var(--text);margin-bottom:16px}
-.libv2-form-btn-row{display:flex;gap:10px;margin-top:6px}
-.libv2-form-btn-row .ex-detail-btn{background:var(--bg3);color:var(--text)}
-.libv2-form-btn-row .ex-detail-btn-primary{background:var(--accent);color:var(--accent-text)}
-.libv2-delete-btn{width:100%;margin-top:10px;padding:11px;border-radius:12px;border:1px solid var(--red-border);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
-.libv2-delete-btn:active{transform:scale(0.98)}
-
-/* Scroll-hint chevrons on the two horizontal filter rows */
-.libv2-scroll-wrap{position:relative}
-.libv2-scroll-hint{position:absolute;right:0;top:0;bottom:0;width:28px;display:flex;align-items:center;justify-content:flex-end;background:linear-gradient(to right, transparent, var(--bg) 65%);pointer-events:none;color:var(--text3)}
 .ex-detail-name{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
+
 .ex-detail-count{font-size:13px;color:var(--text2);margin-bottom:14px}
 
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
@@ -897,45 +935,209 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Library tab ── -->
 <div id="tab-library" style="display:none;min-height:200px">
-  <div class="libv2-header-row">
-    <div class="page-title" style="margin-bottom:0" id="libv2-title">Library</div>
-    <div class="libv2-header-btns">
-      <button class="libv2-add-btn" onclick="openLibV2AddForm()" aria-label="Add custom exercise">+</button>
-      <button class="libv2-add-btn" id="libv2-search-btn" onclick="openLibV2Search()" aria-label="Search exercises">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  <!-- Landing: muscle group tiles -->
+  <div id="lib-landing">
+    <div class="lib-header-row">
+      <div class="page-title" style="margin-bottom:0">Library</div>
+      <div class="lib-header-btns">
+        <button class="lib-header-btn" onclick="openLibExerciseForm()" aria-label="Add custom exercise">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="lib-header-btn" onclick="openLibSearch()" aria-label="Search exercises">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="lib-groups-wrap"></div>
+  </div>
+
+  <!-- Category: exercise cards for a selected muscle group -->
+  <div id="lib-category" style="display:none">
+    <div class="lib-header-row">
+      <button class="lib-back-btn" onclick="closeLibCategory()" aria-label="Back to library">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       </button>
+      <div class="page-title" style="margin-bottom:0" id="lib-category-title"></div>
     </div>
-    <div class="libv2-search-pill" id="libv2-search-pill">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="libv2-search-input" placeholder="Search exercises..." oninput="libv2Search(this.value)">
-      <button class="libv2-search-close" onclick="closeLibV2Search()" aria-label="Close search">✕</button>
+    <div class="lib-category-count" id="lib-category-count"></div>
+    <div class="lib-scroll-wrap">
+      <div class="lib-filter-row" id="lib-filter-row"></div>
     </div>
+    <div id="lib-exercise-cards"></div>
   </div>
-  <div class="libv2-scroll-wrap">
-    <div class="libv2-group-row" id="libv2-group-row"></div>
-    <div class="libv2-scroll-hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div>
+
+  <!-- Search overlay -->
+  <div id="lib-search-wrap" style="display:none">
+    <div class="lib-header-row">
+      <div class="lib-search-pill show" style="position:static;width:100%">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="lib-search-input" placeholder="Search exercises..." oninput="libSearchInput(this.value)">
+        <button class="libv2-search-close" onclick="closeLibSearch()" aria-label="Close search">✕</button>
+      </div>
+    </div>
+    <div id="lib-search-results"></div>
   </div>
-  <div class="libv2-scroll-wrap">
-    <div class="libv2-sub-row" id="libv2-sub-row"></div>
-    <div class="libv2-scroll-hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></div>
-  </div>
-  <div class="libv2-tiles" id="libv2-tiles"></div>
 </div>
+
 
 <!-- ── Exercise detail popup ── -->
 <div class="ex-detail-wrap" id="ex-detail-wrap" onclick="if(event.target===this) closeExerciseDetail()">
   <div class="ex-detail-card">
-    <button class="ex-detail-gear" id="ex-detail-gear-btn" aria-label="Edit exercise">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-    <div class="ex-detail-title" id="ex-detail-title"></div>
+    <div class="ex-detail-top-row">
+      <div class="ex-detail-title" id="ex-detail-title"></div>
+      <button class="ex-detail-gear" id="ex-detail-gear-btn" aria-label="Edit exercise">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div class="ex-detail-badges" id="ex-detail-badges"></div>
     <div class="ex-detail-blurb" id="ex-detail-blurb"></div>
+    <table class="ex-detail-stats" id="ex-detail-stats"></table>
     <div class="ex-detail-btn-row">
-      <button class="ex-detail-btn" id="ex-detail-sister-btn"></button>
-      <button class="ex-detail-btn ex-detail-btn-primary" id="ex-detail-add-btn">Add to Day</button>
+      <button class="ex-detail-btn" id="ex-detail-similar-btn">Similar exercises</button>
+      <button class="ex-detail-btn ex-detail-btn-primary" id="ex-detail-add-btn">Add to day</button>
     </div>
   </div>
 </div>
+
+<!-- ── Similar exercises popup ── -->
+<div class="ex-detail-wrap" id="lib-similar-wrap" onclick="if(event.target===this) closeLibSimilar()">
+  <div class="ex-detail-card" id="lib-similar-card">
+    <div class="ex-detail-top-row">
+      <button class="lib-back-btn" onclick="closeLibSimilar()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="ex-detail-title" style="font-size:17px" id="lib-similar-title">Similar exercises</div>
+    </div>
+    <div class="lib-similar-sub" id="lib-similar-sub"></div>
+    <div id="lib-similar-categories"></div>
+    <div id="lib-similar-results"></div>
+  </div>
+</div>
+
+<!-- ── Add to day popup ── -->
+<div class="ex-detail-wrap" id="lib-add-day-wrap" onclick="if(event.target===this) closeLibAddDay()">
+  <div class="ex-detail-card">
+    <div class="ex-detail-top-row">
+      <button class="lib-back-btn" onclick="closeLibAddDay()" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="ex-detail-title" style="font-size:16px" id="lib-add-day-title"></div>
+    </div>
+    <div class="lib-field-label">Choose dates</div>
+    <div class="lib-cal-wrap">
+      <div class="lib-cal-nav-row">
+        <button class="lib-cal-nav-btn" onclick="libAddDayCalNav(-1)" aria-label="Previous month">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span id="lib-cal-month-label"></span>
+        <button class="lib-cal-nav-btn" onclick="libAddDayCalNav(1)" aria-label="Next month">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="lib-cal-grid" id="lib-cal-grid"></div>
+      <div class="lib-cal-selected-count" id="lib-cal-selected-count">No dates selected</div>
+    </div>
+    <div class="lib-field-label">Repeat</div>
+    <div class="lib-repeat-row" id="lib-repeat-row"></div>
+    <button class="ex-detail-btn ex-detail-btn-primary" style="width:100%;margin-top:14px" id="lib-add-day-confirm-btn" onclick="confirmLibAddDay()">Add</button>
+  </div>
+</div>
+
+<!-- ── Add / edit exercise form ── -->
+<div class="ex-detail-wrap" id="lib-form-wrap" onclick="if(event.target===this) closeLibExerciseForm()">
+  <div class="ex-detail-card">
+    <div class="ex-detail-top-row">
+      <div class="ex-detail-title" style="font-size:16px" id="lib-form-title">New exercise</div>
+      <button class="lib-back-btn" onclick="closeLibExerciseForm()" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="lib-field-label">Name</div>
+    <input type="text" class="lib-form-input" id="lf-name" placeholder="Cable face pull">
+
+    <div class="lib-field-label">Muscle group</div>
+    <select class="lib-form-input" id="lf-group" onchange="libFormSyncSubs()"></select>
+    <select class="lib-form-input" id="lf-sub"></select>
+
+    <div class="lib-field-label">Primary muscle</div>
+    <input type="text" class="lib-form-input" id="lf-primary" placeholder="Rear delts">
+
+    <div class="lib-field-label">Secondary muscles</div>
+    <div class="lib-tag-row" id="lf-secondary-tags"></div>
+    <input type="text" class="lib-form-input" id="lf-secondary-input" placeholder="Type and press enter to add">
+
+    <div class="lib-field-label">Equipment</div>
+    <div class="lib-tag-row" id="lf-equipment-tags"></div>
+    <input type="text" class="lib-form-input" id="lf-equipment-input" placeholder="Type and press enter to add">
+
+    <div class="lib-field-label">Movement pattern</div>
+    <input type="text" class="lib-form-input" id="lf-movement" placeholder="Horizontal pull">
+
+    <div class="lib-form-row-2">
+      <div>
+        <div class="lib-field-label">Type</div>
+        <select class="lib-form-input" id="lf-type">
+          <option value="compound">Compound</option>
+          <option value="isolation">Isolation</option>
+          <option value="isometric">Isometric</option>
+          <option value="carry">Carry</option>
+          <option value="conditioning">Conditioning</option>
+          <option value="cardio">Cardio</option>
+        </select>
+      </div>
+      <div>
+        <div class="lib-field-label">Difficulty</div>
+        <select class="lib-form-input" id="lf-difficulty">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="lib-form-row-2">
+      <div>
+        <div class="lib-field-label">Laterality</div>
+        <select class="lib-form-input" id="lf-laterality">
+          <option value="bilateral">Bilateral</option>
+          <option value="unilateral">Unilateral</option>
+        </select>
+      </div>
+      <div>
+        <div class="lib-field-label">Position</div>
+        <select class="lib-form-input" id="lf-position">
+          <option value="standing">Standing</option>
+          <option value="seated">Seated</option>
+          <option value="supine">Supine</option>
+          <option value="prone">Prone</option>
+          <option value="kneeling">Kneeling</option>
+          <option value="lying">Lying</option>
+          <option value="hanging">Hanging</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="lib-field-label">Sets · Reps · Rest</div>
+    <div class="lib-form-row-3">
+      <input type="text" class="lib-form-input" id="lf-sets" placeholder="3">
+      <input type="text" class="lib-form-input" id="lf-reps" placeholder="8-12">
+      <input type="text" class="lib-form-input" id="lf-rest" placeholder="60 sec">
+    </div>
+
+    <div class="lib-field-label">Card description</div>
+    <input type="text" class="lib-form-input" id="lf-card" placeholder="One short sentence">
+
+    <div class="lib-field-label">Blurb</div>
+    <textarea class="lib-form-input lib-form-textarea" id="lf-blurb" placeholder="A few beginner-friendly sentences"></textarea>
+
+    <div class="lib-form-btn-row" id="lib-form-btn-row">
+      <button class="ex-detail-btn" id="lf-delete-btn" style="color:var(--red);border-color:var(--red-border)" onclick="deleteLibExercise()">Delete</button>
+      <button class="ex-detail-btn ex-detail-btn-primary" onclick="saveLibExerciseForm()">Save</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ── Log-page instructions popup (lightweight, no actions) ── -->
 <div class="ex-instr-wrap" id="ex-instr-wrap" onclick="if(event.target===this) closeExerciseInstructions()">
@@ -943,45 +1145,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <button class="ex-instr-close" onclick="closeExerciseInstructions()" aria-label="Close">✕</button>
     <div class="ex-instr-title" id="ex-instr-title"></div>
     <div class="ex-instr-body" id="ex-instr-body"></div>
-  </div>
-</div>
-
-<!-- ── Library exercise add/edit form ── -->
-<div class="libv2-form-wrap" id="libv2-form-wrap" onclick="if(event.target===this) closeLibV2Form()">
-  <div class="libv2-form-card">
-    <div class="libv2-form-title" id="libv2-form-title">Add exercise</div>
-    <div class="field-group"><span class="field-hint">Name</span><input class="field-input" id="lv2f-name" type="text" placeholder="e.g. Cable row"></div>
-    <div class="field-grid">
-      <div class="field-group">
-        <span class="field-hint">Muscle group</span>
-        <select class="field-select" id="lv2f-group" onchange="libv2FormSyncSubs()"></select>
-      </div>
-      <div class="field-group">
-        <span class="field-hint">Sub-region</span>
-        <select class="field-select" id="lv2f-sub"></select>
-      </div>
-    </div>
-    <div class="field-grid">
-      <div class="field-group"><span class="field-hint">Equipment</span>
-        <select class="field-select" id="lv2f-type">
-          <option value="gym">Gym</option>
-          <option value="dumbbell">Dumbbell</option>
-          <option value="bodyweight">Bodyweight</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
-    </div>
-    <div class="field-grid">
-      <div class="field-group"><span class="field-hint">Sets</span><input class="field-input" id="lv2f-sets" type="number" min="1" placeholder="3"></div>
-      <div class="field-group"><span class="field-hint">Reps</span><input class="field-input" id="lv2f-reps" type="text" placeholder="8-12"></div>
-    </div>
-    <div class="field-group"><span class="field-hint">Rest</span><input class="field-input" id="lv2f-rest" type="text" placeholder="60 sec"></div>
-    <div class="field-group"><span class="field-hint">Instructions</span><textarea class="field-input" id="lv2f-instructions" rows="4" style="height:auto;padding:8px 10px;resize:vertical" placeholder="How to perform this exercise..."></textarea></div>
-    <div class="libv2-form-btn-row">
-      <button class="ex-detail-btn" onclick="closeLibV2Form()">Cancel</button>
-      <button class="ex-detail-btn ex-detail-btn-primary" onclick="saveLibV2Form()">Save</button>
-    </div>
-    <button class="libv2-delete-btn" id="lv2f-delete-btn" onclick="deleteLibV2Exercise()" style="display:none">Delete exercise</button>
   </div>
 </div>
 

@@ -3181,153 +3181,6 @@ function genLibV2Id() {
   return id;
 }
 
-// Sister-variant chains: same movement, different equipment. Clicking "See X version"
-// on any exercise in a chain advances to the next one, wrapping back to the first.
-const SISTER_CHAINS = [
-  ["2amry", "24e8a"],
-  ["isr4t", "hbux8"],
-  ["g3f58", "7khny"],
-  ["1dihs", "wdin1"],
-  ["ftbdr", "6mxt7"],
-  ["3n20d", "3y5au"],
-  ["i4vm1", "ikyui"],
-  ["7aw2p", "eqsyw"],
-  ["jcrnh", "0k96z", "7br31"],
-  ["qdwmt", "c86i0", "zzgf4"],
-  ["q6r23", "38h9s", "u2oux", "wvb43"],
-  ["e3xwn", "rnvlx", "y7nqm", "4rvhw"],
-];
-function getSisterOf(name) {
-  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
-  if (!ex || !ex.id) return null;
-  for (const chain of SISTER_CHAINS) {
-    const i = chain.indexOf(ex.id);
-    if (i !== -1) {
-      const sisterId = chain[(i + 1) % chain.length];
-      const sisterEx = DEFAULT_LIBRARY_V2.find(e => e.id === sisterId);
-      return sisterEx ? sisterEx.name : null;
-    }
-  }
-  return null;
-}
-
-// Blurbs, keyed by exact exercise name. Filled in incrementally.
-const EXERCISE_BLURBS = {
-  "Incline Barbell Bench Press": "Set the bench to a 30-45° incline, grip the bar slightly wider than shoulder-width. Lower it to your upper chest with elbows at ~45°, then press up until arms extend. Feet planted, core tight throughout.",
-  "Dumbbell Incline Bench Press": "Set the bench to a 30-45° incline. Start with dumbbells at upper-chest height, elbows around 45° out. Press up and slightly back until arms extend, then lower with control. Feet planted, core tight throughout.",
-  "Dumbbell Chest Fly": "Lie on an incline bench, dumbbells pressed straight up, palms facing in. Lower them out to the sides in a wide arc, slight elbow bend. Bring back up, squeezing chest at the top.",
-  "Low-To-High Cable Fly": "Stand between two low cable pulleys, handle in each hand. Bring your hands up and together in front of your chest in a wide arc, like hugging a big ball. Slowly let them back down.",
-  "Barbell Bench Press": "Lie flat on a bench, bar above your chest, hands slightly wider than shoulders. Lower the bar to your chest, then push it back up until your arms straighten.",
-  "Dumbbell Bench Press": "Lie flat on a bench holding a dumbbell in each hand above your chest. Lower them down to chest level, elbows bent, then push back up.",
-  "Push-Up": "Start face-down, hands under shoulders, body in a straight line. Lower your chest to the floor by bending your elbows, then push back up.",
-  "Flat Cable Fly": "Stand between two cable pulleys set at chest height. Bring your hands together in front of you in a hugging motion, then let them back out slowly.",
-  "Decline Barbell Bench Press": "Lie on a bench angled downward, feet higher than your head. Lower the bar to your lower chest, then press it back up.",
-  "Dips": "Grip two parallel bars, arms straight, body hanging. Lower yourself by bending your elbows until your upper arms are about parallel to the floor, then push back up.",
-  "Decline Dumbbell Press": "Lie on a bench angled downward, holding a dumbbell in each hand above your lower chest. Lower them down, then press back up.",
-  "High-To-Low Cable Fly": "Stand between two cable pulleys set above your head. Pull your hands down and together in front of your hips, then let them back up slowly.",
-  "Lat Pulldown": "Sit at the machine, grab the bar wide overhead. Pull it down to your upper chest, squeezing your back, then let it rise back up with control.",
-  "Barbell Row": "Bend forward at the hips holding a bar, back flat. Pull the bar up to your stomach, squeezing your back, then lower it back down.",
-  "Straight-Arm Pulldown": "Stand facing a high cable, arms straight down in front of you holding the bar. Pull it down to your thighs keeping arms straight, then let it rise back up.",
-  "Barbell Shrug": "Stand holding a bar in front of you, arms straight. Lift your shoulders straight up toward your ears, then lower them back down.",
-  "Dumbbell Shrug": "Stand holding a dumbbell in each hand at your sides. Lift your shoulders straight up toward your ears, then lower them back down.",
-  "Farmer's Carry": "Pick up a heavy dumbbell or weight in each hand and simply walk forward for the set distance or time, keeping your shoulders back and core tight.",
-  "Face Pull": "Stand facing a cable set at head height with a rope handle. Pull the rope toward your face, elbows out wide, then let it back out slowly.",
-  "Deadlift": "Stand with feet hip-width apart, bar on the floor in front of you. Bend at your hips and knees to grip it, then stand up tall by pushing through your feet, keeping the bar close to your legs.",
-  "Back Extension": "Lie face-down on the machine with your hips on the pad, ankles secured. Lower your upper body down, then lift back up until your body is straight.",
-  "Good Morning": "Stand with a bar across your upper back. Keeping your legs mostly straight, bend forward at the hips until your torso is close to parallel with the floor, then stand back up.",
-  "Seated Cable Row": "Sit at the machine, feet braced, grab the handle with arms extended. Pull it toward your stomach, squeezing your back, then let it extend back out.",
-  "Chest-Supported Row": "Lie face-down on an inclined bench holding dumbbells hanging below you. Pull them up toward your sides, squeezing your back, then lower back down.",
-  "Reverse Pec Deck": "Sit at the machine facing the pad, arms out in front holding the handles. Pull your arms back and out to the sides, squeezing your shoulder blades, then return slowly.",
-  "Bent-Over Rear Delt Row": "Bend forward at the hips holding dumbbells hanging below you. Pull your elbows up and out to the sides, then lower back down.",
-  "Barbell Overhead Press": "Stand holding a bar at shoulder height. Press it straight overhead until your arms are extended, then lower it back to your shoulders.",
-  "Front Raise": "Stand holding a dumbbell in each hand at your sides. Raise them straight out in front of you to shoulder height, then lower back down.",
-  "Cable Lateral Raise": "Stand sideways to a low cable pulley, handle in the hand farthest from the machine. Raise your arm out to the side to shoulder height, then lower back down.",
-  "Machine Lateral Raise": "Sit at the machine, arms inside the pads at your sides. Push your arms out and up to the sides, then lower back down.",
-  "Upright Row": "Stand holding a bar or dumbbells in front of your thighs. Pull it straight up toward your chin, elbows leading and out to the sides, then lower back down.",
-  "Reverse Pec Deck (Delts)": "Sit at the machine facing the pad, arms out in front holding the handles. Pull your arms back and out to the sides, squeezing your shoulder blades, then return slowly.",
-  "Bent-Over Dumbbell Raise": "Bend forward at the hips holding dumbbells hanging below you. Raise your arms out to the sides until level with your shoulders, then lower back down.",
-  "Cable Rear Delt Fly": "Stand facing a cable machine with the handles crossed at chest height. Pull your arms out and back to the sides, then return slowly to the front.",
-  "Barbell Curl": "Stand holding a bar with palms facing forward, arms extended. Curl the bar up toward your shoulders, then lower it back down.",
-  "Dumbbell Curl": "Stand holding a dumbbell in each hand, arms at your sides, palms facing forward. Curl them up toward your shoulders, then lower back down.",
-  "Hammer Curl": "Stand holding a dumbbell in each hand, palms facing your body. Curl them up toward your shoulders, then lower back down.",
-  "Cable Curl": "Stand facing a low cable with a bar attachment, arms extended down. Curl it up toward your shoulders, then lower back down with control.",
-  "Cable Tricep Pushdown": "Stand facing a high cable with a bar or rope attachment, elbows tucked at your sides. Push the bar down until your arms are straight, then let it rise back up.",
-  "Close-Grip Bench Press": "Lie flat on a bench, hands close together on the bar, just inside shoulder width. Lower the bar to your chest, then push it back up.",
-  "Skull Crusher": "Lie on a bench holding a bar or dumbbells above your forehead, elbows pointing up. Bend your elbows to lower the weight toward your forehead, then straighten back up.",
-  "Overhead Tricep Extension": "Stand or sit holding a dumbbell with both hands overhead. Lower it behind your head by bending your elbows, then straighten your arms back up.",
-  "Dumbbell Wrist Curl": "Sit with your forearm resting on your thigh, palm up, holding a light dumbbell. Curl your wrist up, then lower back down.",
-  "Reverse Wrist Curl": "Sit with your forearm resting on your thigh, palm down, holding a light dumbbell. Curl your wrist up, then lower back down.",
-  "Cable Crunch": "Kneel facing away from a high cable, rope behind your head. Curl your body forward, bringing your elbows toward your knees, then return slowly.",
-  "Sit-Up": "Lie on your back, knees bent, feet flat on the floor. Curl your whole upper body up toward your knees, then lower back down.",
-  "Machine Crunch": "Sit at the machine with pads against your chest or shoulders. Curl forward, contracting your abs, then return slowly.",
-  "Hanging Leg Raise": "Hang from a pull-up bar with straight arms. Raise your legs up in front of you as high as you can, then lower back down with control.",
-  "Reverse Crunch": "Lie on your back, knees bent toward your chest. Curl your hips up off the floor, bringing your knees toward your chest, then lower back down.",
-  "Leg Raise": "Lie on your back, legs straight. Raise them up toward the ceiling without bending your knees, then lower back down without letting your feet touch the floor.",
-  "Dumbbell Side Bend": "Stand holding a dumbbell in one hand at your side. Bend sideways toward that hand, then straighten back up. Finish all reps, then switch sides.",
-  "Russian Twist": "Sit with knees bent, leaning back slightly, feet either on the floor or lifted. Twist your torso side to side, touching the floor beside you each time.",
-  "Cable Woodchopper": "Stand sideways to a high cable, handle in both hands. Pull it down and across your body toward your opposite hip, then return slowly.",
-  "Side Plank": "Lie on your side, propped up on one forearm, body in a straight line. Hold this position, keeping your hips lifted off the floor.",
-  "Barbell Squat": "Stand with a bar across your upper back, feet shoulder-width apart. Bend your knees and hips to lower down like sitting in a chair, then stand back up.",
-  "Leg Press": "Sit in the machine, feet on the platform shoulder-width apart. Push the platform away by straightening your legs, then let it come back slowly.",
-  "Dumbbell Goblet Squat": "Hold a dumbbell with both hands at your chest. Bend your knees and hips to lower down like sitting in a chair, then stand back up.",
-  "Bodyweight Squat": "Stand with feet shoulder-width apart, no weight. Bend your knees and hips to lower down like sitting in a chair, then stand back up.",
-  "Leg Extension": "Sit at the machine with the pad against the front of your ankles. Straighten your legs to lift the pad up, then lower back down with control.",
-  "Leg Curl": "Lie face-down or sit at the machine with the pad against the back of your ankles. Curl your legs, bringing your heels toward your glutes, then lower back down.",
-  "Good Morning (Legs)": "Stand with a bar across your upper back. Keeping your legs mostly straight, bend forward at the hips until your torso is close to parallel with the floor, then stand back up.",
-  "Nordic Curl": "Kneel with your ankles held down by a partner or anchor. Slowly lower your body forward as far as you can, using your hamstrings to control the movement, then pull back up.",
-  "Glute Bridge": "Lie on your back, knees bent, feet flat on the floor. Push through your heels to lift your hips up until your body forms a straight line, then lower back down.",
-  "Cable Kickback": "Stand facing a low cable with the strap around your ankle. Kick your leg straight back and up, then return slowly to the start.",
-  "Seated Calf Raise": "Sit at the machine with the pad on your thighs and your toes on the platform. Push up onto your toes as high as you can, then lower back down.",
-  "Cable Adduction": "Stand sideways to a low cable with the strap around your ankle furthest from the machine. Pull that leg across your body, then return slowly.",
-  "Sumo Squat": "Stand with feet wider than shoulder-width, toes pointed out, holding a dumbbell if you like. Bend your knees to lower down, then stand back up.",
-  "Cable Abduction": "Stand sideways to a low cable with the strap around your ankle nearest the machine. Pull that leg out and away from your body, then return slowly.",
-  "Lateral Band Walk": "Put a resistance band around your ankles or knees, feet shoulder-width apart, knees slightly bent. Step sideways in small steps, keeping tension on the band.",
-  "Stationary Bike": "Sit on the bike and pedal at a steady pace for the set time.",
-  "Rowing Machine": "Sit on the rower, feet strapped in, handle in both hands. Push with your legs, then pull the handle to your stomach, leaning back slightly. Reverse the motion to return.",
-  "Elliptical": "Stand on the pedals and hold the handles, moving your legs and arms in a smooth, walking-like motion for the set time.",
-  "Stair Climber": "Step onto the machine and climb at a steady pace, like walking up stairs, for the set time.",
-  "Jump Rope": "Hold one handle in each hand, swing the rope over your head and jump over it as it passes under your feet.",
-  "Child's Pose": "Kneel on the floor, then sit back onto your heels and stretch your arms forward, lowering your chest toward the ground. Hold and breathe.",
-  "Hip Flexor Stretch": "Kneel on one knee with the other foot planted in front of you. Gently push your hips forward until you feel a stretch in the front of your hip. Hold, then switch sides.",
-  "Hamstring Stretch": "Sit or stand with one leg extended in front of you, heel on the floor. Hinge forward at your hips, reaching toward your toes, keeping your back flat. Hold, then switch sides.",
-  "Couch Stretch": "Kneel in front of a couch or bench with your back foot resting on it behind you. Push your hips forward gently until you feel a stretch in the front of your thigh. Hold, then switch sides.",
-  "World's Greatest Stretch": "Step forward into a lunge, place both hands on the floor inside your front foot, then rotate one arm up toward the ceiling, opening your chest. Return and repeat, then switch sides.",
-  "Thoracic Rotation": "Get on all fours, place one hand behind your head. Rotate your upper body, bringing that elbow up toward the ceiling, then back down under your body. Repeat, then switch sides.",
-  "Pull-Up": "Hang from a bar with hands wider than shoulders, palms facing away. Pull your body up until your chin clears the bar, then lower back down with control.",
-  "Dumbbell Row": "Place one knee and hand on a bench, holding a dumbbell in the other hand hanging down. Pull it up to your side, squeezing your back, then lower back down. Finish, then switch sides.",
-  "Dumbbell Lateral Raise": "Stand holding a dumbbell in each hand at your sides. Raise them out to the sides up to shoulder height, then lower back down.",
-  "Dumbbell Shoulder Press": "Stand or sit holding a dumbbell in each hand at shoulder height. Press them straight overhead until your arms extend, then lower back down.",
-  "Arnold Press": "Sit holding dumbbells in front of your shoulders, palms facing you. As you press overhead, rotate your palms to face forward. Reverse the rotation as you lower back down.",
-  "Dumbbell Romanian Deadlift": "Stand holding a bar or dumbbells in front of your thighs. Keeping your legs mostly straight, hinge at your hips to lower the weight down your legs, then stand back up.",
-  "Bulgarian Split Squat": "Stand a couple feet in front of a bench, resting one foot behind you on it. Bend your front knee to lower down, then push back up. Finish, then switch legs.",
-  "Bodyweight Calf Raise": "Stand with feet flat on the floor. Rise up onto your toes as high as you can, then lower back down.",
-  "Cat-Cow": "Get on all fours. Arch your back and drop your belly toward the floor while lifting your head (cow), then round your spine up toward the ceiling while tucking your chin (cat). Move slowly between the two.",
-  "Pigeon Pose": "From all fours, bring one knee forward and place it behind your wrist, extending the other leg straight back. Lower your body forward over your front leg. Hold, then switch sides.",
-  "Rear Delt Fly": "Bend forward slightly holding a dumbbell in each hand. Raise your arms out to the sides until level with your shoulders, then lower back down.",
-  "Incline Bicep Curl": "Sit on an incline bench, arms hanging straight down holding dumbbells. Curl them up toward your shoulders, then lower back down.",
-  "Tricep Overhead Extension": "Stand or sit holding a dumbbell with both hands overhead. Lower it behind your head by bending your elbows, then straighten your arms back up.",
-  "Dumbbell Hip Thrust": "Sit on the floor with your upper back against a bench, a dumbbell resting on your hips. Push through your heels to lift your hips up, then lower back down.",
-  "Donkey Kick": "Get on all fours. Keeping your knee bent, kick one leg up and back toward the ceiling, then lower back down. Finish, then switch legs.",
-  "Dumbbell Step-Up": "Stand facing a bench or box, holding a dumbbell in each hand. Step up onto it with one foot, then bring the other foot up to join it. Step back down and repeat.",
-  "Plank": "Get into a push-up position, but rest on your forearms instead of your hands. Keep your body in a straight line and hold.",
-  "Weighted Sit-Up": "Lie on your back, knees bent, holding a weight against your chest. Curl your whole upper body up toward your knees, then lower back down.",
-  "Treadmill (Zone 2)": "Walk or jog at a pace where you can still hold a conversation, for the set amount of time.",
-  "Frogger Stretch": "Get on all fours, then widen your knees out to the sides. Rock your hips backward and forward slowly to feel a stretch in your inner thighs.",
-  "Deep Squat Hold": "Lower into a full squat, feet flat on the floor, and simply hold that position, letting your hips sink low.",
-  "Standing Forward Hold": "Stand with feet hip-width apart, then bend forward at your hips and let your upper body hang down toward your toes. Hold and relax.",
-  "Seated Single Leg Stretch": "Sit with one leg extended straight out, the other bent with your foot near your inner thigh. Reach toward the toes of your straight leg. Hold, then switch sides.",
-  "Thread The Needle": "Get on all fours. Slide one arm underneath your body and through the gap between your other arm and leg, lowering your shoulder to the floor. Hold, then switch sides.",
-  "Barbell Hip Thrust": "Sit on the floor with your upper back against a bench, a bar resting across your hips. Push through your heels to lift your hips up, then lower back down.",
-};
-function saveBlurbsV2() {
-  try { localStorage.setItem(KEYS.blurbsV2, JSON.stringify(EXERCISE_BLURBS)); } catch {}
-}
-function loadBlurbsV2() {
-  try {
-    const saved = localStorage.getItem(KEYS.blurbsV2);
-    if (saved) Object.assign(EXERCISE_BLURBS, JSON.parse(saved));
-  } catch {}
-}
 
 /* ─── STATE ─── */
 let schedule = JSON.parse(JSON.stringify(DEFAULT_DAYS));
@@ -3726,7 +3579,6 @@ function applyRestore() {
   syncThemeColorMeta(savedTheme, savedBase);
   loadSchedule();
   loadLibraryV2();
-  loadBlurbsV2();
 
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -3806,7 +3658,7 @@ function resolveScheduledExercise(ex) {
     libEx = DEFAULT_LIBRARY_V2.find(e => normalizeExName(e.name) === norm);
   }
   if (libEx) {
-    return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type };
+    return { ...ex, name: libEx.name, reps: libEx.reps, rest: libEx.rest, restSecs: libEx.restSecs, type: libEx.type, blurb: libEx.blurb };
   }
   return ex;
 }
@@ -3834,133 +3686,155 @@ function closeSidebar() {
 }
 
 /* ─── TAB SWITCHING ─── */
-/* ─── LIBRARY (V2) — live-linked to day-logging via exId, see resolveScheduledExercise ─── */
-let libv2ActiveGroup = null;
-let libv2ActiveSub = null;
-let libv2SearchQuery = '';
+/* ─── LIBRARY — landing (muscle groups) → category (exercise cards) → detail popup ─── */
+let libActiveGroupKey = null; // group shown in category view, or highlighted on landing after a visit
+let libActiveFilterSub = null; // sub-group filter chip selected within a category
+let libSearchQuery = '';
+let _libPickingDay = null; // set when Library is opened from a specific day's "+ Add exercise" button
+let _libDetailExId = null; // exercise currently shown in the detail popup, for Similar/Add-to-day/edit
 
-function openLibV2Search() {
-  document.getElementById('libv2-title').style.display = 'none';
-  document.getElementById('libv2-search-btn').style.display = 'none';
-  const pill = document.getElementById('libv2-search-pill');
-  pill.classList.add('show');
-  const input = document.getElementById('libv2-search-input');
-  input.value = '';
-  libv2SearchQuery = '';
-  document.querySelectorAll('.libv2-scroll-wrap').forEach(el => el.style.display = 'none');
-  setTimeout(() => input.focus(), 50);
-  renderLibV2();
-}
-function closeLibV2Search() {
-  document.getElementById('libv2-title').style.display = '';
-  document.getElementById('libv2-search-btn').style.display = '';
-  document.getElementById('libv2-search-pill').classList.remove('show');
-  document.querySelectorAll('.libv2-scroll-wrap').forEach(el => el.style.display = '');
-  libv2SearchQuery = '';
-  renderLibV2();
-}
-function libv2Search(query) {
-  libv2SearchQuery = query.trim();
-  renderLibV2();
-}
-
-function libv2SelectGroup(key) {
-  libv2ActiveGroup = (libv2ActiveGroup === key) ? null : key;
-  libv2ActiveSub = null; // reset sub-filter when gross group changes
-  renderLibV2();
-}
-function libv2SelectSub(sub) {
-  if (libv2ActiveSub === sub) {
-    libv2ActiveSub = null;
-  } else {
-    libv2ActiveSub = sub;
-    // Auto-select the parent gross group, so tapping a sub-tile directly
-    // highlights its gross group and narrows the sub-row to match.
-    const parent = MUSCLE_GROUPS_V2.find(g => g.subs.includes(sub));
-    if (parent) libv2ActiveGroup = parent.key;
-  }
-  renderLibV2();
-}
 function renderLibV2() {
-  const groupRow = document.getElementById('libv2-group-row');
-  const subRow = document.getElementById('libv2-sub-row');
-  const tilesEl = document.getElementById('libv2-tiles');
+  renderLibGroupsGrid();
+}
+function renderLibGroupsGrid() {
+  const wrap = document.getElementById('lib-groups-wrap');
+  if (!wrap) return;
+  const sections = [
+    { label: 'Upper body', keys: ['chest', 'back', 'shoulders', 'arms'] },
+    { label: 'Lower body', keys: ['legs'] },
+    { label: 'Other', keys: ['core', 'fullbody', 'cardio'] },
+  ];
+  wrap.innerHTML = sections.map(sec => {
+    const tiles = sec.keys.map(key => {
+      const g = MUSCLE_GROUPS_V2.find(mg => mg.key === key);
+      if (!g) return '';
+      const count = DEFAULT_LIBRARY_V2.filter(e => e.group === key).length;
+      const active = libActiveGroupKey === key ? ' active' : '';
+      return `<button class="lib-group-tile${active}" onclick="openLibCategory('${g.key}')">
+        <div class="lib-group-tile-dot"></div>
+        <div class="lib-group-tile-name">${escHtml(g.label)}</div>
+        <div class="lib-group-tile-count">${count} exercises</div>
+      </button>`;
+    }).join('');
+    return `<div class="lib-section-label">${escHtml(sec.label)}</div><div class="lib-group-grid">${tiles}</div>`;
+  }).join('');
+}
 
-  groupRow.innerHTML = MUSCLE_GROUPS_V2.map(g =>
-    `<button class="libv2-chip${g.key===libv2ActiveGroup?' libv2-tint-'+g.color+' active':''}" onclick="libv2SelectGroup('${g.key}')">${g.label}</button>`
-  ).join('');
+/* ─── CATEGORY VIEW ─── */
+function openLibCategory(groupKey) {
+  libActiveGroupKey = groupKey;
+  libActiveFilterSub = null;
+  document.getElementById('lib-landing').style.display = 'none';
+  document.getElementById('lib-category').style.display = '';
+  renderLibCategory();
+}
+function closeLibCategory() {
+  document.getElementById('lib-category').style.display = 'none';
+  document.getElementById('lib-landing').style.display = '';
+  renderLibGroupsGrid();
+}
+function libSelectFilterSub(sub) {
+  libActiveFilterSub = (libActiveFilterSub === sub) ? null : sub;
+  renderLibCategory();
+}
+function renderLibCategory() {
+  const g = MUSCLE_GROUPS_V2.find(mg => mg.key === libActiveGroupKey);
+  if (!g) return;
+  document.getElementById('lib-category-title').textContent = g.label;
+  const all = DEFAULT_LIBRARY_V2.filter(e => e.group === libActiveGroupKey);
+  document.getElementById('lib-category-count').textContent = all.length + ' exercises';
 
-  // Sub-row: show only the active group's subs if one is selected, otherwise
-  // every sub-region across every group, tinted by its parent group's color.
-  const activeGroupObj = MUSCLE_GROUPS_V2.find(g => g.key === libv2ActiveGroup);
-  const subsToShow = activeGroupObj
-    ? activeGroupObj.subs.map(s => ({ sub: s, color: activeGroupObj.color }))
-    : MUSCLE_GROUPS_V2.flatMap(g => g.subs.map(s => ({ sub: s, color: g.color })));
+  const filterRow = document.getElementById('lib-filter-row');
+  filterRow.innerHTML = ['All', ...g.subs].map(sub => {
+    const isAll = sub === 'All';
+    const active = isAll ? (!libActiveFilterSub) : (libActiveFilterSub === sub);
+    return `<button class="lib-filter-chip${active ? ' active' : ''}" onclick="libSelectFilterSub(${isAll ? 'null' : `'${escAttr(sub)}'`})">${escHtml(sub)}</button>`;
+  }).join('');
 
-  subRow.innerHTML = subsToShow.map(({sub, color}) =>
-    `<button class="libv2-chip libv2-chip-sub libv2-tint-${color}${sub===libv2ActiveSub?' active':''}" onclick="libv2SelectSub('${escAttr(sub)}')">${escHtml(sub)}</button>`
-  ).join('');
-
-  // Exercise grid: search overrides group/sub filters when active; otherwise
-  // show everything by default, narrowing as group/sub filters are applied.
-  let filtered = DEFAULT_LIBRARY_V2;
-  if (libv2SearchQuery) {
-    const q = libv2SearchQuery.toLowerCase();
-    filtered = filtered.filter(ex => ex.name.toLowerCase().includes(q));
-  } else {
-    if (libv2ActiveGroup) filtered = filtered.filter(ex => ex.group === libv2ActiveGroup);
-    if (libv2ActiveSub) filtered = filtered.filter(ex => ex.sub === libv2ActiveSub);
-  }
-
+  const filtered = libActiveFilterSub ? all.filter(e => e.sub === libActiveFilterSub) : all;
+  const cardsEl = document.getElementById('lib-exercise-cards');
   if (!filtered.length) {
-    tilesEl.innerHTML = `<div class="empty">${libv2SearchQuery ? 'No exercises match your search.' : 'No exercises match this filter yet.'}</div>`;
+    cardsEl.innerHTML = `<div class="empty">No exercises match this filter yet.</div>`;
     return;
   }
-  tilesEl.innerHTML = filtered.map(ex => `
-    <div class="libv2-tile" data-exname="${escAttr(ex.name)}">
-      <div class="libv2-tile-name">${escHtml(ex.name)}</div>
-      <div class="libv2-tile-tags">${escHtml(ex.sub)} · ${escHtml(ex.reps)} reps · ${escHtml(ex.rest)} rest</div>
+  cardsEl.innerHTML = filtered.map(ex => libExerciseCardHtml(ex)).join('');
+}
+function libExerciseCardHtml(ex) {
+  return `<div class="lib-exercise-card" onclick="openExerciseDetail('${ex.id}')">
+    <div class="lib-exercise-card-top">
+      <div class="lib-exercise-card-name">${escHtml(ex.name)}</div>
+      <span class="lib-diff-badge lib-diff-${escAttr(ex.difficulty || 'beginner')}">${escHtml((ex.difficulty || 'beginner').replace(/^./, c => c.toUpperCase()))}</span>
     </div>
-  `).join('');
+    <div class="lib-exercise-card-desc">${escHtml(ex.card || '')}</div>
+  </div>`;
+}
+
+/* ─── SEARCH ─── */
+function openLibSearch() {
+  document.getElementById('lib-landing').style.display = 'none';
+  document.getElementById('lib-category').style.display = 'none';
+  document.getElementById('lib-search-wrap').style.display = '';
+  const input = document.getElementById('lib-search-input');
+  input.value = '';
+  libSearchQuery = '';
+  document.getElementById('lib-search-results').innerHTML = '';
+  setTimeout(() => input.focus(), 50);
+}
+function closeLibSearch() {
+  document.getElementById('lib-search-wrap').style.display = 'none';
+  document.getElementById('lib-landing').style.display = '';
+  document.getElementById('lib-category').style.display = 'none';
+  libSearchQuery = '';
+  renderLibGroupsGrid();
+}
+function libSearchInput(query) {
+  libSearchQuery = query.trim();
+  const resultsEl = document.getElementById('lib-search-results');
+  if (!libSearchQuery) { resultsEl.innerHTML = ''; return; }
+  const q = libSearchQuery.toLowerCase();
+  const matches = DEFAULT_LIBRARY_V2.filter(ex =>
+    ex.name.toLowerCase().includes(q) ||
+    (ex.muscles && ex.muscles.primary && ex.muscles.primary.some(m => m.toLowerCase().includes(q))) ||
+    (ex.equipment && ex.equipment.some(eq => eq.toLowerCase().includes(q)))
+  );
+  resultsEl.innerHTML = matches.length
+    ? matches.map(ex => libExerciseCardHtml(ex)).join('')
+    : `<div class="empty">No exercises match your search.</div>`;
 }
 
 /* ─── EXERCISE DETAIL POPUP ─── */
-function sisterLabel(name) {
-  const keywords = ['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Seated'];
-  for (const kw of keywords) {
-    if (name.toLowerCase().includes(kw.toLowerCase())) return kw;
-  }
-  return name.split(' ')[0];
+function findLibExById(id) { return DEFAULT_LIBRARY_V2.find(e => e.id === id); }
+function findLibExByIdOrName(idOrName) {
+  return DEFAULT_LIBRARY_V2.find(e => e.id === idOrName) || DEFAULT_LIBRARY_V2.find(e => e.name === idOrName);
 }
-// Delegated, document-level click handler for library exercise tiles.
-// Attached immediately at script parse time — does not depend on DOMContentLoaded
-// or any other init step succeeding first, and survives any number of re-renders
-// of the tiles grid since it's attached once to the document, not per-tile.
-document.addEventListener('click', function(e) {
-  const tile = e.target.closest('.libv2-tile');
-  if (tile && tile.dataset.exname) {
-    openExerciseDetail(tile.dataset.exname);
-  }
-});
-
-function openExerciseDetail(name) {
-  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
+function openExerciseDetail(idOrName) {
+  const ex = findLibExByIdOrName(idOrName);
   if (!ex) return;
-  const blurb = EXERCISE_BLURBS[name] || 'No description yet.';
-  const sister = getSisterOf(name);
-  document.getElementById('ex-detail-title').textContent = name.toUpperCase();
-  document.getElementById('ex-detail-blurb').textContent = blurb;
-  const sisterBtn = document.getElementById('ex-detail-sister-btn');
-  if (sister) {
-    sisterBtn.style.visibility = 'visible';
-    sisterBtn.textContent = `See ${sisterLabel(sister)} version`;
-    sisterBtn.onclick = () => openExerciseDetail(sister);
-  } else {
-    sisterBtn.style.visibility = 'hidden';
-  }
+  _libDetailExId = ex.id;
+  document.getElementById('ex-detail-title').textContent = ex.name;
+  const diff = (ex.difficulty || 'beginner');
+  const badgesEl = document.getElementById('ex-detail-badges');
+  badgesEl.innerHTML = `<span class="ex-detail-badge lib-diff-${escAttr(diff)}">${escHtml(diff.replace(/^./, c => c.toUpperCase()))}</span>` +
+    (ex.exerciseType ? `<span class="ex-detail-badge ex-detail-badge-neutral">${escHtml(ex.exerciseType.replace(/^./, c => c.toUpperCase()))}</span>` : '');
+  document.getElementById('ex-detail-blurb').textContent = ex.blurb || ex.card || 'No description yet.';
+
+  const primary = (ex.muscles && ex.muscles.primary) || [];
+  const secondary = (ex.muscles && ex.muscles.secondary) || [];
+  const worksText = primary.length
+    ? primary.join(', ') + (secondary.length ? ` <span style="color:var(--text3)">+${secondary.length} more</span>` : '')
+    : '—';
+  const equipText = (ex.equipment && ex.equipment.length) ? ex.equipment.join(', ') : '—';
+  const setsRepsText = [ex.sets ? ex.sets + ' sets' : '', ex.reps ? ex.reps + ' reps' : ''].filter(Boolean).join(' · ') || '—';
+  document.getElementById('ex-detail-stats').innerHTML = `
+    <tr><td><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Works</td><td>${worksText}</td></tr>
+    <tr><td><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="20" height="6" rx="1"/><path d="M4 9V7a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2M16 9V7a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>Equipment</td><td>${escHtml(equipText)}</td></tr>
+    <tr><td><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Sets · Reps</td><td>${escHtml(setsRepsText)}</td></tr>
+    <tr><td><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Rest</td><td>${escHtml(ex.rest || '—')}</td></tr>
+  `;
+
   const addBtn = document.getElementById('ex-detail-add-btn');
   if (typeof _customLogPicking !== 'undefined' && _customLogPicking) {
-    addBtn.textContent = 'Add to Custom Log';
+    addBtn.textContent = 'Add to custom log';
     addBtn.onclick = () => {
       _customLogPicking = false;
       closeExerciseDetail();
@@ -3968,10 +3842,11 @@ function openExerciseDetail(name) {
       customLogReceiveExercise(ex);
     };
   } else {
-    addBtn.textContent = 'Add to Day';
-    addBtn.onclick = () => addExerciseToDayFromLibrary(ex);
+    addBtn.textContent = 'Add to day';
+    addBtn.onclick = () => openLibAddDay(ex.id);
   }
-  document.getElementById('ex-detail-gear-btn').onclick = () => { closeExerciseDetail(); openLibV2EditForm(ex.name); };
+  document.getElementById('ex-detail-similar-btn').onclick = () => openLibSimilar(ex.id);
+  document.getElementById('ex-detail-gear-btn').onclick = () => { closeExerciseDetail(); openLibExerciseForm(ex.id); };
   document.getElementById('ex-detail-wrap').classList.add('show');
 }
 function closeExerciseDetail() {
@@ -3979,7 +3854,8 @@ function closeExerciseDetail() {
 }
 
 function openExerciseInstructions(name) {
-  const blurb = EXERCISE_BLURBS[name];
+  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
+  const blurb = ex && ex.blurb;
   if (!blurb) return;
   document.getElementById('ex-instr-title').textContent = name;
   document.getElementById('ex-instr-body').textContent = blurb;
@@ -3988,138 +3864,325 @@ function openExerciseInstructions(name) {
 function closeExerciseInstructions() {
   document.getElementById('ex-instr-wrap').classList.remove('show');
 }
-function addExerciseToDayFromLibrary(ex) {
-  const d = _libv2PickingDay || currentDay;
-  const already = schedule[d].exercises.some(e => e.name === ex.name);
-  const doAdd = () => {
-    schedule[d].exercises.push({
-      exId: ex.id || '',
-      name: ex.name,
-      reps: ex.reps,
-      sets: 0,
-      duration: ex.type === 'custom' ? (ex.reps || '') : '',
-      note: '',
-      rest: ex.rest,
-      restSecs: ex.restSecs,
-      type: ex.type,
-    });
-    saveSchedule();
-    if (currentDay === d) renderDayContent();
+
+/* ─── SIMILAR EXERCISES ─── */
+function libSimilarByMuscle(ex) {
+  const primary = (ex.muscles && ex.muscles.primary) || [];
+  if (!primary.length) return [];
+  return DEFAULT_LIBRARY_V2.filter(o => o.id !== ex.id && o.muscles && o.muscles.primary &&
+    o.muscles.primary.some(m => primary.includes(m)));
+}
+function libSimilarByEquipment(ex) {
+  const eq = ex.equipment || [];
+  if (!eq.length) return [];
+  return DEFAULT_LIBRARY_V2.filter(o => o.id !== ex.id && o.equipment &&
+    o.equipment.some(e => eq.includes(e)));
+}
+function libSimilarByMovement(ex) {
+  if (!ex.movementPattern) return [];
+  return DEFAULT_LIBRARY_V2.filter(o => o.id !== ex.id && o.movementPattern === ex.movementPattern);
+}
+let libSimilarActiveCat = null;
+function openLibSimilar(exId) {
+  const ex = findLibExById(exId);
+  if (!ex) return;
+  _libDetailExId = exId;
+  libSimilarActiveCat = null;
+  document.getElementById('lib-similar-title').textContent = 'Similar exercises';
+  document.getElementById('lib-similar-sub').textContent = 'To ' + ex.name.toLowerCase();
+  closeExerciseDetail();
+  renderLibSimilar();
+  document.getElementById('lib-similar-wrap').classList.add('show');
+}
+function closeLibSimilar() {
+  document.getElementById('lib-similar-wrap').classList.remove('show');
+}
+function libSelectSimilarCat(cat) {
+  libSimilarActiveCat = (libSimilarActiveCat === cat) ? null : cat;
+  renderLibSimilar();
+}
+function renderLibSimilar() {
+  const ex = findLibExById(_libDetailExId);
+  if (!ex) return;
+  const muscleMatches = libSimilarByMuscle(ex);
+  const equipMatches = libSimilarByEquipment(ex);
+  const movementMatches = libSimilarByMovement(ex);
+  const primaryLabel = (ex.muscles && ex.muscles.primary && ex.muscles.primary.join(', ')) || '—';
+  const equipLabel = (ex.equipment && ex.equipment.join(' or ')) || '—';
+
+  const cats = [
+    { key: 'muscle', name: 'Similar muscles', hint: primaryLabel, results: muscleMatches },
+    { key: 'equipment', name: 'Similar equipment', hint: equipLabel, results: equipMatches },
+    { key: 'movement', name: 'Similar movement', hint: ex.movementPattern || '—', results: movementMatches },
+  ];
+
+  document.getElementById('lib-similar-categories').innerHTML = cats.map(c => `
+    <div class="lib-similar-cat${libSimilarActiveCat === c.key ? ' active' : ''}" onclick="libSelectSimilarCat('${c.key}')">
+      <div>
+        <div class="lib-similar-cat-name">${escHtml(c.name)}</div>
+        <div class="lib-similar-cat-hint">${escHtml(c.hint)}</div>
+      </div>
+      <div class="lib-similar-cat-count">${c.results.length}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  `).join('');
+
+  const activeCat = cats.find(c => c.key === libSimilarActiveCat);
+  const resultsEl = document.getElementById('lib-similar-results');
+  if (!activeCat) { resultsEl.innerHTML = ''; return; }
+  resultsEl.innerHTML = `<div class="lib-similar-group-label">${escHtml(activeCat.name)}</div>` +
+    (activeCat.results.length
+      ? activeCat.results.map(r => `
+        <div class="lib-similar-result" onclick="openExerciseDetail('${r.id}')">
+          <div class="lib-similar-result-name">${escHtml(r.name)}</div>
+          <div class="lib-similar-result-desc">${escHtml(r.card || '')}</div>
+        </div>`).join('')
+      : `<div class="empty">Nothing else matches yet.</div>`);
+}
+
+/* ─── ADD TO DAY (calendar + repeat) ─── */
+let libAddDayExId = null;
+let libAddDaySelectedDates = [];
+let libAddDayRepeat = 'never';
+let libAddDayCalMonth = null;
+
+function openLibAddDay(exId) {
+  const ex = findLibExById(exId);
+  if (!ex) return;
+  libAddDayExId = exId;
+  libAddDaySelectedDates = [];
+  libAddDayRepeat = 'never';
+  libAddDayCalMonth = new Date(viewedDate.getFullYear(), viewedDate.getMonth(), 1);
+  if (_libPickingDay) {
+    const dayIdx = DAY_NAMES.indexOf(_libPickingDay);
+    if (dayIdx !== -1) {
+      const d = new Date();
+      while (d.getDay() !== dayIdx) d.setDate(d.getDate() + 1);
+      libAddDaySelectedDates = [formatISODate(d)];
+      libAddDayCalMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    }
+  }
+  closeExerciseDetail();
+  document.getElementById('lib-add-day-title').textContent = 'Add ' + ex.name.toLowerCase();
+  renderLibAddDayCal();
+  renderLibAddDayRepeat();
+  document.getElementById('lib-add-day-wrap').classList.add('show');
+}
+function closeLibAddDay() {
+  document.getElementById('lib-add-day-wrap').classList.remove('show');
+  _libPickingDay = null;
+}
+function libAddDayCalNav(dir) {
+  libAddDayCalMonth = new Date(libAddDayCalMonth.getFullYear(), libAddDayCalMonth.getMonth() + dir, 1);
+  renderLibAddDayCal();
+}
+function libToggleCalDate(iso) {
+  const idx = libAddDaySelectedDates.indexOf(iso);
+  if (idx === -1) libAddDaySelectedDates.push(iso);
+  else libAddDaySelectedDates.splice(idx, 1);
+  renderLibAddDayCal();
+}
+function renderLibAddDayCal() {
+  const label = libAddDayCalMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('lib-cal-month-label').textContent = label;
+  const year = libAddDayCalMonth.getFullYear(), month = libAddDayCalMonth.getMonth();
+  const firstDow = new Date(year, month, 1).getDay();
+  const numDays = new Date(year, month + 1, 0).getDate();
+  const dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  let html = dow.map(d => `<div class="lib-cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < firstDow; i++) html += `<div class="lib-cal-day empty"></div>`;
+  for (let d = 1; d <= numDays; d++) {
+    const iso = formatISODate(new Date(year, month, d));
+    const selected = libAddDaySelectedDates.includes(iso);
+    html += `<div class="lib-cal-day${selected ? ' selected' : ''}" onclick="libToggleCalDate('${iso}')">${d}</div>`;
+  }
+  document.getElementById('lib-cal-grid').innerHTML = html;
+  const n = libAddDaySelectedDates.length;
+  document.getElementById('lib-cal-selected-count').textContent = n === 0 ? 'No dates selected' : n + ' date' + (n === 1 ? '' : 's') + ' selected';
+  document.getElementById('lib-add-day-confirm-btn').textContent = n > 1 ? `Add to ${n} days` : 'Add';
+}
+function libSelectRepeat(val) {
+  libAddDayRepeat = val;
+  renderLibAddDayRepeat();
+}
+function renderLibAddDayRepeat() {
+  const opts = [
+    { key: 'never', label: 'Never' },
+    { key: 'daily', label: 'Daily' },
+    { key: 'weekly', label: 'Weekly' },
+    { key: 'biweekly', label: 'Every 2 weeks' },
+    { key: 'monthly', label: 'Monthly' },
+    { key: 'yearly', label: 'Yearly' },
+  ];
+  document.getElementById('lib-repeat-row').innerHTML = opts.map(o =>
+    `<button class="lib-repeat-chip${libAddDayRepeat === o.key ? ' active' : ''}" onclick="libSelectRepeat('${o.key}')">${escHtml(o.label)}</button>`
+  ).join('');
+}
+function libExpandRepeatDates(baseDates, repeat) {
+  if (repeat === 'never') return baseDates.slice();
+  const stepFns = {
+    daily:    d => { const r = cloneDate(d); r.setDate(r.getDate() + 1); return r; },
+    weekly:   d => { const r = cloneDate(d); r.setDate(r.getDate() + 7); return r; },
+    biweekly: d => { const r = cloneDate(d); r.setDate(r.getDate() + 14); return r; },
+    monthly:  d => { const r = cloneDate(d); r.setMonth(r.getMonth() + 1); return r; },
+    yearly:   d => { const r = cloneDate(d); r.setFullYear(r.getFullYear() + 1); return r; },
   };
-  if (already) {
-    closeExerciseDetail();
-    showModal('Already added', `${ex.name} is already in ${FULL_DAYS[d]}. Add it again anyway?`, () => {
-      doAdd();
-      closeModal();
-    });
-    return;
-  }
-  doAdd();
-  const btn = document.getElementById('ex-detail-add-btn');
-  if (btn) {
-    btn.textContent = `✓ Added to ${d}`;
-    setTimeout(() => { closeExerciseDetail(); btn.textContent = 'Add to Day'; }, 700);
-  } else {
-    closeExerciseDetail();
-  }
+  const step = stepFns[repeat];
+  if (!step) return baseDates.slice();
+  const horizon = new Date(); horizon.setFullYear(horizon.getFullYear() + 1);
+  const out = new Set();
+  baseDates.forEach(iso => {
+    let d = parseISODate(iso);
+    let guard = 0;
+    while (d <= horizon && guard < 366) {
+      out.add(formatISODate(d));
+      d = step(d);
+      guard++;
+    }
+  });
+  return [...out];
+}
+function confirmLibAddDay() {
+  const ex = findLibExById(libAddDayExId);
+  if (!ex || !libAddDaySelectedDates.length) return;
+  const allDates = libExpandRepeatDates(libAddDaySelectedDates, libAddDayRepeat);
+  allDates.forEach(iso => {
+    const d = parseISODate(iso);
+    const dn = DAY_NAMES[d.getDay()];
+    if (!schedule[dn].exercises.some(e => e.exId === ex.id)) {
+      schedule[dn].exercises.push({ exId: ex.id, name: ex.name });
+    }
+  });
+  saveSchedule();
+  closeLibAddDay();
+  if (schedule[currentDay]) renderDayContent();
 }
 
-// Opens the Library tab specifically to add an exercise into the given day —
-// called from the "+ Add exercise" button on the Log tab (edit mode).
-function openLibV2ForDay(day) {
-  _libv2PickingDay = day;
-  switchTab('library');
-}
+/* ─── ADD / EDIT EXERCISE FORM ─── */
+let _libFormEditingId = null;
+let _libFormSecondary = [];
+let _libFormEquipment = [];
 
-/* ─── LIBRARY V2 ADD/EDIT FORM ─── */
-let _libv2PickingDay = null; // set when Library is opened from a specific day's "+ Add exercise" button
-let _libv2FormEditingName = null; // null = adding new; otherwise the name of the exercise being edited
-
-function libv2PopulateGroupSelect(selectedGroupKey) {
-  const sel = document.getElementById('lv2f-group');
+function libFormPopulateGroupSelect(selectedGroupKey) {
+  const sel = document.getElementById('lf-group');
   sel.innerHTML = MUSCLE_GROUPS_V2.map(g =>
     `<option value="${g.key}"${g.key === selectedGroupKey ? ' selected' : ''}>${g.label}</option>`
   ).join('');
 }
-function libv2FormSyncSubs() {
-  const groupKey = document.getElementById('lv2f-group').value;
+function libFormSyncSubs() {
+  const groupKey = document.getElementById('lf-group').value;
   const groupObj = MUSCLE_GROUPS_V2.find(g => g.key === groupKey);
-  const subSel = document.getElementById('lv2f-sub');
+  const subSel = document.getElementById('lf-sub');
   const subs = groupObj ? groupObj.subs : [];
-  if (subs.length) {
-    subSel.style.display = '';
-    subSel.innerHTML = subs.map(s => `<option value="${escAttr(s)}">${escHtml(s)}</option>`).join('');
+  subSel.innerHTML = subs.map(s => `<option value="${escAttr(s)}">${escHtml(s)}</option>`).join('');
+}
+function libFormRenderTags(containerId, items, removeFn) {
+  document.getElementById(containerId).innerHTML = items.map((item, i) =>
+    `<span class="lib-tag-pill">${escHtml(item)}<button onclick="${removeFn}(${i})" aria-label="Remove">✕</button></span>`
+  ).join('');
+}
+function libFormRemoveSecondary(i) { _libFormSecondary.splice(i, 1); libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary'); }
+function libFormRemoveEquipment(i) { _libFormEquipment.splice(i, 1); libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment'); }
+function libFormWireTagInputs() {
+  const secInput = document.getElementById('lf-secondary-input');
+  secInput.onkeydown = (e) => {
+    if (e.key === 'Enter' && secInput.value.trim()) {
+      e.preventDefault();
+      _libFormSecondary.push(secInput.value.trim());
+      secInput.value = '';
+      libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
+    }
+  };
+  const eqInput = document.getElementById('lf-equipment-input');
+  eqInput.onkeydown = (e) => {
+    if (e.key === 'Enter' && eqInput.value.trim()) {
+      e.preventDefault();
+      _libFormEquipment.push(eqInput.value.trim());
+      eqInput.value = '';
+      libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
+    }
+  };
+}
+function openLibExerciseForm(exId) {
+  libFormWireTagInputs();
+  if (exId) {
+    const ex = findLibExById(exId);
+    if (!ex) return;
+    _libFormEditingId = exId;
+    document.getElementById('lib-form-title').textContent = 'Edit exercise';
+    document.getElementById('lf-name').value = ex.name;
+    libFormPopulateGroupSelect(ex.group);
+    libFormSyncSubs();
+    if (ex.sub) document.getElementById('lf-sub').value = ex.sub;
+    document.getElementById('lf-primary').value = (ex.muscles && ex.muscles.primary && ex.muscles.primary.join(', ')) || '';
+    _libFormSecondary = (ex.muscles && ex.muscles.secondary) ? [...ex.muscles.secondary] : [];
+    _libFormEquipment = ex.equipment ? [...ex.equipment] : [];
+    document.getElementById('lf-movement').value = ex.movementPattern || '';
+    document.getElementById('lf-type').value = ex.exerciseType || 'compound';
+    document.getElementById('lf-difficulty').value = ex.difficulty || 'beginner';
+    document.getElementById('lf-laterality').value = ex.laterality || 'bilateral';
+    document.getElementById('lf-position').value = ex.position || 'standing';
+    document.getElementById('lf-sets').value = ex.sets != null ? ex.sets : '';
+    document.getElementById('lf-reps').value = ex.reps || '';
+    document.getElementById('lf-rest').value = ex.rest || '';
+    document.getElementById('lf-card').value = ex.card || '';
+    document.getElementById('lf-blurb').value = ex.blurb || '';
+    document.getElementById('lib-form-btn-row').style.display = '';
   } else {
-    subSel.style.display = 'none';
-    subSel.innerHTML = '';
+    _libFormEditingId = null;
+    document.getElementById('lib-form-title').textContent = 'New exercise';
+    ['lf-name','lf-primary','lf-movement','lf-sets','lf-reps','lf-rest','lf-card','lf-blurb'].forEach(id => document.getElementById(id).value = '');
+    _libFormSecondary = [];
+    _libFormEquipment = [];
+    libFormPopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
+    libFormSyncSubs();
+    document.getElementById('lf-type').value = 'compound';
+    document.getElementById('lf-difficulty').value = 'beginner';
+    document.getElementById('lf-laterality').value = 'bilateral';
+    document.getElementById('lf-position').value = 'standing';
+    document.getElementById('lib-form-btn-row').style.display = 'none';
   }
+  libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
+  libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
+  document.getElementById('lib-form-wrap').classList.add('show');
 }
-function openLibV2AddForm() {
-  _libv2FormEditingName = null;
-  document.getElementById('libv2-form-title').textContent = 'Add exercise';
-  document.getElementById('lv2f-name').value = '';
-  document.getElementById('lv2f-reps').value = '';
-  document.getElementById('lv2f-sets').value = '';
-  document.getElementById('lv2f-rest').value = '';
-  document.getElementById('lv2f-type').value = 'gym';
-  document.getElementById('lv2f-instructions').value = '';
-  document.getElementById('lv2f-delete-btn').style.display = 'none';
-  libv2PopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
-  libv2FormSyncSubs();
-  document.getElementById('libv2-form-wrap').classList.add('show');
+function closeLibExerciseForm() {
+  document.getElementById('lib-form-wrap').classList.remove('show');
 }
-function openLibV2EditForm(name) {
-  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === name);
-  if (!ex) return;
-  _libv2FormEditingName = name;
-  document.getElementById('libv2-form-title').textContent = 'Edit exercise';
-  document.getElementById('lv2f-name').value = ex.name;
-  document.getElementById('lv2f-reps').value = ex.reps || '';
-  document.getElementById('lv2f-sets').value = ex.sets || '';
-  document.getElementById('lv2f-rest').value = ex.rest || '';
-  document.getElementById('lv2f-type').value = ex.type || 'gym';
-  document.getElementById('lv2f-instructions').value = EXERCISE_BLURBS[ex.name] || '';
-  document.getElementById('lv2f-delete-btn').style.display = '';
-  libv2PopulateGroupSelect(ex.group);
-  libv2FormSyncSubs();
-  if (ex.sub) document.getElementById('lv2f-sub').value = ex.sub;
-  document.getElementById('libv2-form-wrap').classList.add('show');
-}
-function closeLibV2Form() {
-  document.getElementById('libv2-form-wrap').classList.remove('show');
-}
-function saveLibV2Form() {
-  const name = document.getElementById('lv2f-name').value.trim();
-  if (!name) { document.getElementById('lv2f-name').focus(); return; }
-  const group = document.getElementById('lv2f-group').value;
-  const subSelect = document.getElementById('lv2f-sub');
-  const sub = subSelect.style.display !== 'none' ? subSelect.value : undefined;
-  const type = document.getElementById('lv2f-type').value;
-  const reps = document.getElementById('lv2f-reps').value.trim() || '8-12';
-  const setsRaw = document.getElementById('lv2f-sets').value.trim();
-  const sets = setsRaw ? Math.max(1, parseInt(setsRaw)) || undefined : undefined;
-  const restRaw = document.getElementById('lv2f-rest').value.trim() || '60 sec';
-  const instructions = document.getElementById('lv2f-instructions').value.trim();
-  const restSecsMatch = restRaw.match(/(\d+)\s*min/);
+function saveLibExerciseForm() {
+  const name = document.getElementById('lf-name').value.trim();
+  if (!name) { document.getElementById('lf-name').focus(); return; }
+  const group = document.getElementById('lf-group').value;
+  const sub = document.getElementById('lf-sub').value;
+  const primaryRaw = document.getElementById('lf-primary').value.trim();
+  const primary = primaryRaw ? primaryRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const movementPattern = document.getElementById('lf-movement').value.trim();
+  const exerciseType = document.getElementById('lf-type').value;
+  const difficulty = document.getElementById('lf-difficulty').value;
+  const laterality = document.getElementById('lf-laterality').value;
+  const position = document.getElementById('lf-position').value;
+  const setsRaw = document.getElementById('lf-sets').value.trim();
+  const sets = setsRaw ? (Math.max(0, parseInt(setsRaw)) || 0) : undefined;
+  const reps = document.getElementById('lf-reps').value.trim() || '8-12';
+  const restRaw = document.getElementById('lf-rest').value.trim() || '60 sec';
+  const restSecsMatchMin = restRaw.match(/(\d+)\s*min/);
   const restSecsMatchSec = restRaw.match(/(\d+)\s*sec/);
-  const restSecs = restSecsMatch ? parseInt(restSecsMatch[1]) * 60 : (restSecsMatchSec ? parseInt(restSecsMatchSec[1]) : 60);
+  const restSecs = restSecsMatchMin ? parseInt(restSecsMatchMin[1]) * 60 : (restSecsMatchSec ? parseInt(restSecsMatchSec[1]) : 60);
+  const card = document.getElementById('lf-card').value.trim();
+  const blurb = document.getElementById('lf-blurb').value.trim();
+  const type = _libFormEquipment.includes('Dumbbell') ? 'dumbbell'
+    : _libFormEquipment.includes('Bodyweight') ? 'bodyweight'
+    : 'gym';
 
-  if (_libv2FormEditingName) {
-    const ex = DEFAULT_LIBRARY_V2.find(e => e.name === _libv2FormEditingName);
+  const muscles = { primary, secondary: [..._libFormSecondary], stabilizers: [] };
+
+  if (_libFormEditingId) {
+    const ex = findLibExById(_libFormEditingId);
     if (ex) {
-      // If the name changed, move the instructions entry over to the new name
-      if (_libv2FormEditingName !== name && EXERCISE_BLURBS[_libv2FormEditingName] !== undefined) {
-        EXERCISE_BLURBS[name] = EXERCISE_BLURBS[_libv2FormEditingName];
-        delete EXERCISE_BLURBS[_libv2FormEditingName];
-      }
       const oldName = ex.name;
-      ex.name = name; ex.group = group; ex.type = type; ex.reps = reps; ex.rest = restRaw; ex.restSecs = restSecs;
-      if (sets !== undefined) ex.sets = sets; else delete ex.sets;
-      if (sub !== undefined) ex.sub = sub; else delete ex.sub;
-      // Relink any schedule/history entries still holding the OLD name (matched
-      // exactly, since we know precisely what it was a moment ago) so the rename
-      // shows up everywhere immediately, instead of waiting on the next app load's
-      // fuzzy-match migration to catch it.
+      Object.assign(ex, { name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type });
+      if (sets !== undefined) ex.sets = sets;
       if (oldName !== name) {
         let schedTouched = false;
         DAY_NAMES.forEach(d => {
@@ -4137,25 +4200,20 @@ function saveLibV2Form() {
       }
     }
   } else {
-    const newEx = { name, group, type, reps, rest: restRaw, restSecs, id: genLibV2Id() };
+    const newEx = { id: genLibV2Id(), name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type };
     if (sets !== undefined) newEx.sets = sets;
-    if (sub !== undefined) newEx.sub = sub;
     DEFAULT_LIBRARY_V2.push(newEx);
   }
-  if (instructions) EXERCISE_BLURBS[name] = instructions;
-  else delete EXERCISE_BLURBS[name];
   saveLibraryV2();
-  saveBlurbsV2();
-  closeLibV2Form();
-  renderLibV2();
+  closeLibExerciseForm();
+  if (libActiveGroupKey) renderLibCategory();
+  renderLibGroupsGrid();
 }
-
-function deleteLibV2Exercise() {
-  if (!_libv2FormEditingName) return;
-  const ex = DEFAULT_LIBRARY_V2.find(e => e.name === _libv2FormEditingName);
+function deleteLibExercise() {
+  if (!_libFormEditingId) return;
+  const ex = findLibExById(_libFormEditingId);
   if (!ex) return;
 
-  // Find every day currently scheduling this exercise (matched by exId).
   const daysUsingIt = DAY_NAMES.filter(d =>
     schedule[d].exercises.some(e => ex.id && e.exId === ex.id)
   ).map(d => FULL_DAYS[d]);
@@ -4163,17 +4221,14 @@ function deleteLibV2Exercise() {
   const doDelete = () => {
     const idx = DEFAULT_LIBRARY_V2.findIndex(e => e.id === ex.id);
     if (idx !== -1) DEFAULT_LIBRARY_V2.splice(idx, 1);
-    delete EXERCISE_BLURBS[ex.name];
-    // Remove it from every day that had it scheduled, since keeping it there
-    // would be a dead entry with no way to log new history against it.
     DAY_NAMES.forEach(d => {
       schedule[d].exercises = schedule[d].exercises.filter(e => !(ex.id && e.exId === ex.id));
     });
     saveLibraryV2();
-    saveBlurbsV2();
     saveSchedule();
-    closeLibV2Form();
-    renderLibV2();
+    closeLibExerciseForm();
+    if (libActiveGroupKey) renderLibCategory();
+    renderLibGroupsGrid();
     if (schedule[currentDay]) renderDayContent();
   };
 
@@ -4189,15 +4244,23 @@ function deleteLibV2Exercise() {
   }
 }
 
+function openLibV2ForDay(day) {
+  _libPickingDay = day;
+  switchTab('library');
+}
+
+
 function switchTab(tab) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-' + tab).classList.add('active');
   if (tab !== 'library') {
-    _libv2PickingDay = null;
-    if (document.getElementById('libv2-search-pill')?.classList.contains('show')) closeLibV2Search();
-    libv2ActiveGroup = null;
-    libv2ActiveSub = null;
-    libv2SearchQuery = '';
+    _libPickingDay = null;
+    if (document.getElementById('lib-search-wrap')?.style.display !== 'none') closeLibSearch();
+    libActiveGroupKey = null;
+    libActiveFilterSub = null;
+    libSearchQuery = '';
+    document.getElementById('lib-landing').style.display = '';
+    document.getElementById('lib-category').style.display = 'none';
   }
   // Leaving to a tab that isn't Library or Log (where the Custom Log sheet lives)
   // means the user abandoned the picker — don't leave "Add to Custom Log" stuck
