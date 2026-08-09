@@ -8,11 +8,9 @@ const KEYS = {
   history:   'wl_v3',
   bw:        'wl_bw',
   name:      'wl_name',
-  libSeen:   'wl_lib_seen',
   theme:     'wl_theme',
   units:     'wl_units',
   welcomed:  'wl_welcomed',
-  hideWarn:  'wl_hide_warn',
   greetDate: 'wl_greet_date',
   greetOrder:'wl_greet_order',
   music:     'wl_music_enabled',
@@ -1151,22 +1149,12 @@ function openExerciseHistory(key) {
 }
 
 /* ─── DAY PICKER / CONTENT ─── */
-function toggleDayPicker() {
-  const dd = document.getElementById('day-dropdown');
-  const picker = document.getElementById('day-picker-btn');
-  if (!dd) return;
-  closeDayMenu();
-  const opening = !dd.classList.contains('show');
-  dd.classList.toggle('show', opening);
-  picker.classList.toggle('open', opening);
-}
 function closeDayPicker() {
   const dd = document.getElementById('day-dropdown');
   const picker = document.getElementById('day-picker-btn');
   if (dd) dd.classList.remove('show');
   if (picker) picker.classList.remove('open');
 }
-function selectDay(d) { flushInputs(); currentDay = d; dayEditMode = false; closeDayPicker(); renderDayContent(); }
 
 function toggleDayMenu() {
   const dd = document.getElementById('day-menu-dropdown');
@@ -1284,61 +1272,6 @@ function clearSet(d, i, si) {
   const data = getSetData(d, i);
   if (data.logged) return;
   if (data.sets[si]) { data.sets[si].reps = ''; data.sets[si].weight = ''; }
-  renderDayContent();
-}
-
-/* ─── LOGGING ─── */
-function logExercise(d, idx) {
-  flushInputs();
-  const data = getSetData(d, idx);
-  const valid = data.sets.filter(s => s.reps !== '' || s.weight !== '');
-  if (!valid.length) return;
-  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
-  const hist = getHistory();
-  if (!hist[today]) hist[today] = [];
-  const ex = schedule[d].exercises[idx];
-  const bw = ex.type === 'bodyweight' ? getCleanBw() : null;
-  const newSets = valid.map(s => {
-    const weight = s.weight !== '' ? Number(s.weight)||0 : (bw != null ? bw : 0);
-    return { reps: Number(s.reps)||0, weight };
-  });
-  const existing = hist[today].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
-  if (existing >= 0) {
-    // Append to today's existing entry so multiple log presses on the same day merge
-    hist[today][existing].sets = hist[today][existing].sets.concat(newSets);
-  } else {
-    hist[today].push({ exId: ex.exId||'', name: ex.name, sets: newSets });
-  }
-  saveHistory(hist);
-  data.logged = true;
-  data.lastLoggedCount = newSets.length; // remember for undo
-  renderDayContent();
-  startTimer(ex.restSecs || 90, d, idx);
-}
-function undoLog(d, idx) {
-  const data = getSetData(d, idx);
-  data.logged = false;
-  // Remove only the sets that were just appended (not earlier same-day logs)
-  const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
-  const hist = getHistory();
-  const ex = schedule[d].exercises[idx];
-  const removeCount = data.lastLoggedCount || 0;
-  if (hist[today]) {
-    const i = hist[today].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
-    if (i >= 0) {
-      const entry = hist[today][i];
-      if (removeCount > 0 && entry.sets.length > removeCount) {
-        // Earlier sets exist from a previous log this day — keep them, drop only the latest batch
-        entry.sets = entry.sets.slice(0, entry.sets.length - removeCount);
-      } else {
-        // Either no earlier sets, or we don't know the count — remove the whole entry
-        hist[today].splice(i, 1);
-      }
-      if (!hist[today].length) delete hist[today];
-      saveHistory(hist);
-    }
-  }
-  data.lastLoggedCount = 0;
   renderDayContent();
 }
 

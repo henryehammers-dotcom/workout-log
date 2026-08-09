@@ -1212,55 +1212,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <script src="calendar.js?v=126"></script>
 <script src="custom-log.js?v=126"></script>
 <script>
-// Force-clear every cache and service worker on load, unconditionally, so no
-// stale bundle can ever survive a deploy. Runs once per browser session via
-// a sessionStorage flag, then re-registers a clean service worker.
-// Backs up localStorage first and restores it after reload as a hard
-// guarantee this can never touch saved data, even in theory.
-(function forceCacheClear() {
-  const FLAG = 'wl_force_clear_v126';
-  if (sessionStorage.getItem(FLAG)) return;
-  sessionStorage.setItem(FLAG, '1');
-
-  // Snapshot every localStorage key/value pair before touching anything.
-  const backup = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    backup[k] = localStorage.getItem(k);
-  }
-  sessionStorage.setItem('wl_ls_backup', JSON.stringify(backup));
-
-  const clearAll = async () => {
-    try {
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-      }
-    } catch (e) { console.warn('Cache clear failed:', e); }
-  };
-
-  clearAll().then(() => location.reload());
-})();
-
-// On every load, verify localStorage still matches the last backup taken
-// above; if anything is missing, restore it. Pure safety net — under normal
-// operation this is a no-op since forceCacheClear never touches localStorage.
-(function restoreIfNeeded() {
-  const backupRaw = sessionStorage.getItem('wl_ls_backup');
-  if (!backupRaw) return;
-  try {
-    const backup = JSON.parse(backupRaw);
-    Object.keys(backup).forEach(k => {
-      if (localStorage.getItem(k) === null) localStorage.setItem(k, backup[k]);
-    });
-  } catch (e) {}
-})();
-</script>
-<script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').catch(err => {

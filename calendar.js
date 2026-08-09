@@ -150,19 +150,6 @@ function renderCalendarRoot() {
   if (calendarView === 'day') initDrag(DAY_NAMES[viewedDate.getDay()]);
 }
 
-/* ─── NAV ARROWS (shared by day/week/month) ─── */
-function calNavArrows() {
-  return `
-    <div class="cal-nav-arrows">
-      <button class="cal-nav-arrow" onclick="calendarNav(-1)" aria-label="Previous">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-      </button>
-      <button class="cal-nav-arrow" onclick="calendarNav(1)" aria-label="Next">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
-      </button>
-    </div>`;
-}
-
 /* ─── DAY VIEW (this is the old Log tab, now date-aware) ─── */
 function renderDayView() {
   const date = viewedDate;
@@ -309,7 +296,7 @@ function renderDayView() {
 function formatISODate(date) { return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0'); }
 function parseISODate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
 
-// Same as logExercise, but writes history under an arbitrary date instead of always "today".
+// Writes history under an arbitrary date instead of always "today".
 function logExerciseOnDate(d, idx, isoDate) {
   flushInputs();
   const date = parseISODate(isoDate);

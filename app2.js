@@ -45,13 +45,6 @@ function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Number(s.re
 function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
 // A session's strength score = its best single-set e1RM (not summed across sets)
 function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
-function parseRepRange(str) { if (!str) return null; const m = str.match(/(\d+)\s*[-–—]\s*(\d+)/); return m ? { lo: parseInt(m[1]), hi: parseInt(m[2]) } : null; }
-function getRepRangeForExercise(nameOrId) {
-  for (const g of library) for (const ex of g.exercises) if ((ex.id && ex.id === nameOrId) || ex.name === nameOrId) return parseRepRange(ex.reps);
-  for (const d of Object.values(schedule)) for (const ex of d.exercises) if (ex.name === nameOrId && ex.reps) return parseRepRange(ex.reps);
-  return null;
-}
-
 function renderHistory(selected) {
   destroyCharts();
   const container = document.getElementById('history-container');
@@ -349,14 +342,6 @@ function exerciseStillHasSessions(exKey) {
 }
 
 /* ─── VALIDATION ─── */
-function toggleDurationField(prefix, type) {
-  const wrap = document.getElementById(prefix + '-duration-wrap');
-  if (wrap) wrap.style.display = type === 'custom' ? 'grid' : 'none';
-}
-function validReps(val) {
-  if (!val || val.trim() === '') return true;
-  return /^\d+\s*[-–]\s*\d+$/.test(val.trim());
-}
 document.addEventListener('keydown', e => {
   if (e.target.type === 'number' && ['e','E','+','-'].includes(e.key)) e.preventDefault();
 });
