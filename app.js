@@ -785,19 +785,25 @@ function libExerciseCardHtml(ex) {
 
 /* ─── SEARCH ─── */
 function openLibSearch() {
-  document.getElementById('lib-landing').style.display = 'none';
   document.getElementById('lib-category').style.display = 'none';
-  document.getElementById('lib-search-wrap').style.display = '';
+  document.getElementById('lib-landing').style.display = '';
+  document.querySelector('#lib-landing .lib-header-row').classList.add('searching');
+  document.getElementById('lib-search-btn').style.display = 'none';
+  document.getElementById('lib-search-pill').classList.add('show');
+  document.getElementById('lib-groups-wrap').style.display = 'none';
   const input = document.getElementById('lib-search-input');
   input.value = '';
   libSearchQuery = '';
+  document.getElementById('lib-search-results').style.display = '';
   document.getElementById('lib-search-results').innerHTML = '';
-  setTimeout(() => input.focus(), 50);
+  setTimeout(() => input.focus(), 200);
 }
 function closeLibSearch() {
-  document.getElementById('lib-search-wrap').style.display = 'none';
-  document.getElementById('lib-landing').style.display = '';
-  document.getElementById('lib-category').style.display = 'none';
+  document.querySelector('#lib-landing .lib-header-row').classList.remove('searching');
+  document.getElementById('lib-search-btn').style.display = '';
+  document.getElementById('lib-search-pill').classList.remove('show');
+  document.getElementById('lib-groups-wrap').style.display = '';
+  document.getElementById('lib-search-results').style.display = 'none';
   libSearchQuery = '';
   renderLibGroupsGrid();
 }
@@ -815,6 +821,7 @@ function libSearchInput(query) {
     ? matches.map(ex => libExerciseCardHtml(ex)).join('')
     : `<div class="empty">No exercises match your search.</div>`;
 }
+
 
 /* ─── EXERCISE DETAIL POPUP ─── */
 function findLibExById(id) { return DEFAULT_LIBRARY_V2.find(e => e.id === id); }
@@ -1269,12 +1276,15 @@ function switchTab(tab) {
   document.getElementById('snav-' + tab).classList.add('active');
   if (tab !== 'library') {
     _libPickingDay = null;
-    if (document.getElementById('lib-search-wrap')?.style.display !== 'none') closeLibSearch();
+    if (document.getElementById('lib-search-pill')?.classList.contains('show')) closeLibSearch();
     libActiveGroupKey = null;
     libActiveFilterSub = null;
     libSearchQuery = '';
     document.getElementById('lib-landing').style.display = '';
     document.getElementById('lib-category').style.display = 'none';
+  }
+  if (tab !== 'history') {
+    if (document.getElementById('hist-search-pill')?.classList.contains('show')) closeHistSearch();
   }
   // Leaving to a tab that isn't Library or Log (where the Custom Log sheet lives)
   // means the user abandoned the picker — don't leave "Add to Custom Log" stuck

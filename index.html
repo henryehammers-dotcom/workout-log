@@ -522,7 +522,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    ADD / EDIT EXERCISE FORM
    ────────────────────────────────────────────────────────── */
-.lib-form-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;margin-bottom:12px}
+.lib-form-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:16px;font-family:inherit;margin-bottom:12px}
 .lib-form-input:focus{outline:none;border-color:var(--accent)}
 .lib-form-textarea{height:72px;resize:vertical;line-height:1.4}
 .lib-form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -537,6 +537,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* Scroll-hint chevrons on horizontal filter rows */
 .libv2-scroll-hint{position:absolute;right:0;top:0;bottom:0;width:28px;display:flex;align-items:center;justify-content:flex-end;background:linear-gradient(to right, transparent, var(--bg) 65%);pointer-events:none;color:var(--text3)}
 .libv2-search-pill{position:relative;height:38px;background:var(--bg2);border:1px solid var(--border2);border-radius:19px;display:none;align-items:center;gap:8px;padding:0 14px;width:0;overflow:hidden;transition:width .2s ease;z-index:5;color:var(--text3)}
+.lib-search-pill{height:34px;background:var(--bg2);border:1px solid var(--border2);border-radius:17px;display:flex;align-items:center;gap:8px;padding:0;width:0;overflow:hidden;transition:width .2s ease, padding .2s ease;color:var(--text3);flex-shrink:0}
+.lib-search-pill.show{width:100%;padding:0 14px}
+.lib-search-pill input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:16px;color:var(--text);font-family:inherit}
+.lib-search-pill input::placeholder{color:var(--text3)}
+.lib-header-row{position:relative}
+.lib-header-row.searching #lib-title{display:none}
+.lib-header-row.searching #lib-add-btn{display:none}
+.lib-header-row.searching #hist-title{display:none}
 .libv2-search-pill.show{display:flex;width:100%}
 .libv2-search-pill input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:16px;color:var(--text);font-family:inherit}
 .libv2-search-pill input::placeholder{color:var(--text3)}
@@ -897,7 +905,19 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── History tab ── -->
 <div id="tab-history" style="display:none">
-  <div class="page-title">History</div>
+  <div class="lib-header-row" id="hist-header-row">
+    <div class="page-title" style="margin-bottom:0" id="hist-title">History</div>
+    <div class="lib-header-btns">
+      <button class="lib-header-btn" id="hist-search-btn" onclick="openHistSearch()" aria-label="Search history">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+    <div class="lib-search-pill" id="hist-search-pill">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="hist-search-input" placeholder="Search history..." oninput="histSearchInput(this.value)">
+      <button class="libv2-search-close" onclick="closeHistSearch()" aria-label="Close search">✕</button>
+    </div>
+  </div>
   <div id="history-container"></div>
 </div>
 
@@ -948,17 +968,23 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <!-- Landing: muscle group tiles -->
   <div id="lib-landing">
     <div class="lib-header-row">
-      <div class="page-title" style="margin-bottom:0">Library</div>
-      <div class="lib-header-btns">
-        <button class="lib-header-btn" onclick="openLibExerciseForm()" aria-label="Add custom exercise">
+      <div class="page-title" style="margin-bottom:0" id="lib-title">Library</div>
+      <div class="lib-header-btns" id="lib-header-btns">
+        <button class="lib-header-btn" id="lib-add-btn" onclick="openLibExerciseForm()" aria-label="Add custom exercise">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-        <button class="lib-header-btn" onclick="openLibSearch()" aria-label="Search exercises">
+        <button class="lib-header-btn" id="lib-search-btn" onclick="openLibSearch()" aria-label="Search exercises">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
       </div>
+      <div class="lib-search-pill" id="lib-search-pill">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="lib-search-input" placeholder="Search exercises..." oninput="libSearchInput(this.value)">
+        <button class="libv2-search-close" onclick="closeLibSearch()" aria-label="Close search">✕</button>
+      </div>
     </div>
     <div id="lib-groups-wrap"></div>
+    <div id="lib-search-results" style="display:none"></div>
   </div>
 
   <!-- Category: exercise cards for a selected muscle group -->
@@ -974,18 +1000,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="lib-filter-row" id="lib-filter-row"></div>
     </div>
     <div id="lib-exercise-cards"></div>
-  </div>
-
-  <!-- Search overlay -->
-  <div id="lib-search-wrap" style="display:none">
-    <div class="lib-header-row">
-      <div class="lib-search-pill show" style="position:static;width:100%">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="lib-search-input" placeholder="Search exercises..." oninput="libSearchInput(this.value)">
-        <button class="libv2-search-close" onclick="closeLibSearch()" aria-label="Close search">✕</button>
-      </div>
-    </div>
-    <div id="lib-search-results"></div>
   </div>
 </div>
 

@@ -45,6 +45,27 @@ function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Number(s.re
 function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
 // A session's strength score = its best single-set e1RM (not summed across sets)
 function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
+let histSearchQuery = '';
+function openHistSearch() {
+  document.getElementById('hist-header-row').classList.add('searching');
+  document.getElementById('hist-search-btn').style.display = 'none';
+  document.getElementById('hist-search-pill').classList.add('show');
+  const input = document.getElementById('hist-search-input');
+  input.value = '';
+  histSearchQuery = '';
+  setTimeout(() => input.focus(), 200);
+}
+function closeHistSearch() {
+  document.getElementById('hist-header-row').classList.remove('searching');
+  document.getElementById('hist-search-btn').style.display = '';
+  document.getElementById('hist-search-pill').classList.remove('show');
+  histSearchQuery = '';
+  renderHistory();
+}
+function histSearchInput(query) {
+  histSearchQuery = query.trim();
+  renderHistory();
+}
 function renderHistory(selected) {
   destroyCharts();
   const container = document.getElementById('history-container');
@@ -57,7 +78,12 @@ function renderHistory(selected) {
 
   if (!selected) {
     if (backBtn) backBtn.classList.remove('show');
-    const list = getHistoryDisplayNames(index);
+    let list = getHistoryDisplayNames(index);
+    if (typeof histSearchQuery !== 'undefined' && histSearchQuery) {
+      const q = histSearchQuery.toLowerCase();
+      list = list.filter(({name}) => name.toLowerCase().includes(q));
+    }
+    if (!list.length) { container.innerHTML = '<div class="empty">No history matches your search.</div>'; return; }
     container.innerHTML =
       list.map(({key, name}) => {
         const entry = index[key];
