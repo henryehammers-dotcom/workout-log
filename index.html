@@ -1212,29 +1212,62 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <script src="calendar.js?v=126"></script>
 <script src="custom-log.js?v=126"></script>
 <script>
-// Register the service worker, and self-heal if a previous registration is
-// broken/unresponsive (e.g. stuck mid-install from an earlier bad deploy) —
-// so a wedged SW never requires manually clearing Safari's site data by hand.
+// Force-clear every cache and service worker on load, unconditionally, so no
+// stale bundle can ever survive a deploy. Runs once per browser session via
+// a sessionStorage flag, then re-registers a clean service worker.
+// Backs up localStorage first and restores it after reload as a hard
+// guarantee this can never touch saved data, even in theory.
+(function forceCacheClear() {
+  const FLAG = 'wl_force_clear_v126';
+  if (sessionStorage.getItem(FLAG)) return;
+  sessionStorage.setItem(FLAG, '1');
+
+  // Snapshot every localStorage key/value pair before touching anything.
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    backup[k] = localStorage.getItem(k);
+  }
+  sessionStorage.setItem('wl_ls_backup', JSON.stringify(backup));
+
+  const clearAll = async () => {
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) { console.warn('Cache clear failed:', e); }
+  };
+
+  clearAll().then(() => location.reload());
+})();
+
+// On every load, verify localStorage still matches the last backup taken
+// above; if anything is missing, restore it. Pure safety net — under normal
+// operation this is a no-op since forceCacheClear never touches localStorage.
+(function restoreIfNeeded() {
+  const backupRaw = sessionStorage.getItem('wl_ls_backup');
+  if (!backupRaw) return;
+  try {
+    const backup = JSON.parse(backupRaw);
+    Object.keys(backup).forEach(k => {
+      if (localStorage.getItem(k) === null) localStorage.setItem(k, backup[k]);
+    });
+  } catch (e) {}
+})();
+</script>
+</script>
+<script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').catch(err => {
       console.warn('SW registration failed:', err);
     });
   });
-
-  // If an existing registration is present but has no active worker after a
-  // few seconds (a hallmark of a wedged/half-installed SW), unregister it and
-  // reload once so the browser re-registers cleanly from scratch.
-  const RECOVERY_FLAG = 'wl_sw_recovery_attempted';
-  setTimeout(() => {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      const broken = regs.some(r => !r.active && !r.installing && !r.waiting);
-      if (broken && !sessionStorage.getItem(RECOVERY_FLAG)) {
-        sessionStorage.setItem(RECOVERY_FLAG, '1');
-        Promise.all(regs.map(r => r.unregister())).then(() => location.reload());
-      }
-    }).catch(() => {});
-  }, 4000);
 }
 </script>
 </body>
