@@ -1211,5 +1211,31 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <script src="app2.js"></script>
 <script src="calendar.js"></script>
 <script src="custom-log.js"></script>
+<script>
+// Register the service worker, and self-heal if a previous registration is
+// broken/unresponsive (e.g. stuck mid-install from an earlier bad deploy) —
+// so a wedged SW never requires manually clearing Safari's site data by hand.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(err => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+
+  // If an existing registration is present but has no active worker after a
+  // few seconds (a hallmark of a wedged/half-installed SW), unregister it and
+  // reload once so the browser re-registers cleanly from scratch.
+  const RECOVERY_FLAG = 'wl_sw_recovery_attempted';
+  setTimeout(() => {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      const broken = regs.some(r => !r.active && !r.installing && !r.waiting);
+      if (broken && !sessionStorage.getItem(RECOVERY_FLAG)) {
+        sessionStorage.setItem(RECOVERY_FLAG, '1');
+        Promise.all(regs.map(r => r.unregister())).then(() => location.reload());
+      }
+    }).catch(() => {});
+  }, 4000);
+}
+</script>
 </body>
 </html>

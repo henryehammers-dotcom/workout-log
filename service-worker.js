@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v122';
+const CACHE = 'tallymark-v123';
 const FILES = [
   './index.html',
   './app.js',
@@ -11,12 +11,15 @@ const FILES = [
   './Tallymark-icon-512.png'
 ];
 
-// Install: cache all files and activate immediately so the next launch
-// (after the PWA is fully closed) gets the new bundle without waiting.
+// Install: cache all files individually (not addAll) so a single missing/failed
+// file can't reject the whole install and leave the service worker stuck —
+// then activate immediately so the next launch gets the new bundle without waiting.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(FILES))
+      .then(c => Promise.all(
+        FILES.map(f => c.add(f).catch(err => console.warn('SW: failed to cache', f, err)))
+      ))
       .then(() => self.skipWaiting())
   );
 });
@@ -54,7 +57,7 @@ self.addEventListener('fetch', e => {
     );
   } else {
     e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request))
+      caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
     );
   }
 });
