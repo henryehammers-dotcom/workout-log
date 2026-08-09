@@ -133,7 +133,6 @@ function renderCalendarRoot() {
 
   const pill = `
     <div class="cal-pill" id="cal-pill">
-      <div class="cal-pill-thumb cal-pill-thumb-${calendarView}"></div>
       <button class="cal-pill-opt${calendarView==='day'?' active':''}" onclick="switchCalendarView('day')">Day</button>
       <button class="cal-pill-opt${calendarView==='week'?' active':''}" onclick="switchCalendarView('week')">Week</button>
       <button class="cal-pill-opt${calendarView==='month'?' active':''}" onclick="switchCalendarView('month')">Month</button>
@@ -182,12 +181,15 @@ function renderDayView() {
 
   const top = `
     <div class="day-header cal-day-header">
-      ${calNavArrows()}
-      <div class="cal-day-date">${escHtml(dateStr)}${!isToday?` <button class="cal-today-btn" onclick="jumpToDate(new Date())">Today</button>`:''}</div>
+      <div class="cal-day-header-row">
+        ${calNavArrows()}
+        <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+      <div class="cal-day-date">${escHtml(dateStr)}</div>
       ${titleHtml}
-      <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-      </button>
+      ${!isToday ? `<button class="cal-today-btn" onclick="jumpToDate(new Date())">Jump to today</button>` : ''}
       <div class="day-menu-dropdown" id="day-menu-dropdown">
         <button class="day-menu-item" onclick="closeDayMenu();toggleDayEditMode()">${dayEditMode?'Done editing':'Edit workout'}</button>
         <button class="day-menu-item" onclick="closeDayMenu();toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
@@ -347,8 +349,10 @@ function renderWeekView() {
 
   return `
     <div class="cal-card-header">
-      ${calNavArrows()}
-      <div class="cal-title"><span class="cal-title-accent">${escHtml(label)}</span></div>
+      <div class="cal-card-header-top">
+        <div class="cal-title"><span class="cal-title-accent">${escHtml(label)}</span></div>
+        ${calNavArrows()}
+      </div>
       ${monthModeToggleHtml()}
     </div>
     <div class="cal-grid cal-grid-week">
@@ -371,10 +375,12 @@ function renderMonthView() {
 
   return `
     <div class="cal-card-header">
-      ${calNavArrows()}
-      <div class="cal-title" onclick="toggleMonthDropdown()" id="cal-month-title">
-        <span class="cal-title-accent">${MONTH_NAMES[viewedDate.getMonth()].toUpperCase()}</span> ${viewedDate.getFullYear()}
-        <svg class="cal-title-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="cal-card-header-top">
+        <div class="cal-title" onclick="toggleMonthDropdown()" id="cal-month-title">
+          <span class="cal-title-accent">${MONTH_NAMES[viewedDate.getMonth()].toUpperCase()}</span> ${viewedDate.getFullYear()}
+          <svg class="cal-title-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        ${calNavArrows()}
       </div>
       ${monthModeToggleHtml()}
     </div>
@@ -437,11 +443,11 @@ function trendArrowSvg(dir) {
 function renderYearView() {
   const year = viewedDate.getFullYear();
   return `
-    <div class="cal-card-header cal-year-header">
+    <div class="cal-card-header">
       <div class="cal-title">${year}</div>
     </div>
     <div class="cal-year-list">
-      ${MONTH_NAMES.map((m,i) => `<button class="cal-year-item" onclick="jumpToMonth(${i},${year})">${m}</button>`).join('')}
+      ${MONTH_NAMES.map((m,i) => `<button class="cal-year-item" onclick="jumpToMonth(${i},${year})"><span>${m}</span><span class="cal-year-item-chev">›</span></button>`).join('')}
     </div>`;
 }
 
