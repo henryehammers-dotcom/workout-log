@@ -7,14 +7,21 @@
 let _customLog = null; // { date: Date, entries: [{ exId, name, sets:[{reps,weight}] }] }
 
 function openCustomLog(isoDate) {
-  const date = isoDate ? parseISODate(isoDate) : cloneDate(viewedDate);
-  _customLog = { date, entries: [] };
-  renderCustomLog();
-  document.getElementById('custom-log-wrap').classList.add('show');
+  try {
+    const date = isoDate ? parseISODate(isoDate) : cloneDate(viewedDate);
+    _customLog = { date, entries: [] };
+    const wrap = document.getElementById('custom-log-wrap');
+    if (!wrap) { alert('Custom log failed to open (missing sheet). Please reload the app.'); return; }
+    wrap.classList.add('show');
+    renderCustomLog();
+  } catch (err) {
+    console.error('openCustomLog failed:', err);
+    alert('Custom log failed to open: ' + err.message);
+  }
 }
 function closeCustomLog() {
   _customLog = null;
-  document.getElementById('custom-log-wrap').classList.remove('show');
+  document.getElementById('custom-log-wrap')?.classList.remove('show');
 }
 function customLogSetDate(val) {
   if (!_customLog || !val) return;
@@ -22,8 +29,6 @@ function customLogSetDate(val) {
   _customLog.date = new Date(y, m-1, d);
   renderCustomLogHeader();
 }
-// Renders the date as a tappable display; tapping swaps it for a native date
-// input in place (same pattern as the History edit-session date).
 function renderCustomLogHeader() {
   if (!_customLog) return;
   const el = document.getElementById('custom-log-date');
@@ -86,39 +91,47 @@ function customLogFlush() {
 }
 function renderCustomLog() {
   if (!_customLog) return;
-  renderCustomLogHeader();
-  const u = currentUnits;
-  const entriesHtml = _customLog.entries.length === 0
-    ? '<div class="empty">No exercises added yet — tap “+ Add exercise” below.</div>'
-    : _customLog.entries.map((e, i) => `
-      <div class="exercise-card" data-idx="${i}">
-        <div class="ex-head">
-          <div class="ex-head-text"><div class="ex-name">${escHtml(e.name)}</div></div>
-          <button class="ex-x" onclick="customLogRemoveEntry(${i})" aria-label="Remove">✕</button>
-        </div>
-        <div class="sets-table">
-          <div class="sets-thead">
-            <span class="sets-thead-cell center">Set</span>
-            <span class="sets-thead-cell center">Reps</span>
-            <span class="sets-thead-cell center">Weight (${u})</span>
-            <span></span>
+  try {
+    renderCustomLogHeader();
+    const u = currentUnits;
+    const entriesHtml = _customLog.entries.length === 0
+      ? '<div class="empty">No exercises added yet — tap “+ Add exercise” below.</div>'
+      : _customLog.entries.map((e, i) => `
+        <div class="exercise-card" data-idx="${i}">
+          <div class="ex-head">
+            <div class="ex-head-text"><div class="ex-name">${escHtml(e.name)}</div></div>
+            <button class="ex-x" onclick="customLogRemoveEntry(${i})" aria-label="Remove">✕</button>
           </div>
-          ${e.sets.map((s, si) => `
-            <div class="set-row">
-              <span class="set-num">${si+1}</span>
-              <input class="set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-cli="${i}" data-clsi="${si}" data-field="reps">
-              <input class="set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-cli="${i}" data-clsi="${si}" data-field="weight">
-              <button class="del-set" onclick="customLogRemoveSet(${i},${si})" aria-label="Clear">✕</button>
-            </div>`).join('')}
-        </div>
-        <div class="card-footer">
-          <button class="add-exercise-btn" style="margin-top:0" onclick="customLogAddSet(${i})">+ Add set</button>
-        </div>
-      </div>`).join('');
-  document.getElementById('custom-log-entries').innerHTML = entriesHtml;
-  document.querySelectorAll('#custom-log-entries [data-cli]').forEach(el => {
-    el.addEventListener('input', customLogFlush);
-  });
+          <div class="sets-table">
+            <div class="sets-thead">
+              <span class="sets-thead-cell center">Set</span>
+              <span class="sets-thead-cell center">Reps</span>
+              <span class="sets-thead-cell center">Weight (${u})</span>
+              <span></span>
+            </div>
+            ${e.sets.map((s, si) => `
+              <div class="set-row">
+                <span class="set-num">${si+1}</span>
+                <input class="set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-cli="${i}" data-clsi="${si}" data-field="reps">
+                <input class="set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-cli="${i}" data-clsi="${si}" data-field="weight">
+                <button class="del-set" onclick="customLogRemoveSet(${i},${si})" aria-label="Clear">✕</button>
+              </div>`).join('')}
+          </div>
+          <div class="card-footer">
+            <button class="add-exercise-btn" style="margin-top:0" onclick="customLogAddSet(${i})">+ Add set</button>
+          </div>
+        </div>`).join('');
+    const entriesEl = document.getElementById('custom-log-entries');
+    if (!entriesEl) { console.error('renderCustomLog: #custom-log-entries not found in DOM'); return; }
+    entriesEl.innerHTML = entriesHtml;
+    entriesEl.querySelectorAll('[data-cli]').forEach(el => {
+      el.addEventListener('input', customLogFlush);
+    });
+  } catch (err) {
+    console.error('renderCustomLog failed:', err);
+    const entriesEl = document.getElementById('custom-log-entries');
+    if (entriesEl) entriesEl.innerHTML = `<div class="empty">Something went wrong loading this — ${escHtml(err.message)}</div>`;
+  }
 }
 function saveCustomLog() {
   if (!_customLog) return;

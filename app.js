@@ -471,23 +471,32 @@ function applySettingsName(val) { localStorage.setItem(KEYS.name, val); updateAp
 
 /* ─── SETTINGS SHEET ─── */
 function openSettings(isFirstLaunch) {
-  if (isFirstLaunch) {
+  try {
+    if (isFirstLaunch) {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      syncWelcomeTheme(theme);
+      document.getElementById('welcome-wrap')?.classList.add('show');
+      setTimeout(() => document.getElementById('welcome-name')?.focus(), 300);
+      return;
+    }
+    const modal = document.getElementById('settings-modal');
+    if (!modal) { alert('Settings failed to open (missing panel). Please reload the app.'); return; }
+    modal.classList.add('show');
+    const nameEl = document.getElementById('settings-name');
+    if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
+    const bw = getCleanBw();
+    const bwEl = document.getElementById('settings-bw');
+    if (bwEl) bwEl.value = bw != null ? bw : '';
+    document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    syncWelcomeTheme(theme);
-    document.getElementById('welcome-wrap').classList.add('show');
-    setTimeout(() => document.getElementById('welcome-name').focus(), 300);
-    return;
+    document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
+    document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
+  } catch (err) {
+    console.error('openSettings failed:', err);
+    alert('Settings failed to open: ' + err.message);
   }
-  document.getElementById('settings-name').value = localStorage.getItem(KEYS.name) || '';
-  const bw = getCleanBw();
-  document.getElementById('settings-bw').value = bw != null ? bw : '';
-  document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
-  const theme = document.documentElement.getAttribute('data-theme') || 'light';
-  document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
-  document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
-  document.getElementById('settings-modal').classList.add('show');
 }
-function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
+function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
 
 function finishWelcome() {
   const nameInput = document.getElementById('welcome-name');
