@@ -480,9 +480,8 @@ function openSettings(isFirstLaunch) {
       return;
     }
     const modal = document.getElementById('settings-modal');
-    if (!modal) { alert('DEBUG: settings-modal element not found in DOM'); return; }
+    if (!modal) return;
     modal.classList.add('show');
-    alert('DEBUG: modal.show added. Current classes: "' + modal.className + '". If the sheet is not visible now, it is a CSS/stacking issue, not a JS error.');
     const nameEl = document.getElementById('settings-name');
     if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
     const bw = getCleanBw();
@@ -493,7 +492,7 @@ function openSettings(isFirstLaunch) {
     document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
     document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
   } catch (err) {
-    alert('DEBUG: openSettings threw an error: ' + err.message + '\n\nStack: ' + err.stack);
+    console.error('openSettings failed:', err);
   }
 }
 function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
@@ -755,7 +754,7 @@ function closeSidebar() {
     document.getElementById('sidebar').classList.remove('show');
     document.getElementById('sidebar-overlay').classList.remove('show');
   } catch (err) {
-    alert('DEBUG: closeSidebar threw: ' + err.message);
+    console.error('closeSidebar failed:', err);
   }
 }
 
