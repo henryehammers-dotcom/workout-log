@@ -244,21 +244,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    CALENDAR — Day / Week / Month / Year
    ────────────────────────────────────────────────────────── */
 .cal-wrap{width:100%}
-.cal-pill{display:flex;gap:0;background:var(--bg3);border-radius:var(--r-pill);padding:3px;margin:0 0 18px}
+.cal-pill{display:flex;gap:0;background:transparent;border:1.5px solid var(--border2);border-radius:var(--r-pill);padding:3px;margin:0 0 18px}
 .cal-pill-opt{flex:1;padding:9px 0;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-radius:var(--r-pill);transition:all .15s;border:none;background:transparent;font-family:inherit}
-.cal-pill-opt.active{background:var(--accent);color:var(--accent-text);font-weight:600}
+.cal-pill-opt.active{background:transparent;color:var(--accent);font-weight:700}
 
 .cal-nav-arrows{display:flex;gap:8px;flex-shrink:0;align-items:center;padding-top:6px}
 .cal-nav-arrow{width:20px;height:20px;border-radius:0;border:none;background:transparent;color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .cal-nav-arrow:active{opacity:0.6}
 
-.cal-day-header{position:relative;padding:0 0 20px 0;text-align:left;min-height:40px}
-.cal-day-header-row{position:absolute;top:0;right:0;display:flex;align-items:center;gap:6px}
+.cal-day-header{position:relative;padding:0 0 28px 0;text-align:left;min-height:40px}
+.cal-day-header-row{position:absolute;top:0;right:0;display:flex;align-items:center;gap:8px}
 .cal-day-header-row .day-menu-btn{position:static}
-.cal-day-date{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-0.02em;color:var(--text);line-height:1.1;padding-right:80px}
-.cal-day-header .day-title-input{text-align:left;font-size:15px;font-weight:600;color:var(--text2);padding:0;margin-top:4px}
+.cal-day-date{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-0.02em;color:var(--text);line-height:1.1;padding-right:90px}
+.cal-day-header .day-title-input{text-align:left;font-size:17px;font-weight:700;color:var(--text2);padding:0;margin-top:5px}
 .cal-day-header .day-title-placeholder{color:var(--text3);font-weight:500}
 .cal-today-btn{display:inline-block;margin-top:10px;padding:4px 12px;font-size:11px;font-weight:700;border-radius:var(--r-pill);border:1px solid var(--accent-border);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:inherit}
+.cal-custom-log-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--accent);background:transparent;color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.cal-custom-log-btn:hover{background:var(--accent-dim)}
+.cal-custom-log-btn:active{transform:scale(0.94)}
 
 .cal-card-header{position:relative;margin-bottom:12px}
 .cal-card-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
@@ -279,21 +282,27 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal-dow{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.04em;text-align:left;padding-bottom:4px}
-.cal-cell{position:relative;background:var(--bg2);border:1px solid var(--text3);border-radius:2px;height:15vw;max-height:64px;min-height:44px;padding:4px;cursor:pointer;overflow:hidden}
+.cal-cell{position:relative;background:transparent;border:none;padding:4px 2px;height:15vw;max-height:64px;min-height:44px;cursor:pointer;overflow:hidden}
 .cal-cell-dim{opacity:0.35}
-.cal-cell-top{display:flex;align-items:flex-start;justify-content:space-between;line-height:1}
-.cal-cell-date{font-size:12px;font-weight:600;color:var(--text)}
+.cal-cell-top{display:flex;align-items:center;gap:4px;line-height:1}
+.cal-cell-date{font-size:13px;font-weight:600;color:var(--text)}
 .cal-cell-date-today{color:var(--accent)}
 .cal-cell-badge{font-size:11px;line-height:1;flex-shrink:0}
-.cal-cell-check{color:var(--text)}
-.cal-cell-pr{color:#b8860b}
-.cal-cell-label{position:absolute;left:4px;right:4px;bottom:3px;font-size:8.5px;font-weight:500;color:var(--text2);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cal-cell-trend{position:absolute;left:4px;bottom:3px;display:flex}
+.cal-cell-check{color:var(--text3)}
+.cal-cell-pr{color:#d4a017}
+.cal-cell-label{margin-top:3px;font-size:8.5px;font-weight:500;color:var(--text2);line-height:1.15;white-space:normal;word-break:break-word}
+.cal-cell-trend{margin-top:3px;display:flex}
 .cal-trend-up{color:var(--green)}
 .cal-trend-down{color:var(--red)}
 .cal-trend-flat{color:#b8971f}
 
-.cal-grid-week .cal-cell{height:auto;max-height:none;min-height:88px}
+/* Week view — each day column runs the full height the month grid occupied,
+   with the day's actual logged exercises listed underneath. */
+.cal-grid-week{grid-template-rows:1fr}
+.cal-week-cell{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;height:71vw;max-height:400px;min-height:280px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
+.cal-week-cell-label{margin-top:5px;font-size:9px;font-weight:600;color:var(--accent);line-height:1.2;white-space:normal;word-break:break-word;text-transform:uppercase;letter-spacing:0.03em}
+.cal-week-cell-exercises{margin-top:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.cal-week-cell-ex{font-size:9.5px;font-weight:600;color:var(--text2);line-height:1.3;padding:4px 3px;background:var(--bg3);border-radius:5px;word-break:break-word;border-left:2px solid var(--accent)}
 
 .cal-year-list{display:flex;flex-direction:column;gap:0}
 .cal-year-item{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);background:transparent;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;font-family:inherit}
@@ -840,7 +849,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
-  <button class="custom-log-btn" onclick="openCustomLog()">Custom log</button>
 </div>
 
 <!-- ── Log tab ── -->

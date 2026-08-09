@@ -172,7 +172,8 @@ function renderDayView() {
   const isToday = isSameDate(date, today);
   const labelSuffix = day.label.includes('—') ? day.label.replace(/^.+?—\s*/, '') : '';
   const u = currentUnits;
-  const dateStr = date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  const weekdayStr = date.toLocaleDateString('en-US', { weekday:'long' });
+  const monthDayStr = date.toLocaleDateString('en-US', { month:'long', day:'numeric' });
 
   const titleHtml = dayEditMode
     ? `<input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
@@ -182,12 +183,14 @@ function renderDayView() {
   const top = `
     <div class="day-header cal-day-header">
       <div class="cal-day-header-row">
-        ${calNavArrows()}
         <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
         </button>
+        <button class="cal-custom-log-btn" onclick="openCustomLog(formatISODate(viewedDate))" aria-label="Custom log">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </div>
-      <div class="cal-day-date">${escHtml(dateStr)}</div>
+      <div class="cal-day-date"><span class="cal-title-accent">${escHtml(weekdayStr)}</span> ${escHtml(monthDayStr)}</div>
       ${titleHtml}
       ${!isToday ? `<button class="cal-today-btn" onclick="jumpToDate(new Date())">Jump to today</button>` : ''}
       <div class="day-menu-dropdown" id="day-menu-dropdown">
@@ -351,12 +354,11 @@ function renderWeekView() {
     <div class="cal-card-header">
       <div class="cal-card-header-top">
         <div class="cal-title"><span class="cal-title-accent">${escHtml(label)}</span></div>
-        ${calNavArrows()}
       </div>
       ${monthModeToggleHtml()}
     </div>
     <div class="cal-grid cal-grid-week">
-      ${days.map(d => calDayCellHtml(d, true)).join('')}
+      ${days.map(d => calWeekCellHtml(d)).join('')}
     </div>`;
 }
 
@@ -380,7 +382,6 @@ function renderMonthView() {
           <span class="cal-title-accent">${MONTH_NAMES[viewedDate.getMonth()].toUpperCase()}</span> ${viewedDate.getFullYear()}
           <svg class="cal-title-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        ${calNavArrows()}
       </div>
       ${monthModeToggleHtml()}
     </div>
@@ -431,6 +432,40 @@ function calDayCellHtml(date, inCurrentPeriod) {
       ${badge}
     </div>
     ${bottom}
+  </div>`;
+}
+
+/* Week view uses a taller, richer cell: date/badge up top, then the day's
+   actual logged exercises (name only) listed underneath so the week reads
+   like a real week-at-a-glance rather than a stretched month cell. */
+function calWeekCellHtml(date) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = isSameDate(date, today);
+  const summary = dayLogSummary(date);
+  const badge = summary.logged
+    ? (summary.pr
+        ? `<span class="cal-cell-badge cal-cell-pr" title="PR">★</span>`
+        : `<span class="cal-cell-badge cal-cell-check" title="Logged">✓</span>`)
+    : '';
+  let labelBit = '';
+  if (monthViewMode === 'labels') {
+    const label = dayLabelSuffix(date);
+    if (label) labelBit = `<div class="cal-week-cell-label">${escHtml(label)}</div>`;
+  } else if (monthViewMode === 'trends') {
+    const trend = dayTrend(date);
+    if (trend) labelBit = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
+  }
+  const entries = historyEntriesForDate(date);
+  const exList = entries.length
+    ? `<div class="cal-week-cell-exercises">${entries.map(e => `<div class="cal-week-cell-ex">${escHtml(e.name)}</div>`).join('')}</div>`
+    : '';
+  return `<div class="cal-week-cell" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
+    <div class="cal-cell-top">
+      <span class="cal-cell-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
+      ${badge}
+    </div>
+    ${labelBit}
+    ${exList}
   </div>`;
 }
 function trendArrowSvg(dir) {
