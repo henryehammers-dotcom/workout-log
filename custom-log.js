@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-   Tallymark — Custom Log
+   Tally Up — Custom Log
    A blank log page: pick any exercise from the library, freeform
    sets/reps, editable date, saves straight to history.
    ════════════════════════════════════════════ */
