@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-   Tallymark — Calendar (Day / Week / Month / Year)
+   Tally Up — Calendar (Day / Week / Month / Year)
    Replaces the old always-"today" Log tab with a date-aware
    Day view, plus Week/Month/Year rollup views.
    ════════════════════════════════════════════ */
@@ -8,7 +8,7 @@
 let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
 let viewedDate = new Date();    // the date currently shown in Day/Week/Month
 viewedDate.setHours(0,0,0,0);
-let monthViewMode = 'trends';   // 'labels' | 'trends' | 'none'
+let monthViewMode = localStorage.getItem(KEYS.monthViewMode) || 'trends';   // 'labels' | 'trends' | 'none'
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -56,6 +56,7 @@ function jumpToMonth(monthIdx, year) {
 function setMonthViewMode(mode) {
   // "labels" and "trends" are mutually exclusive; clicking an active one turns it off.
   monthViewMode = (monthViewMode === mode) ? 'none' : mode;
+  localStorage.setItem(KEYS.monthViewMode, monthViewMode);
   renderCalendarRoot();
 }
 

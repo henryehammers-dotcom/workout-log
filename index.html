@@ -224,7 +224,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    LOGO (top-right, sidebar closed)
    ────────────────────────────────────────────────────────── */
 .app-logo{width:34px;height:34px;border-radius:8px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.10);background:#ff9999;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0;-webkit-appearance:none;appearance:none;opacity:1}
-.app-logo svg, .welcome-logo svg{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:1}
+.app-logo svg{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:1}
 .settings-trigger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .settings-trigger-btn:hover{background:var(--bg3);border-color:var(--border2)}
 .settings-trigger-btn:active{transform:scale(0.96)}
@@ -374,14 +374,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .del-set:hover{color:var(--coral)}
 
 .card-footer{display:block;margin-top:6px}
-.log-sets-btn{width:100%;padding:11px;font-size:14px;font-weight:700;background:var(--coral);color:var(--coral-text);border:none;border-radius:var(--r-md);cursor:pointer;font-family:inherit;letter-spacing:0.01em}
+.log-sets-btn{width:100%;padding:11px;font-size:14px;font-weight:700;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--r-md);cursor:pointer;font-family:inherit;letter-spacing:0.01em}
 .log-sets-btn:hover{filter:brightness(0.95)}
 .log-sets-btn:active{transform:scale(0.98)}
 .log-sets-btn.logged{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);cursor:default;display:flex;align-items:center;justify-content:center;gap:8px}
 .log-sets-btn.logged:hover{filter:none}
-.log-sets-btn.timing{background:var(--bg2);color:var(--text2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:10px;font-variant-numeric:tabular-nums}
-.log-sets-btn.timing:hover{filter:none;background:var(--bg3)}
-.log-sets-btn.timing .timer-count{font-size:16px;font-weight:800;color:var(--text);letter-spacing:0.02em}
+.log-sets-btn.timing{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;gap:10px;font-variant-numeric:tabular-nums}
+.log-sets-btn.timing:hover{filter:none}
+.log-sets-btn.timing .timer-count{font-size:16px;font-weight:800;color:var(--accent);letter-spacing:0.02em}
 .log-sets-btn.ready{background:var(--accent);color:var(--accent-text);border:none;animation:readyPulse 1.4s ease-in-out infinite}
 .log-sets-btn.ready:hover{filter:brightness(0.95)}
 @keyframes readyPulse{0%,100%{box-shadow:0 0 0 0 rgba(31,79,71,0)}50%{box-shadow:0 0 0 6px rgba(31,79,71,0.18)}}
@@ -608,9 +608,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .clock-btn:active{transform:scale(0.94)}
 .clock-btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
 .clock-btn-secondary:hover{background:var(--bg4)}
-.clock-btn-primary{background:var(--coral);color:var(--coral-text)}
+.clock-btn-primary{background:var(--accent);color:var(--accent-text)}
 .clock-btn-primary:hover{filter:brightness(0.95)}
-.clock-btn-primary.running{background:var(--coral);color:var(--coral-text)}
+.clock-btn-primary.running{background:var(--accent);color:var(--accent-text)}
 
 /* ──────────────────────────────────────────────────────────
    MODALS / SHEETS
@@ -695,7 +695,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    ────────────────────────────────────────────────────────── */
 .welcome-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);z-index:900;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;overflow-y:auto}
 .welcome-wrap.show{display:flex}
-.welcome-logo{width:104px;height:104px;border-radius:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.10);background:#ff9999;position:relative;overflow:hidden;cursor:pointer;border:none;padding:0}
+.welcome-logo{width:104px;height:104px;border-radius:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.10);object-fit:cover;display:block}
 .welcome-title{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-0.02em;color:var(--text);margin-bottom:10px;text-align:center;line-height:1.1}
 .welcome-sub{font-size:14px;color:var(--text2);text-align:center;max-width:300px;margin-bottom:28px;line-height:1.4}
 .welcome-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
@@ -712,10 +712,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .greeting-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,20,15,0.55);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);z-index:950;display:none;align-items:center;justify-content:center;padding:24px}
 .greeting-wrap.show{display:flex}
 .greeting{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;max-width:380px;width:100%}
-.greeting-day{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-0.01em;margin-bottom:8px}
-.greeting-workout{font-size:14px;color:var(--text2);margin-bottom:8px}
-.greeting-msg{font-size:14px;color:var(--text);margin-bottom:8px;line-height:1.4}
-.greeting-reminder{font-size:13px;color:var(--text2);margin-bottom:18px;font-style:italic}
+.greeting-day{font-size:13px;font-weight:600;color:var(--text2);letter-spacing:0.01em;margin-bottom:6px}
+.greeting-workout{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-0.01em;color:var(--text);margin-bottom:14px;line-height:1.15}
+.greeting-msg{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.4}
 
 /* ──────────────────────────────────────────────────────────
    LIBRARY SHEET (removed — replaced by the new Library tab)
@@ -988,9 +987,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Welcome ── -->
 <div class="welcome-wrap" id="welcome-wrap">
-  <button class="welcome-logo" id="welcome-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
+  <img class="welcome-logo" src="Tallyup-Icon-192.png" alt="Tally Up">
   <div class="welcome-title">Welcome to Tally Up!</div>
-  <div class="welcome-sub">Log your sets. Track your progress. Build the habit.</div>
+  <div class="welcome-sub">Your one-stop shop for workout routine organization, progress tracking, and habit building.</div>
   <div class="welcome-form">
     <div>
       <label class="welcome-field-label" for="welcome-name">Your name</label>
@@ -1024,7 +1023,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="greeting-day" id="greeting-day"></div>
     <div class="greeting-workout" id="greeting-workout"></div>
     <div class="greeting-msg" id="greeting-msg"></div>
-    <div class="greeting-reminder" id="greeting-reminder"></div>
     <button class="welcome-cta" style="height:44px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
   </div>
 </div>
@@ -1196,7 +1194,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
 
-<script src="logo-anim.js?v=126"></script>
 <script src="app.js?v=126"></script>
 <script src="app2.js?v=126"></script>
 <script src="calendar.js?v=126"></script>

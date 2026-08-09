@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-   Tallymark — application logic, part 2
+   Tally Up — application logic, part 2
    (history, library, clock, greeting, music)
    ════════════════════════════════════════════ */
 
@@ -585,19 +585,15 @@ function maybeShowGreeting() {
   const day = DAY_NAMES[new Date().getDay()];
   const dayFull = FULL_DAYS[day];
   const sched = schedule[day];
-  const { msg, reminder } = getGreetMessage();
+  const { msg } = getGreetMessage();
   document.getElementById('greeting-day').textContent = name ? `Happy ${dayFull}, ${name}!` : `Happy ${dayFull}!`;
   if (sched.restDay) {
     document.getElementById('greeting-workout').textContent = '';
     document.getElementById('greeting-msg').textContent = "What are you doing here? You should be resting! 😁";
-    document.getElementById('greeting-reminder').textContent = '';
   } else {
     const suffix = sched.label.includes('—') ? sched.label.replace(/^.+?—\s*/, '').trim() : '';
-    if (suffix) document.getElementById('greeting-workout').textContent = `Today's workout is ${suffix}`;
-    else if (sched.exercises.length === 0) document.getElementById('greeting-workout').textContent = "Looks like you don't have anything planned yet for today!";
-    else document.getElementById('greeting-workout').textContent = '';
+    document.getElementById('greeting-workout').textContent = suffix ? `Today is ${suffix}` : "Today's workout";
     document.getElementById('greeting-msg').textContent = msg;
-    document.getElementById('greeting-reminder').textContent = reminder;
   }
   document.getElementById('greeting-wrap').classList.add('show');
 }

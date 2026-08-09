@@ -1,11 +1,10 @@
-const CACHE = 'tallyup-v132';
+const CACHE = 'tallyup-v133';
 const FILES = [
   './index.html',
   './app.js',
   './app2.js',
   './calendar.js',
   './custom-log.js',
-  './logo-anim.js',
   './manifest.json',
   './Tallyup-Icon-192.png',
   './Tallyup-Icon-512.png'
