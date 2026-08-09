@@ -1,12 +1,12 @@
 {
-  "name": "Tallymark",
-  "short_name": "Tallymark",
+  "name": "Tally Up",
+  "short_name": "Tally Up",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4efe6",
   "theme_color": "#1f4f47",
   "icons": [
-    { "src": "Tallymark-icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "Tallymark-icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "Tallyup-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "Tallyup-icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

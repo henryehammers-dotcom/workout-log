@@ -6,17 +6,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Tallymark">
+<meta name="apple-mobile-web-app-title" content="Tally Up">
 <meta name="theme-color" content="#f4efe6">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="Tallymark-icon-192.png">
-<title>Tallymark</title>
+<link rel="apple-touch-icon" href="Tallyup-icon-192.png">
+<title>Tally Up</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ──────────────────────────────────────────────────────────
-   TOKENS — matched 1:1 to Tallymark Redesign
+   TOKENS — matched 1:1 to Tally Up Redesign
    ────────────────────────────────────────────────────────── */
 :root {
   --bg:#f4efe6;
@@ -784,7 +784,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Sidebar ── -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-title" id="sidebar-title">Workout log</div>
+    <div class="sidebar-title" id="sidebar-title">Tally Up</div>
     <button class="bw-chip" onclick="closeSidebar();openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
       <span class="bw-chip-label">BW</span>
       <span class="bw-chip-value" id="bw-display">—</span>
@@ -992,7 +992,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Welcome ── -->
 <div class="welcome-wrap" id="welcome-wrap">
   <button class="welcome-logo" id="welcome-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
-  <div class="welcome-title">Welcome to Tallymark!</div>
+  <div class="welcome-title">Welcome to Tally Up!</div>
   <div class="welcome-sub">Log your sets. Track your progress. Build the habit.</div>
   <div class="welcome-form">
     <div>
@@ -1101,7 +1101,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
     <div class="section-label">Share</div>
     <button class="data-card" onclick="shareApp()">
-      <div class="data-card-title">Share Tallymark</div>
+      <div class="data-card-title">Share Tally Up</div>
       <div class="data-card-sub">Send the app link to someone</div>
     </button>
 
@@ -1119,7 +1119,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="data-card-sub">Plain text — paste into ChatGPT, Claude, etc.</div>
     </button>
 
-    <div class="version-line">Tallymark <span id="settings-version"></span></div>
+    <div class="version-line">Tally Up <span id="settings-version"></span></div>
   </div>
 </div>
 

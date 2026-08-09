@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-   Tallymark — application logic
+   Tally Up — application logic
    ════════════════════════════════════════════ */
 
 /* ─── CONSTANTS ─── */
@@ -24,9 +24,9 @@ let APP_VERSION = '';
 function loadAppVersion() {
   if (!self.caches) return;
   caches.keys().then(function(keys) {
-    var tm = keys.find(function(k) { return k.indexOf('tallymark-') === 0; });
+    var tm = keys.find(function(k) { return k.indexOf('tallyup-') === 0; });
     if (tm) {
-      APP_VERSION = tm.replace('tallymark-', '');
+      APP_VERSION = tm.replace('tallyup-', '');
       var vEl = document.getElementById('settings-version');
       if (vEl) vEl.textContent = APP_VERSION;
     }
@@ -463,7 +463,7 @@ function migrateIds() {
 /* ─── APP TITLE ─── */
 function updateAppTitle() {
   const name = localStorage.getItem(KEYS.name) || '';
-  document.getElementById('sidebar-title').textContent = name ? name + "'s Workout Log" : 'Workout Log';
+  document.getElementById('sidebar-title').textContent = name ? name + "'s Tally" : 'Tally Up';
 }
 function applySettingsName(val) { localStorage.setItem(KEYS.name, val); updateAppTitle(); }
 
@@ -514,7 +514,7 @@ function finishWelcome() {
 const APP_URL = 'https://henryehammers-dotcom.github.io/workout-log/';
 function shareApp() {
   if (navigator.share) {
-    navigator.share({ title: 'Tallymark', text: 'Check out Tallymark — a workout tracker', url: APP_URL })
+    navigator.share({ title: 'Tally Up', text: 'Check out Tally Up — a workout tracker', url: APP_URL })
       .catch(err => { if (err.name !== 'AbortError') copyAppLink(); });
     return;
   }
@@ -572,7 +572,7 @@ function exportForAI() {
 /* ─── SAVE FILE ─── */
 function saveFile() {
   const backup = {
-    tallymark_backup: true,
+    tallyup_backup: true,
     version: APP_VERSION || 'unknown',
     savedAt: new Date().toISOString(),
     data: {
@@ -594,7 +594,7 @@ function saveFile() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
-  a.download = 'tallymark-backup-' + stamp + '.json';
+  a.download = 'tallyup-backup-' + stamp + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -613,8 +613,8 @@ function applyRestore() {
   let parsed;
   try { parsed = JSON.parse(txt); }
   catch (e) { alert('That doesn\u2019t look like a valid backup file (couldn\u2019t parse JSON).'); return; }
-  if (!parsed || !parsed.tallymark_backup || !parsed.data) {
-    alert('That doesn\u2019t look like a Tallymark backup file.'); return;
+  if (!parsed || !(parsed.tallyup_backup || parsed.tallymark_backup) || !parsed.data) {
+    alert('That doesn\u2019t look like a Tally Up backup file.'); return;
   }
   showModal('Replace all data?', 'This will overwrite your current routine, history, and settings with the backup. This cannot be undone.', function() {
     const d = parsed.data;
@@ -693,7 +693,7 @@ function applyRestore() {
       if (!localStorage.getItem(KEYS.welcomed)) openSettings(true);
       else if (typeof maybeShowGreeting === 'function') maybeShowGreeting();
     } catch (err) {
-      console.error('Tallymark init error:', err);
+      console.error('Tally Up init error:', err);
     }
   });
 })();

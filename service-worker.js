@@ -1,4 +1,4 @@
-const CACHE = 'tallymark-v127';
+const CACHE = 'tallyup-v129';
 const FILES = [
   './index.html',
   './app.js',
@@ -7,8 +7,8 @@ const FILES = [
   './custom-log.js',
   './logo-anim.js',
   './manifest.json',
-  './Tallymark-icon-192.png',
-  './Tallymark-icon-512.png'
+  './Tallyup-icon-192.png',
+  './Tallyup-icon-512.png'
 ];
 
 // Install: cache all files individually (not addAll) so a single missing/failed
