@@ -480,8 +480,9 @@ function openSettings(isFirstLaunch) {
       return;
     }
     const modal = document.getElementById('settings-modal');
-    if (!modal) { alert('Settings failed to open (missing panel). Please reload the app.'); return; }
+    if (!modal) { alert('DEBUG: settings-modal element not found in DOM'); return; }
     modal.classList.add('show');
+    alert('DEBUG: modal.show added. Current classes: "' + modal.className + '". If the sheet is not visible now, it is a CSS/stacking issue, not a JS error.');
     const nameEl = document.getElementById('settings-name');
     if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
     const bw = getCleanBw();
@@ -492,8 +493,7 @@ function openSettings(isFirstLaunch) {
     document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
     document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
   } catch (err) {
-    console.error('openSettings failed:', err);
-    alert('Settings failed to open: ' + err.message);
+    alert('DEBUG: openSettings threw an error: ' + err.message + '\n\nStack: ' + err.stack);
   }
 }
 function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
@@ -751,8 +751,12 @@ function openSidebar() {
   document.getElementById('sidebar-overlay').classList.add('show');
 }
 function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('show');
-  document.getElementById('sidebar-overlay').classList.remove('show');
+  try {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  } catch (err) {
+    alert('DEBUG: closeSidebar threw: ' + err.message);
+  }
 }
 
 /* ─── TAB SWITCHING ─── */
