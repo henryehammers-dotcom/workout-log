@@ -28,10 +28,8 @@
   --text:#0f2f2a;
   --text2:#4a635f;
   --text3:#9aada9;
-  --accent:#1f4f47;
-  --accent-dim:rgba(31,79,71,0.08);
-  --accent-border:rgba(31,79,71,0.30);
-  --accent-text:#ffffff;
+  --accent-h:#1f4f47;
+  --accent-h-text:#ffffff;
   --coral:#e85d52;
   --coral-text:#ffffff;
   --coral-dim:rgba(232,93,82,0.10);
@@ -47,6 +45,25 @@
   --display:'Bricolage Grotesque', system-ui, sans-serif;
   --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
   --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:999px;
+  /* Accent — set by data-accent on <html>, defaults to the teal above */
+  --accent:var(--accent-h);
+  --accent-dim:rgba(31,79,71,0.08);
+  --accent-border:rgba(31,79,71,0.30);
+  --accent-text:var(--accent-h-text);
+}
+/* Light base variants — data-base on <html>, "beige" is the default/original palette */
+[data-theme=light][data-base=white] {
+  --bg:#ffffff;
+  --bg2:#f7f7f5;
+  --bg3:#eeeeec;
+  --bg4:#e4e4e0;
+  --border:rgba(15,20,18,0.08);
+  --border2:rgba(15,20,18,0.16);
+  --text:#14201d;
+  --text2:#525f5b;
+  --text3:#9a9f9c;
+  --chart-grid:rgba(15,20,18,0.08);
+  --chart-tick:#9a9f9c;
 }
 [data-theme=dark] {
   --bg:#0f1817;
@@ -58,10 +75,8 @@
   --text:#ecebe3;
   --text2:#9bafac;
   --text3:#5d716e;
-  --accent:#5fb5a4;
-  --accent-dim:rgba(95,181,164,0.12);
-  --accent-border:rgba(95,181,164,0.35);
-  --accent-text:#0f1817;
+  --accent-h:#5fb5a4;
+  --accent-h-text:#0f1817;
   --coral:#ef7a70;
   --coral-text:#0f1817;
   --coral-dim:rgba(239,122,112,0.14);
@@ -74,64 +89,69 @@
   --blue:#5b9bd5;
   --chart-grid:rgba(255,255,255,0.08);
   --chart-tick:#9bafac;
+  --accent:var(--accent-h);
+  --accent-dim:rgba(95,181,164,0.12);
+  --accent-border:rgba(95,181,164,0.35);
+  --accent-text:var(--accent-h-text);
 }
-[data-theme=matrix] {
-  --bg:#020503;
-  --bg2:#061008;
-  --bg3:#0a1a0e;
-  --bg4:#10240f;
-  --border:rgba(0,255,102,0.14);
-  --border2:rgba(0,255,102,0.30);
-  --text:#00ff66;
-  --text2:#1ec256;
-  --text3:#0a8a3a;
-  --accent:#00ff66;
-  --accent-dim:rgba(0,255,102,0.12);
-  --accent-border:rgba(0,255,102,0.45);
-  --accent-text:#020503;
-  --coral:#00ff66;
-  --coral-text:#020503;
-  --coral-dim:rgba(0,255,102,0.18);
-  --coral-border:rgba(0,255,102,0.55);
-  --green:#00ff66;
-  --green-dim:rgba(0,255,102,0.18);
-  --red:#ff4040;
-  --red-dim:rgba(255,64,64,0.14);
-  --red-border:rgba(255,64,64,0.40);
-  --blue:#00ff66;
-  --chart-grid:rgba(0,255,102,0.10);
-  --chart-tick:#1ec256;
-  --display:var(--mono);
-}
-[data-theme=matrix] body { font-family:var(--mono); }
-[data-theme=mdnt] {
+/* Dark base variants — "green" (the original dark palette above) is the default */
+[data-theme=dark][data-base=black] {
   --bg:#000000;
   --bg2:#0a0a0a;
   --bg3:#161616;
   --bg4:#212121;
-  --border:rgba(255,255,255,0.12);
-  --border2:rgba(255,255,255,0.22);
-  --text:#ffffff;
-  --text2:#b8b8b8;
-  --text3:#707070;
-  --accent:#ff3b52;
-  --accent-dim:rgba(255,59,82,0.14);
-  --accent-border:rgba(255,59,82,0.45);
-  --accent-text:#ffffff;
-  --coral:#ff3b52;
-  --coral-text:#ffffff;
-  --coral-dim:rgba(255,59,82,0.16);
-  --coral-border:rgba(255,59,82,0.45);
-  --green:#3ec26a;
-  --green-dim:rgba(62,194,106,0.14);
-  --red:#b8202f;
-  --red-dim:rgba(184,32,47,0.16);
-  --red-border:rgba(184,32,47,0.45);
-  --blue:#5b9bd5;
+  --border:rgba(255,255,255,0.10);
+  --border2:rgba(255,255,255,0.20);
+  --text:#f4f4f2;
+  --text2:#a3a3a0;
+  --text3:#6b6b68;
   --chart-grid:rgba(255,255,255,0.08);
-  --chart-tick:#707070;
+  --chart-tick:#6b6b68;
 }
-[data-theme=matrix] .display { font-family:var(--mono) !important; letter-spacing:0; }
+/* Accent color overrides — applied on top of light or dark via data-accent on <html>.
+   Each sets --accent-h/--accent-h-text (the picked hue) plus dim/border alphas tuned
+   per theme brightness, so accent-dim/accent-border stay legible in both modes. */
+[data-accent=teal] { --accent-h:#1f4f47; --accent-h-text:#ffffff; }
+[data-theme=dark][data-accent=teal] { --accent-h:#5fb5a4; --accent-h-text:#0f1817; }
+
+[data-accent=coral] { --accent-h:#e85d52; --accent-h-text:#ffffff; --accent-dim:rgba(232,93,82,0.10); --accent-border:rgba(232,93,82,0.35); }
+[data-theme=dark][data-accent=coral] { --accent-h:#ef7a70; --accent-h-text:#0f1817; --accent-dim:rgba(239,122,112,0.14); --accent-border:rgba(239,122,112,0.40); }
+
+[data-accent=blue] { --accent-h:#1a5fa5; --accent-h-text:#ffffff; --accent-dim:rgba(26,95,165,0.10); --accent-border:rgba(26,95,165,0.35); }
+[data-theme=dark][data-accent=blue] { --accent-h:#5b9bd5; --accent-h-text:#0f1817; --accent-dim:rgba(91,155,213,0.14); --accent-border:rgba(91,155,213,0.40); }
+
+[data-accent=green] { --accent-h:#2a8a5c; --accent-h-text:#ffffff; --accent-dim:rgba(42,138,92,0.10); --accent-border:rgba(42,138,92,0.35); }
+[data-theme=dark][data-accent=green] { --accent-h:#5dc78a; --accent-h-text:#0f1817; --accent-dim:rgba(93,199,138,0.14); --accent-border:rgba(93,199,138,0.40); }
+
+[data-accent=purple] { --accent-h:#6b4fa0; --accent-h-text:#ffffff; --accent-dim:rgba(107,79,160,0.10); --accent-border:rgba(107,79,160,0.35); }
+[data-theme=dark][data-accent=purple] { --accent-h:#afa9ec; --accent-h-text:#0f1817; --accent-dim:rgba(175,169,236,0.14); --accent-border:rgba(175,169,236,0.40); }
+
+[data-accent=amber] { --accent-h:#a8710a; --accent-h-text:#ffffff; --accent-dim:rgba(168,113,10,0.10); --accent-border:rgba(168,113,10,0.35); }
+[data-theme=dark][data-accent=amber] { --accent-h:#f0b955; --accent-h-text:#0f1817; --accent-dim:rgba(240,185,85,0.14); --accent-border:rgba(240,185,85,0.40); }
+
+[data-accent=red] { --accent-h:#c03232; --accent-h-text:#ffffff; --accent-dim:rgba(192,50,50,0.10); --accent-border:rgba(192,50,50,0.35); }
+[data-theme=dark][data-accent=red] { --accent-h:#e57373; --accent-h-text:#0f1817; --accent-dim:rgba(229,115,115,0.14); --accent-border:rgba(229,115,115,0.40); }
+
+[data-accent=orange] { --accent-h:#ff751f; --accent-h-text:#ffffff; --accent-dim:rgba(255,117,31,0.10); --accent-border:rgba(255,117,31,0.35); }
+[data-theme=dark][data-accent=orange] { --accent-h:#ff9955; --accent-h-text:#1a1005; --accent-dim:rgba(255,153,85,0.14); --accent-border:rgba(255,153,85,0.40); }
+
+[data-accent=scarlet] { --accent-h:#ff3131; --accent-h-text:#ffffff; --accent-dim:rgba(255,49,49,0.10); --accent-border:rgba(255,49,49,0.35); }
+[data-theme=dark][data-accent=scarlet] { --accent-h:#ff6b6b; --accent-h-text:#1a0505; --accent-dim:rgba(255,107,107,0.14); --accent-border:rgba(255,107,107,0.40); }
+
+[data-accent=pink] { --accent-h:#d6478a; --accent-h-text:#ffffff; --accent-dim:rgba(214,71,138,0.10); --accent-border:rgba(214,71,138,0.35); }
+[data-theme=dark][data-accent=pink] { --accent-h:#ef8ec0; --accent-h-text:#1a0e15; --accent-dim:rgba(239,142,192,0.14); --accent-border:rgba(239,142,192,0.40); }
+
+[data-accent=yellow] { --accent-h:#b8901a; --accent-h-text:#ffffff; --accent-dim:rgba(184,144,26,0.10); --accent-border:rgba(184,144,26,0.35); }
+[data-theme=dark][data-accent=yellow] { --accent-h:#f0d955; --accent-h-text:#1a1705; --accent-dim:rgba(240,217,85,0.14); --accent-border:rgba(240,217,85,0.40); }
+
+[data-accent=cyan] { --accent-h:#0e8f9e; --accent-h-text:#ffffff; --accent-dim:rgba(14,143,158,0.10); --accent-border:rgba(14,143,158,0.35); }
+[data-theme=dark][data-accent=cyan] { --accent-h:#5cd6e6; --accent-h-text:#052426; --accent-dim:rgba(92,214,230,0.14); --accent-border:rgba(92,214,230,0.40); }
+
+[data-accent=indigo] { --accent-h:#4c4fb0; --accent-h-text:#ffffff; --accent-dim:rgba(76,79,176,0.10); --accent-border:rgba(76,79,176,0.35); }
+[data-theme=dark][data-accent=indigo] { --accent-h:#9497e0; --accent-h-text:#12132b; --accent-dim:rgba(148,151,224,0.14); --accent-border:rgba(148,151,224,0.40); }
+
+[data-accent=gray] { --accent-h:#5b5b58; --accent-h-text:#ffffff; --accent-dim:rgba(91,91,88,0.10); --accent-border:rgba(91,91,88,0.35); }
+[data-theme=dark][data-accent=gray] { --accent-h:#b0b0ab; --accent-h-text:#171715; --accent-dim:rgba(176,176,171,0.14); --accent-border:rgba(176,176,171,0.40); }
 
 /* ──────────────────────────────────────────────────────────
    RESET
@@ -237,8 +257,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .day-title-input::placeholder{color:var(--text3);font-weight:700}
 .day-title-readonly{cursor:default;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .day-title-placeholder{color:var(--text3)}
-[data-theme=matrix] .day-title-input{font-family:var(--mono);letter-spacing:0;font-weight:700}
 .edit-mode-badge{display:inline-block;margin-top:8px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r-pill)}
+.accent-swatch-row{display:flex;gap:10px;flex-wrap:wrap}
+.accent-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;background:var(--sw-color);position:relative;flex-shrink:0}
+.accent-swatch.active{border-color:var(--text)}
+.accent-swatch.active::after{content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,0.15)}
+.theme-base-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:capitalize;letter-spacing:0}
 
 /* ──────────────────────────────────────────────────────────
    CALENDAR — Day / Week / Month / Year
@@ -377,7 +401,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
    ────────────────────────────────────────────────────────── */
 .history-section-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:10px}
 .page-title{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-0.02em;color:var(--text);text-align:center;margin-bottom:16px}
-[data-theme=matrix] .page-title{font-family:var(--mono);letter-spacing:0}
 .hist-card{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .15s, background .15s}
 .hist-card:hover{border-color:var(--border2);background:var(--bg3)}
 .hist-card-text{flex:1;min-width:0}
@@ -406,24 +429,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .libv2-chip-sub.libv2-tint-green{background:rgba(99,153,34,0.18);color:#3d5c14;border-color:rgba(99,153,34,0.24)}
 .libv2-chip-sub.libv2-tint-teal{background:rgba(29,158,117,0.16);color:#146349;border-color:rgba(29,158,117,0.22)}
 .libv2-chip-sub.libv2-tint-gray{background:rgba(136,135,128,0.18);color:#55544f;border-color:rgba(136,135,128,0.24)}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-coral,[data-theme=matrix] .libv2-chip-sub.libv2-tint-coral{color:#f0997b}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-blue,[data-theme=matrix] .libv2-chip-sub.libv2-tint-blue{color:#85b7eb}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-amber,[data-theme=matrix] .libv2-chip-sub.libv2-tint-amber{color:#f0b955}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-purple,[data-theme=matrix] .libv2-chip-sub.libv2-tint-purple{color:#afa9ec}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-green,[data-theme=matrix] .libv2-chip-sub.libv2-tint-green{color:#97c459}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-teal,[data-theme=matrix] .libv2-chip-sub.libv2-tint-teal{color:#5dcaa5}
-[data-theme=dark] .libv2-chip-sub.libv2-tint-gray,[data-theme=matrix] .libv2-chip-sub.libv2-tint-gray{color:#b4b2a9}
-
-/* MDNT overrides all 7 tint colors into one uniform pale red, regardless of group */
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-coral,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-blue,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-amber,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-purple,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-green,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-teal,
-[data-theme=mdnt] .libv2-chip-sub.libv2-tint-gray{
-  background:rgba(255,59,82,0.16);color:#ff8a99;border-color:rgba(255,59,82,0.28)
-}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-coral{color:#f0997b}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-blue{color:#85b7eb}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-amber{color:#f0b955}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-purple{color:#afa9ec}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-green{color:#97c459}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-teal{color:#5dcaa5}
+[data-theme=dark] .libv2-chip-sub.libv2-tint-gray{color:#b4b2a9}
 
 /* Active state: deepen the SAME tint color, don't switch to a generic accent */
 .libv2-chip.active.libv2-tint-coral,.libv2-chip-sub.active.libv2-tint-coral{background:#d85a30;color:#ffffff;border-color:#d85a30}
@@ -433,17 +445,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .libv2-chip.active.libv2-tint-green,.libv2-chip-sub.active.libv2-tint-green{background:#639922;color:#ffffff;border-color:#639922}
 .libv2-chip.active.libv2-tint-teal,.libv2-chip-sub.active.libv2-tint-teal{background:#1d9e75;color:#ffffff;border-color:#1d9e75}
 .libv2-chip.active.libv2-tint-gray,.libv2-chip-sub.active.libv2-tint-gray{background:#888780;color:#ffffff;border-color:#888780}
-
-/* MDNT active state: all 7 tint classes converge to one dark red, regardless of group */
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-coral,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-coral,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-blue,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-blue,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-amber,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-amber,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-purple,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-purple,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-green,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-green,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-teal,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-teal,
-[data-theme=mdnt] .libv2-chip.active.libv2-tint-gray,[data-theme=mdnt] .libv2-chip-sub.active.libv2-tint-gray{
-  background:#ff3b52;color:#ffffff;border-color:#ff3b52
-}
 
 .libv2-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .libv2-tile{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:11px 12px;min-width:0;min-height:78px;display:flex;flex-direction:column;justify-content:center}
@@ -583,8 +584,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .drum-inner{position:absolute;left:0;right:0;top:0;transition:transform .15s ease}
 .drum-item{height:50px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:46px;letter-spacing:-0.02em;color:var(--text3);font-variant-numeric:tabular-nums;line-height:1}
 .drum-selected{color:var(--text);font-size:54px}
-[data-theme=matrix] .drum-item{font-family:var(--mono);font-weight:700;letter-spacing:0}
-[data-theme=matrix] .drum-selected{font-size:50px}
 .drum-fade-top,.drum-fade-bot{position:absolute;left:0;right:0;height:50px;pointer-events:none}
 .drum-fade-top{top:0;background:linear-gradient(to bottom, var(--bg) 0%, transparent 100%)}
 .drum-fade-bot{bottom:0;background:linear-gradient(to top, var(--bg) 0%, transparent 100%)}
@@ -593,12 +592,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* Clock countdown big readout (when running) */
 .clock-readout{font-family:var(--display);font-weight:700;font-size:64px;letter-spacing:-0.02em;text-align:center;margin:30px 0;color:var(--text);font-variant-numeric:tabular-nums}
-[data-theme=matrix] .clock-readout{font-family:var(--mono);letter-spacing:0;font-size:56px}
 
 /* Stopwatch big display */
 .sw-display{font-family:var(--display);font-weight:700;font-size:60px;letter-spacing:-0.02em;text-align:center;margin:60px 0 40px;color:var(--text);font-variant-numeric:tabular-nums}
 .sw-display .cs{font-size:30px;color:var(--text2);margin-left:6px}
-[data-theme=matrix] .sw-display{font-family:var(--mono);letter-spacing:0;font-size:48px}
 .sw-laps{max-height:200px;overflow-y:auto;margin-bottom:20px}
 .sw-lap-row{display:grid;grid-template-columns:60px 1fr 1fr;padding:8px 12px;border-top:1px solid var(--border);font-size:13px;font-variant-numeric:tabular-nums}
 .sw-lap-num{color:var(--text3)}
@@ -1001,7 +998,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="welcome-error" id="welcome-error">Please enter your name to continue.</div>
     </div>
     <div>
-      <label class="welcome-field-label">Theme</label>
+      <label class="welcome-field-label">Theme <span class="theme-base-label" id="welcome-base-label"></span></label>
       <div class="segmented welcome-segmented" id="welcome-theme">
         <button class="seg-opt active" data-val="light" onclick="setTheme('light');syncWelcomeTheme('light')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -1011,15 +1008,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           Dark
         </button>
-        <button class="seg-opt" data-val="matrix" onclick="setTheme('matrix');syncWelcomeTheme('matrix')">
-          <span style="font-family:var(--mono);font-weight:700">&gt;_</span>
-          Matrix
-        </button>
-        <button class="seg-opt" data-val="mdnt" onclick="setTheme('mdnt');syncWelcomeTheme('mdnt')">
-          <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
-          MDNT
-        </button>
       </div>
+    </div>
+    <div>
+      <label class="welcome-field-label">Accent color</label>
+      <div class="accent-swatch-row" id="welcome-accent"></div>
     </div>
     <button class="welcome-cta" onclick="finishWelcome()">Get started</button>
   </div>
@@ -1063,7 +1056,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="section-label">Preferences</div>
     <div class="settings-block">
       <div class="settings-block-row">
-        <span class="settings-block-title">Theme</span>
+        <span class="settings-block-title">Theme <span class="theme-base-label" id="settings-base-label"></span></span>
         <div class="segmented" id="theme-toggle">
           <button class="seg-opt" data-val="light" onclick="setTheme('light')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -1073,15 +1066,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             Dark
           </button>
-          <button class="seg-opt" data-val="matrix" onclick="setTheme('matrix')">
-            <span style="font-family:var(--mono);font-weight:700">&gt;_</span>
-            Matrix
-          </button>
-          <button class="seg-opt" data-val="mdnt" onclick="setTheme('mdnt')">
-            <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
-            MDNT
-          </button>
         </div>
+      </div>
+      <div class="settings-block-row">
+        <span class="settings-block-title">Accent color</span>
+        <div class="accent-swatch-row" id="settings-accent"></div>
       </div>
       <div class="settings-block-row">
         <span class="settings-block-title">Units</span>

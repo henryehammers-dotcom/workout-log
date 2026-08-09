@@ -9,6 +9,8 @@ const KEYS = {
   bw:        'wl_bw',
   name:      'wl_name',
   theme:     'wl_theme',
+  base:      'wl_base',
+  accent:    'wl_accent',
   units:     'wl_units',
   welcomed:  'wl_welcomed',
   greetDate: 'wl_greet_date',
@@ -393,16 +395,79 @@ function setUnits(u) {
   updateBwDisplay();
   renderDayContent();
 }
-const THEME_COLORS = { light: '#f4efe6', dark: '#0f1817', matrix: '#020503', mdnt: '#000000' };
-function syncThemeColorMeta(t) {
+const THEME_COLORS = { 'light-beige': '#f4efe6', 'light-white': '#ffffff', 'dark-green': '#0f1817', 'dark-black': '#000000' };
+// Old themes retired in the light/dark + accent rework — map them to the closest
+// (theme, base, accent) so existing users land somewhere familiar instead of erroring out.
+const LEGACY_THEME_MIGRATION = {
+  matrix: { theme: 'dark', base: 'green', accent: 'green' },
+  mdnt:   { theme: 'dark', base: 'black', accent: 'red' },
+};
+const ACCENTS = [
+  { id: 'teal',    light: '#1f4f47', dark: '#5fb5a4' },
+  { id: 'coral',   light: '#e85d52', dark: '#ef7a70' },
+  { id: 'orange',  light: '#ff751f', dark: '#ff9955' },
+  { id: 'scarlet', light: '#ff3131', dark: '#ff6b6b' },
+  { id: 'red',     light: '#c03232', dark: '#e57373' },
+  { id: 'pink',    light: '#d6478a', dark: '#ef8ec0' },
+  { id: 'purple',  light: '#6b4fa0', dark: '#afa9ec' },
+  { id: 'indigo',  light: '#4c4fb0', dark: '#9497e0' },
+  { id: 'blue',    light: '#1a5fa5', dark: '#5b9bd5' },
+  { id: 'cyan',    light: '#0e8f9e', dark: '#5cd6e6' },
+  { id: 'green',   light: '#2a8a5c', dark: '#5dc78a' },
+  { id: 'yellow',  light: '#b8901a', dark: '#f0d955' },
+  { id: 'amber',   light: '#a8710a', dark: '#f0b955' },
+  { id: 'gray',    light: '#5b5b58', dark: '#b0b0ab' },
+];
+// Each family (light/dark) cycles between two base variants when its button is
+// tapped again while already active. Tapping the *other* family switches into it
+// at its default base rather than cycling.
+const THEME_BASE_CYCLE = { light: ['beige', 'white'], dark: ['green', 'black'] };
+const THEME_BASE_DEFAULT = { light: 'beige', dark: 'green' };
+function syncThemeColorMeta(t, b) {
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', THEME_COLORS[t] || THEME_COLORS.light);
+  if (meta) meta.setAttribute('content', THEME_COLORS[t + '-' + b] || THEME_COLORS['light-beige']);
 }
-function setTheme(t) {
+function applyTheme(t, b) {
   document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-base', b);
   localStorage.setItem(KEYS.theme, t);
-  document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
-  syncThemeColorMeta(t);
+  localStorage.setItem(KEYS.base, b);
+  document.querySelectorAll('#theme-toggle .seg-opt, #welcome-theme .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === t));
+  syncThemeColorMeta(t, b);
+  syncThemeBaseLabel(b);
+  renderAccentSwatches();
+}
+function syncThemeBaseLabel(b) {
+  const label = '(' + b + ')';
+  const w = document.getElementById('welcome-base-label'); if (w) w.textContent = label;
+  const s = document.getElementById('settings-base-label'); if (s) s.textContent = label;
+}
+// Called by the Light/Dark buttons. If that family is already active, cycles to
+// its other base variant; otherwise switches families at the default base.
+function setTheme(t) {
+  const curTheme = document.documentElement.getAttribute('data-theme');
+  const curBase = document.documentElement.getAttribute('data-base') || THEME_BASE_DEFAULT[t];
+  let nextBase;
+  if (curTheme === t) {
+    const cycle = THEME_BASE_CYCLE[t];
+    const idx = cycle.indexOf(curBase);
+    nextBase = cycle[(idx + 1) % cycle.length];
+  } else {
+    nextBase = THEME_BASE_DEFAULT[t];
+  }
+  applyTheme(t, nextBase);
+}
+function setAccent(a) {
+  document.documentElement.setAttribute('data-accent', a);
+  localStorage.setItem(KEYS.accent, a);
+  renderAccentSwatches();
+}
+function renderAccentSwatches() {
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const current = localStorage.getItem(KEYS.accent) || 'teal';
+  const html = ACCENTS.map(a => `<button class="accent-swatch${a.id===current?' active':''}" style="--sw-color:${theme==='dark'?a.dark:a.light}" aria-label="${a.id}" onclick="setAccent('${a.id}')"></button>`).join('');
+  const w = document.getElementById('welcome-accent'); if (w) w.innerHTML = html;
+  const s = document.getElementById('settings-accent'); if (s) s.innerHTML = html;
 }
 function toggleInstructionsIcons(on) {
   showInstructionsIcons = !!on;
@@ -471,7 +536,10 @@ function applySettingsName(val) { localStorage.setItem(KEYS.name, val); updateAp
 function openSettings(isFirstLaunch) {
   if (isFirstLaunch) {
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const base = document.documentElement.getAttribute('data-base') || THEME_BASE_DEFAULT[theme];
     syncWelcomeTheme(theme);
+    syncThemeBaseLabel(base);
+    renderAccentSwatches();
     document.getElementById('welcome-wrap')?.classList.add('show');
     setTimeout(() => document.getElementById('welcome-name')?.focus(), 300);
     return;
@@ -493,7 +561,10 @@ function openSettings(isFirstLaunch) {
   if (bwEl) bwEl.value = bw != null ? bw : '';
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const base = document.documentElement.getAttribute('data-base') || THEME_BASE_DEFAULT[theme];
   document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
+  syncThemeBaseLabel(base);
+  renderAccentSwatches();
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
 }
 function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
@@ -584,6 +655,8 @@ function saveFile() {
       bw:       localStorage.getItem(KEYS.bw)       || '',
       units:    localStorage.getItem(KEYS.units)    || 'lbs',
       theme:    localStorage.getItem(KEYS.theme)    || 'light',
+      base:     localStorage.getItem(KEYS.base)     || 'beige',
+      accent:   localStorage.getItem(KEYS.accent)   || 'teal',
       welcomed: localStorage.getItem(KEYS.welcomed) || '',
       music:    localStorage.getItem(KEYS.music)    || '',
       greetOrder: localStorage.getItem(KEYS.greetOrder) || '',
@@ -637,6 +710,8 @@ function applyRestore() {
     set(KEYS.bw,       d.bw);
     set(KEYS.units,    d.units);
     set(KEYS.theme,    d.theme);
+    set(KEYS.base,     d.base);
+    set(KEYS.accent,   d.accent);
     set(KEYS.welcomed, d.welcomed);
     set(KEYS.music,    d.music);
     set(KEYS.greetOrder, d.greetOrder);
@@ -648,9 +723,23 @@ function applyRestore() {
 
 /* ─── INIT ─── */
 (function init() {
-  const savedTheme = localStorage.getItem(KEYS.theme) || 'light';
+  let savedTheme = localStorage.getItem(KEYS.theme) || 'light';
+  let savedBase = localStorage.getItem(KEYS.base) || THEME_BASE_DEFAULT[savedTheme] || 'beige';
+  let savedAccent = localStorage.getItem(KEYS.accent) || 'teal';
+  // Migrate anyone still on the retired matrix/mdnt themes to light/dark + base + accent.
+  if (LEGACY_THEME_MIGRATION[savedTheme]) {
+    const m = LEGACY_THEME_MIGRATION[savedTheme];
+    savedTheme = m.theme;
+    savedBase = m.base;
+    savedAccent = m.accent;
+    localStorage.setItem(KEYS.theme, savedTheme);
+    localStorage.setItem(KEYS.base, savedBase);
+    localStorage.setItem(KEYS.accent, savedAccent);
+  }
   document.documentElement.setAttribute('data-theme', savedTheme);
-  syncThemeColorMeta(savedTheme);
+  document.documentElement.setAttribute('data-base', savedBase);
+  document.documentElement.setAttribute('data-accent', savedAccent);
+  syncThemeColorMeta(savedTheme, savedBase);
   loadSchedule();
   loadLibraryV2();
   loadBlurbsV2();
@@ -664,6 +753,7 @@ function applyRestore() {
       // Sync visible toggles
       document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
       document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === savedTheme));
+      syncThemeBaseLabel(savedBase);
 
       updateAppTitle();
       updateBwDisplay();
