@@ -608,6 +608,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .btn-base.danger{color:var(--red);border-color:var(--border2)}
 .btn-base.danger:hover{background:rgba(220,80,80,0.08)}
 .restore-textarea{width:100%;min-height:180px;padding:10px;font-size:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);resize:vertical;box-sizing:border-box;margin-bottom:14px}
+.restore-orphan-body{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:14px}
+.restore-orphan-list{max-height:180px;overflow-y:auto;margin:12px 0;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2)}
+.restore-orphan-item{padding:9px 12px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)}
+.restore-orphan-item:last-child{border-bottom:none}
+.restore-orphan-item-count{color:var(--text3);font-size:12px}
+.restore-orphan-choice-label{font-size:12px;color:var(--text3);line-height:1.4;margin-top:10px}
 
 /* ──────────────────────────────────────────────────────────
    CLOCK
@@ -1322,6 +1328,28 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="right-group">
         <button class="btn-base" onclick="closeRestoreSheet()">Cancel</button>
         <button class="btn-base primary" onclick="applyRestore()">Restore</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Restore: orphaned exercise warning ── -->
+<div class="edit-session-wrap" id="restore-orphan-wrap">
+  <div class="edit-session">
+    <div class="edit-session-header">
+      <div class="edit-session-title">Some exercises aren't in the library</div>
+      <div class="edit-session-date" id="restore-orphan-count"></div>
+    </div>
+    <div class="restore-orphan-body">
+      This backup logs history against exercises that don't match anything in the current library — likely custom exercises that no longer exist, or ones that have since been removed.
+      <div class="restore-orphan-list" id="restore-orphan-list"></div>
+      <div class="restore-orphan-choice-label">Ignore skips these entries entirely. Add anyway keeps them in your history and schedule, but they won't have a library entry to browse or edit.</div>
+    </div>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base" onclick="restoreOrphanChoice('ignore')">Ignore exercises</button>
+        <button class="btn-base primary" onclick="restoreOrphanChoice('add')">Add anyway</button>
       </div>
     </div>
   </div>
