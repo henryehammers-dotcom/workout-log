@@ -972,6 +972,7 @@ function openLibV2AddForm() {
   document.getElementById('libv2-form-title').textContent = 'Add exercise';
   document.getElementById('lv2f-name').value = '';
   document.getElementById('lv2f-reps').value = '';
+  document.getElementById('lv2f-sets').value = '';
   document.getElementById('lv2f-rest').value = '';
   document.getElementById('lv2f-type').value = 'gym';
   document.getElementById('lv2f-instructions').value = '';
@@ -987,6 +988,7 @@ function openLibV2EditForm(name) {
   document.getElementById('libv2-form-title').textContent = 'Edit exercise';
   document.getElementById('lv2f-name').value = ex.name;
   document.getElementById('lv2f-reps').value = ex.reps || '';
+  document.getElementById('lv2f-sets').value = ex.sets || '';
   document.getElementById('lv2f-rest').value = ex.rest || '';
   document.getElementById('lv2f-type').value = ex.type || 'gym';
   document.getElementById('lv2f-instructions').value = EXERCISE_BLURBS[ex.name] || '';
@@ -1007,6 +1009,8 @@ function saveLibV2Form() {
   const sub = subSelect.style.display !== 'none' ? subSelect.value : undefined;
   const type = document.getElementById('lv2f-type').value;
   const reps = document.getElementById('lv2f-reps').value.trim() || '8-12';
+  const setsRaw = document.getElementById('lv2f-sets').value.trim();
+  const sets = setsRaw ? Math.max(1, parseInt(setsRaw)) || undefined : undefined;
   const restRaw = document.getElementById('lv2f-rest').value.trim() || '60 sec';
   const instructions = document.getElementById('lv2f-instructions').value.trim();
   const restSecsMatch = restRaw.match(/(\d+)\s*min/);
@@ -1023,6 +1027,7 @@ function saveLibV2Form() {
       }
       const oldName = ex.name;
       ex.name = name; ex.group = group; ex.type = type; ex.reps = reps; ex.rest = restRaw; ex.restSecs = restSecs;
+      if (sets !== undefined) ex.sets = sets; else delete ex.sets;
       if (sub !== undefined) ex.sub = sub; else delete ex.sub;
       // Relink any schedule/history entries still holding the OLD name (matched
       // exactly, since we know precisely what it was a moment ago) so the rename
@@ -1046,6 +1051,7 @@ function saveLibV2Form() {
     }
   } else {
     const newEx = { name, group, type, reps, rest: restRaw, restSecs, id: genLibV2Id() };
+    if (sets !== undefined) newEx.sets = sets;
     if (sub !== undefined) newEx.sub = sub;
     DEFAULT_LIBRARY_V2.push(newEx);
   }
