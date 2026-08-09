@@ -172,11 +172,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    TOP BAR (hamburger + logo, sidebar closed)
    ────────────────────────────────────────────────────────── */
-.top-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:18px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .custom-log-btn{height:34px;padding:0 16px;border-radius:var(--r-pill);border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
 .custom-log-btn:hover{background:var(--accent-dim)}
 .custom-log-btn:active{transform:scale(0.97)}
-.hamburger-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hamburger-btn{position:static;width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;flex-shrink:0}
+.hamburger-btn.floating{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .log-back-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(64px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .log-back-btn.show{display:flex}
 .hamburger-btn:hover{background:var(--bg3)}
@@ -190,8 +191,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--bg2);border-right:1px solid var(--border);z-index:600;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));transform:translateX(-100%);transition:transform .25s ease}
 .sidebar.show{transform:translateX(0)}
 .sidebar-header{margin-bottom:20px}
-.sidebar-header-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:0}
+.sidebar-title{font-family:var(--display);font-weight:700;font-size:17px;color:var(--text);letter-spacing:-0.01em;margin-bottom:12px}
 .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
 .sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;border:none;background:transparent;color:var(--text2);font-size:15px;font-weight:500;cursor:pointer;text-align:left;transition:background .15s,color .15s;font-family:inherit}
 .sidebar-nav-item:hover{background:var(--bg3)}
@@ -212,7 +212,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    BW chip (used inside sidebar header)
    ────────────────────────────────────────────────────────── */
-.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
+.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1.5px solid var(--border2);border-radius:var(--r-pill);background:transparent;cursor:pointer;transition:border-color .15s,background .15s}
 .bw-chip:hover{border-color:var(--border2);background:var(--bg3)}
 .bw-chip-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.04em}
 .bw-chip-value{font-size:14px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
@@ -263,17 +263,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .cal-custom-log-btn:hover{background:var(--accent-dim)}
 .cal-custom-log-btn:active{transform:scale(0.94)}
 
-.cal-card-header{position:relative;margin-bottom:12px}
+.cal-card-header{position:relative;margin-bottom:24px}
 .cal-card-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .cal-title{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-0.02em;color:var(--text);cursor:default;display:flex;align-items:baseline;gap:6px;min-width:0}
 .cal-title-accent{color:var(--accent)}
-#cal-month-title{cursor:pointer}
-.cal-title-caret{color:var(--text3);flex-shrink:0;align-self:center}
-.cal-month-dropdown{display:none;position:absolute;top:36px;left:0;margin-top:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;max-height:260px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.20);z-index:40;min-width:160px}
-.cal-month-dropdown.show{display:block}
-.cal-month-dropdown-item{padding:8px 10px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-radius:6px}
-.cal-month-dropdown-item:hover{background:var(--bg3);color:var(--text)}
-.cal-month-dropdown-item.active{color:var(--accent);font-weight:700}
 
 .cal-mode-toggles{margin-top:10px;display:flex;justify-content:flex-end;gap:16px}
 .cal-mode-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
@@ -298,11 +291,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* Week view — each day column runs the full height the month grid occupied,
    with the day's actual logged exercises listed underneath. */
-.cal-grid-week{grid-template-rows:1fr}
-.cal-week-cell{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;height:71vw;max-height:400px;min-height:280px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
-.cal-week-cell-label{margin-top:5px;font-size:9px;font-weight:600;color:var(--accent);line-height:1.2;white-space:normal;word-break:break-word;text-transform:uppercase;letter-spacing:0.03em}
-.cal-week-cell-exercises{margin-top:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
-.cal-week-cell-ex{font-size:9.5px;font-weight:600;color:var(--text2);line-height:1.3;padding:4px 3px;background:var(--bg3);border-radius:5px;word-break:break-word;border-left:2px solid var(--accent)}
+.cal-week-list{display:flex;flex-direction:column;gap:8px}
+.cal-week-row{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;cursor:pointer}
+.cal-week-row-head{display:flex;align-items:baseline;gap:8px}
+.cal-week-row-day{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text)}
+.cal-week-row-date{font-size:13px;font-weight:600;color:var(--text2)}
+.cal-week-row-tag{margin-top:4px;font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.03em}
+.cal-week-row-exercises{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.cal-week-row-ex{font-size:11px;font-weight:600;color:var(--text2);line-height:1.3;padding:5px 9px;background:var(--bg3);border-radius:var(--r-pill);border-left:2px solid var(--accent)}
 
 .cal-year-list{display:flex;flex-direction:column;gap:0}
 .cal-year-item{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);background:transparent;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;font-family:inherit}
@@ -550,6 +546,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .edit-session-wrap{position:fixed;inset:0;background:rgba(15,47,42,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:20px}
 .edit-session-wrap.show{display:flex}
 .edit-session{background:var(--bg);border-radius:16px;padding:20px;max-width:380px;width:100%;border:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
+.custom-log-sheet{max-width:520px;width:100%;height:92vh;max-height:92vh}
+.custom-log-entries{flex:1;overflow-y:auto;margin-bottom:4px}
 .edit-session-header{margin-bottom:14px}
 .edit-session-title{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:2px}
 .edit-session-date{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
@@ -562,7 +560,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .edit-set-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:8px;align-items:center}
 .edit-set-num{font-size:12px;color:var(--text3);font-weight:600}
 .edit-set-input{padding:8px 10px;font-size:16px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
-.edit-session-actions{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.edit-session-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:16px}
 .edit-session-actions .right-group{display:flex;gap:8px}
 .btn-base.danger{color:var(--red);border-color:var(--border2)}
 .btn-base.danger:hover{background:rgba(220,80,80,0.08)}
@@ -786,10 +784,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Sidebar ── -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-header-row">
-      <button class="app-logo" id="app-logo-stage" type="button" aria-label="Replay welcome animation" title="Tap to replay"></button>
-      <div class="sidebar-title" id="sidebar-title">Workout log</div>
-    </div>
+    <div class="sidebar-title" id="sidebar-title">Workout log</div>
     <button class="bw-chip" onclick="closeSidebar();openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
       <span class="bw-chip-label">BW</span>
       <span class="bw-chip-value" id="bw-display">—</span>
@@ -1177,15 +1172,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Custom log sheet ── -->
 <div class="edit-session-wrap" id="custom-log-wrap">
-  <div class="edit-session">
+  <div class="edit-session custom-log-sheet">
     <div class="edit-session-header">
       <div class="edit-session-title">Custom log</div>
-      <div class="edit-session-date">
-        <span id="custom-log-date-display"></span>
-        <input type="date" id="custom-log-date-input" class="custom-log-date-input" oninput="customLogSetDate(this.value)">
-      </div>
+      <div class="edit-session-date" id="custom-log-date"></div>
     </div>
-    <div id="custom-log-entries"></div>
+    <div id="custom-log-entries" class="custom-log-entries"></div>
     <button class="add-exercise-btn" onclick="customLogAddExercise()">+ Add exercise</button>
     <div class="edit-session-actions">
       <div></div>

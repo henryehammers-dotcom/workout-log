@@ -24,7 +24,7 @@ const KEYS = {
 // so the only place to update the version is service-worker.js.
 let APP_VERSION = '';
 function loadAppVersion() {
-  if (!('caches' in self)) return;
+  if (!self.caches) return;
   caches.keys().then(function(keys) {
     var tm = keys.find(function(k) { return k.indexOf('tallymark-') === 0; });
     if (tm) {
@@ -659,6 +659,18 @@ function applyRestore() {
       updateAppTitle();
       updateBwDisplay();
       renderDayContent();
+
+      // Hamburger button sits in normal flow at the top of the page (so it
+      // never overlaps the Day view's date/title), and only becomes a
+      // floating fixed button once the page has been scrolled down.
+      const hamburgerBtn = document.querySelector('.hamburger-btn');
+      if (hamburgerBtn) {
+        const updateHamburgerFloat = () => {
+          hamburgerBtn.classList.toggle('floating', window.scrollY > 8);
+        };
+        window.addEventListener('scroll', updateHamburgerFloat, { passive: true });
+        updateHamburgerFloat();
+      }
 
       // Dismiss day dropdown / day menu when clicking/tapping outside them
       document.addEventListener('click', (e) => {

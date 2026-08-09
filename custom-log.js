@@ -22,11 +22,28 @@ function customLogSetDate(val) {
   _customLog.date = new Date(y, m-1, d);
   renderCustomLogHeader();
 }
+// Renders the date as a tappable display; tapping swaps it for a native date
+// input in place (same pattern as the History edit-session date).
 function renderCustomLogHeader() {
   if (!_customLog) return;
+  const el = document.getElementById('custom-log-date');
+  if (!el) return;
+  const display = _customLog.date.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+  el.innerHTML = `<span class="edit-session-date-big" id="custom-log-date-display" onclick="customLogDateEditToggle()">${escHtml(display)}
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+  </span>`;
+}
+function customLogDateEditToggle() {
+  if (!_customLog) return;
+  const el = document.getElementById('custom-log-date');
   const iso = formatISODate(_customLog.date);
-  document.getElementById('custom-log-date-input').value = iso;
-  document.getElementById('custom-log-date-display').textContent = _customLog.date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  el.innerHTML = `<input type="date" class="edit-session-date-input-big" id="custom-log-date-input" value="${iso}">`;
+  const input = document.getElementById('custom-log-date-input');
+  input.addEventListener('change', () => {
+    if (!input.value) { renderCustomLogHeader(); return; }
+    customLogSetDate(input.value);
+  });
+  input.focus();
 }
 function customLogAddExercise() {
   openLibV2ForCustomLog();

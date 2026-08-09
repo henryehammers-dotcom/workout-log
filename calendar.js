@@ -357,8 +357,8 @@ function renderWeekView() {
       </div>
       ${monthModeToggleHtml()}
     </div>
-    <div class="cal-grid cal-grid-week">
-      ${days.map(d => calWeekCellHtml(d)).join('')}
+    <div class="cal-week-list">
+      ${days.map(d => calWeekRowHtml(d)).join('')}
     </div>`;
 }
 
@@ -378,23 +378,16 @@ function renderMonthView() {
   return `
     <div class="cal-card-header">
       <div class="cal-card-header-top">
-        <div class="cal-title" onclick="toggleMonthDropdown()" id="cal-month-title">
+        <div class="cal-title">
           <span class="cal-title-accent">${MONTH_NAMES[viewedDate.getMonth()].toUpperCase()}</span> ${viewedDate.getFullYear()}
-          <svg class="cal-title-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
       ${monthModeToggleHtml()}
-    </div>
-    <div class="cal-month-dropdown" id="cal-month-dropdown">
-      ${MONTH_NAMES.map((m,i) => `<div class="cal-month-dropdown-item${i===viewedDate.getMonth()?' active':''}" onclick="jumpToMonth(${i},${viewedDate.getFullYear()})">${m}</div>`).join('')}
     </div>
     <div class="cal-grid cal-grid-month">
       ${dowHeaders}
       ${cells.map(d => calDayCellHtml(d, d.getMonth() === viewedDate.getMonth())).join('')}
     </div>`;
-}
-function toggleMonthDropdown() {
-  document.getElementById('cal-month-dropdown')?.classList.toggle('show');
 }
 function monthModeToggleHtml() {
   return `
@@ -435,10 +428,9 @@ function calDayCellHtml(date, inCurrentPeriod) {
   </div>`;
 }
 
-/* Week view uses a taller, richer cell: date/badge up top, then the day's
-   actual logged exercises (name only) listed underneath so the week reads
-   like a real week-at-a-glance rather than a stretched month cell. */
-function calWeekCellHtml(date) {
+/* Week view — one row per day, full weekday name on the left so nothing gets
+   cut off, with the day's badge and logged exercises alongside. */
+function calWeekRowHtml(date) {
   const today = new Date(); today.setHours(0,0,0,0);
   const isToday = isSameDate(date, today);
   const summary = dayLogSummary(date);
@@ -447,24 +439,26 @@ function calWeekCellHtml(date) {
         ? `<span class="cal-cell-badge cal-cell-pr" title="PR">★</span>`
         : `<span class="cal-cell-badge cal-cell-check" title="Logged">✓</span>`)
     : '';
-  let labelBit = '';
+  let modeBit = '';
   if (monthViewMode === 'labels') {
     const label = dayLabelSuffix(date);
-    if (label) labelBit = `<div class="cal-week-cell-label">${escHtml(label)}</div>`;
+    if (label) modeBit = `<div class="cal-week-row-tag">${escHtml(label)}</div>`;
   } else if (monthViewMode === 'trends') {
     const trend = dayTrend(date);
-    if (trend) labelBit = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
+    if (trend) modeBit = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
   }
   const entries = historyEntriesForDate(date);
   const exList = entries.length
-    ? `<div class="cal-week-cell-exercises">${entries.map(e => `<div class="cal-week-cell-ex">${escHtml(e.name)}</div>`).join('')}</div>`
+    ? `<div class="cal-week-row-exercises">${entries.map(e => `<span class="cal-week-row-ex">${escHtml(e.name)}</span>`).join('')}</div>`
     : '';
-  return `<div class="cal-week-cell" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
-    <div class="cal-cell-top">
-      <span class="cal-cell-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
+  const weekdayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+  return `<div class="cal-week-row" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
+    <div class="cal-week-row-head">
+      <span class="cal-week-row-day${isToday?' cal-cell-date-today':''}">${weekdayName}</span>
+      <span class="cal-week-row-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
       ${badge}
     </div>
-    ${labelBit}
+    ${modeBit}
     ${exList}
   </div>`;
 }
