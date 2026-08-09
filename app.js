@@ -78,7 +78,16 @@ function saveLibraryV2() {
 function loadLibraryV2() {
   try {
     const saved = localStorage.getItem(KEYS.libraryV2);
-    if (saved) DEFAULT_LIBRARY_V2 = JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Guard against stale saved copies from before the 242-exercise library
+      // rebuild silently overwriting the fresh data with old/incompatible
+      // exercise objects (missing muscles/equipment/blurb/etc, mismatched IDs).
+      // A real modern save always has more than the old ~105-exercise count and
+      // every entry carries the new `blurb` field, which old saves never had.
+      const looksModern = Array.isArray(parsed) && parsed.length > 150 && parsed.every(e => e && typeof e.blurb === 'string');
+      if (looksModern) DEFAULT_LIBRARY_V2 = parsed;
+    }
   } catch {}
 }
 // Generates an ID guaranteed not to collide with any existing exercise ID —
