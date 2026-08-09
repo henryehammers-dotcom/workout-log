@@ -398,14 +398,14 @@ function toggleMonthDropdown() {
 function monthModeToggleHtml() {
   return `
     <div class="cal-mode-toggles">
-      <label class="cal-mode-toggle">
-        <span>Day labels</span>
-        <span class="tm-switch${monthViewMode==='labels'?' on':''}" onclick="setMonthViewMode('labels')"><span class="tm-switch-track"></span><span class="tm-switch-thumb"></span></span>
-      </label>
-      <label class="cal-mode-toggle">
-        <span>Daily trends</span>
-        <span class="tm-switch${monthViewMode==='trends'?' on':''}" onclick="setMonthViewMode('trends')"><span class="tm-switch-track"></span><span class="tm-switch-thumb"></span></span>
-      </label>
+      <button class="cal-mode-toggle" onclick="setMonthViewMode('labels')">
+        <span>Day Labels</span>
+        <span class="cal-mode-dot${monthViewMode==='labels'?' filled':''}"></span>
+      </button>
+      <button class="cal-mode-toggle" onclick="setMonthViewMode('trends')">
+        <span>Daily Trends</span>
+        <span class="cal-mode-dot${monthViewMode==='trends'?' filled':''}"></span>
+      </button>
     </div>`;
 }
 function calDayCellHtml(date, inCurrentPeriod) {
@@ -425,9 +425,9 @@ function calDayCellHtml(date, inCurrentPeriod) {
     const trend = dayTrend(date);
     if (trend) bottom = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
   }
-  return `<div class="cal-cell${isToday?' cal-cell-today':''}${inCurrentPeriod?'':' cal-cell-dim'}" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
+  return `<div class="cal-cell${inCurrentPeriod?'':' cal-cell-dim'}" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
     <div class="cal-cell-top">
-      <span class="cal-cell-date">${date.getDate()}</span>
+      <span class="cal-cell-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
       ${badge}
     </div>
     ${bottom}
