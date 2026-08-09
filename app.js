@@ -683,7 +683,7 @@ function applyRestore() {
 
       // Dismiss day dropdown / day menu when clicking/tapping outside them
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.day-header')) { closeDayPicker(); closeDayMenu(); }
+        if (!e.target.closest('.day-header') && !e.target.closest('.cal-day-actions-row')) { closeDayPicker(); closeDayMenu(); }
       });
 
       const vEl = document.getElementById('settings-version');

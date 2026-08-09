@@ -169,24 +169,26 @@ function renderDayView() {
 
   const top = `
     <div class="day-header cal-day-header">
-      <div class="cal-day-header-row">
-        <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-        </button>
-        <button class="cal-custom-log-btn" onclick="openCustomLog(formatISODate(viewedDate))" aria-label="Custom log">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-      </div>
       <div class="cal-day-date"><span class="cal-title-accent">${escHtml(weekdayStr)}</span> ${escHtml(monthDayStr)}</div>
       ${titleHtml}
       ${!isToday ? `<button class="cal-today-btn" onclick="jumpToDate(new Date())">Jump to today</button>` : ''}
+      ${dayEditMode ? '<div class="edit-mode-badge">Editing</div>' : ''}
+    </div>`;
+
+  const actionsRow = `
+    <div class="cal-day-actions-row">
+      <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+      <button class="cal-custom-log-btn" onclick="openCustomLog(formatISODate(viewedDate))" aria-label="Custom log">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <div class="day-menu-dropdown" id="day-menu-dropdown">
         <button class="day-menu-item" onclick="closeDayMenu();toggleDayEditMode()">${dayEditMode?'Done editing':'Edit workout'}</button>
         <button class="day-menu-item" onclick="closeDayMenu();toggleRestDay()">${day.restDay?'Mark as workout day':'Mark as rest day'}</button>
         <button class="day-menu-item" onclick="closeDayMenu();confirmCopyDay()">Copy to all days</button>
         <button class="day-menu-item" onclick="closeDayMenu();confirmClearSession()">Clear session</button>
       </div>
-      ${dayEditMode ? '<div class="edit-mode-badge">Editing</div>' : ''}
     </div>`;
 
   // A rest day that has a custom-logged entry for this exact date shows as a normal
@@ -195,7 +197,7 @@ function renderDayView() {
   const hasCustomOnRestDay = day.restDay && customEntries.length > 0;
 
   if (day.restDay && !hasCustomOnRestDay) {
-    return top + `<div class="rest-screen"><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
+    return top + actionsRow + `<div class="rest-screen"><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
   }
 
   if (day.restDay && hasCustomOnRestDay) {
@@ -207,7 +209,7 @@ function renderDayView() {
         <div class="session-sets">${e.sets.map(x=>`<span class="pill${Number(x.weight)===bestW&&bestW>0?' pill-best':''}">${x.reps} × ${x.weight} ${u}</span>`).join('')}</div>
       </div>`;
     }).join('');
-    return top + `<div id="drag-zone">${rows}</div><button class="add-exercise-btn" onclick="openCustomLog('${formatISODate(date)}')">+ Add another custom entry</button>`;
+    return top + actionsRow + `<div id="drag-zone">${rows}</div><button class="add-exercise-btn" onclick="openCustomLog('${formatISODate(date)}')">+ Add another custom entry</button>`;
   }
 
   const exCards = day.exercises.length === 0
@@ -290,7 +292,7 @@ function renderDayView() {
       }).join('');
 
   const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibV2ForDay('${dn}')">+ Add exercise</button>` : '';
-  return top + `<div id="drag-zone">${exCards}</div>` + addBtn;
+  return top + actionsRow + `<div id="drag-zone">${exCards}</div>` + addBtn;
 }
 // ISO yyyy-mm-dd, used only for safely embedding a date in an onclick attribute
 function formatISODate(date) { return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0'); }
