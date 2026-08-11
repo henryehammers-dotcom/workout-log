@@ -801,8 +801,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    UPDATE BANNER
    ────────────────────────────────────────────────────────── */
-.update-banner{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-text);padding:10px 18px;border-radius:var(--r-pill);font-size:13px;font-weight:600;cursor:pointer;z-index:1200;box-shadow:0 4px 14px rgba(0,0,0,0.18);display:none}
-.update-banner.show{display:block;animation:slideDown .3s ease}
 @keyframes slideDown { from { transform: translate(-50%, -10px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
 
 /* ──────────────────────────────────────────────────────────
@@ -1396,9 +1394,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
-<!-- ── Update banner ── -->
-<div class="update-banner" id="update-banner" onclick="applyUpdate()">New version available — tap to update</div>
-
 <!-- ── Rest timer bar ── -->
 <div class="timer-bar" id="timer-bar">
   <div class="timer-text">
@@ -1411,7 +1406,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
 
-<script type="module" src="src/main.js?v=152"></script>
+<script type="module" src="src/main.js?v=153"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

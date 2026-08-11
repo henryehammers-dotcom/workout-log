@@ -162,17 +162,15 @@ Object.assign(window, {
 
   // greeting.js
   dismissGreeting: greetingMod.dismissGreeting,
-
-  // main.js (this file)
-  applyUpdate,
 });
 
-/* ─── UPDATE BANNER ─── */
-let _updateAvailable = false;
-function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); _updateAvailable = false; window.location.reload(true); }
+/* ─── AUTO-UPDATE ON OPEN ───
+   Rather than showing a banner and waiting for a tap, silently reload once
+   on startup if a newer version is available. Guards against reload loops
+   (e.g. if version.json is somehow permanently ahead) using a per-tab flag
+   in sessionStorage — reload happens at most once per browser tab/session. */
 function checkForUpdate() {
   try {
-    if (_updateAvailable) return;
     fetch('./version.json?v=' + Date.now(), { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
@@ -180,11 +178,12 @@ function checkForUpdate() {
         // rather than caching it at module-eval time (it's set asynchronously
         // by loadAppVersion() after fetch, so an early cached read would be '').
         import('./state.js').then(({ APP_VERSION }) => {
-          if (data.version && APP_VERSION && data.version !== APP_VERSION) {
-            _updateAvailable = true;
-            const banner = document.getElementById('update-banner');
-            if (banner) banner.classList.add('show');
-          }
+          if (!data.version || !APP_VERSION || data.version === APP_VERSION) return;
+          let alreadyReloadedForThisVersion = false;
+          try { alreadyReloadedForThisVersion = sessionStorage.getItem('wl_update_reloaded') === data.version; } catch {}
+          if (alreadyReloadedForThisVersion) return; // avoid a reload loop if something's stuck
+          try { sessionStorage.setItem('wl_update_reloaded', data.version); } catch {}
+          window.location.reload(true);
         });
       }).catch(() => {});
   } catch (e) { /* never let update-checking break the app */ }
