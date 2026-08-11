@@ -232,6 +232,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .settings-trigger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .settings-trigger-btn:hover{background:var(--bg3);border-color:var(--border2)}
 .settings-trigger-btn:active{transform:scale(0.96)}
+.composer-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.composer-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.composer-pill:hover{background:var(--bg3)}
+.composer-pill:active{transform:scale(0.96)}
+.composer-pill.active{border-color:var(--accent);color:var(--text)}
+.composer-pill .eq-bars{display:none}
+.composer-pill.active .eq-bars{display:flex}
 
 /* ──────────────────────────────────────────────────────────
    BW chip (used inside sidebar header)
@@ -808,14 +815,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 @keyframes slideDown { from { transform: translate(-50%, -10px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
 
 /* ──────────────────────────────────────────────────────────
-   MUSIC CARD (sidebar, above settings)
+   COMPOSER PLAYLIST EQ BARS (used inside the composer pills)
    ────────────────────────────────────────────────────────── */
-.music-card{position:relative;display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:14px;padding:8px 10px;margin-bottom:10px}
-.music-play-btn{width:32px;height:32px;border-radius:50%;background:transparent;color:var(--text2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s}
-.music-play-btn:hover{background:var(--bg2)}
-.music-play-btn:active{transform:scale(0.92)}
-.music-info{flex:1;min-width:0;display:flex;align-items:center;gap:8px;cursor:pointer}
-.track-name{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eq-bars{display:flex;align-items:center;gap:3px;height:16px;flex-shrink:0;opacity:0.4}
 .eq-bars span{width:3px;background:var(--accent);border-radius:1.5px;height:5px}
 .eq-bars span:nth-child(1){height:8px}
@@ -827,10 +828,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .eq-bars.playing span:nth-child(2){animation-delay:0.25s}
 .eq-bars.playing span:nth-child(3){animation-delay:0.12s}
 @keyframes eqBounce{0%,100%{height:4px}50%{height:16px}}
-.track-menu{position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-md);padding:6px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.20);display:none;z-index:50}
-.track-menu.show{display:block}
-.track-item{padding:8px 10px;font-size:12px;color:var(--text);cursor:pointer;border-radius:6px}
-.track-item:hover{background:var(--bg3)}
 
 </style>
 </head>
@@ -856,28 +853,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <button class="sidebar-nav-item" id="snav-clock" onclick="switchTab('clock')"><span class="sidebar-nav-dot"></span>Clock</button>
   </div>
 
-  <!-- ── Music card ── -->
-  <div class="music-card">
-    <button class="music-play-btn" id="mute-btn" onclick="toggleMute()" aria-label="Play music">
-      <svg id="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      <svg id="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+  <!-- ── Composer playlist pills ── -->
+  <div class="composer-pills" id="composer-pills">
+    <button class="composer-pill" id="pill-bach" onclick="selectPlaylist('bach')">
+      <span>Bach</span>
+      <span class="eq-bars" id="eq-bach"><span></span><span></span><span></span></span>
     </button>
-    <div class="music-info" id="track-btn" onclick="toggleTrackMenu()">
-      <span class="track-name" id="track-name">A Templar's Heaven</span>
-      <div class="eq-bars" id="eq-bars"><span></span><span></span><span></span></div>
-    </div>
-    <div class="track-menu" id="track-menu">
-      <div class="track-item" data-name="A Templar's Heaven" data-src="a-templars-heaven.mp3" onclick="selectTrack(this)">A Templar's Heaven</div>
-      <div class="track-item" data-name="Ludwig Lies" data-src="ludwig-lies.mp3" onclick="selectTrack(this)">Ludwig Lies</div>
-      <div class="track-item" data-name="Morbius" data-src="morbius.mp3" onclick="selectTrack(this)">Morbius</div>
-      <div class="track-item" data-name="Mozart on Meth" data-src="mozart-on-meth.mp3" onclick="selectTrack(this)">Mozart on Meth</div>
-      <div class="track-item" data-name="Set Fire to the Orchestra" data-src="set-fire-to-the-orchestra.mp3" onclick="selectTrack(this)">Set Fire to the Orchestra</div>
-      <div class="track-item" data-name="That Golden Fiddle" data-src="that-golden-fiddle.mp3" onclick="selectTrack(this)">That Golden Fiddle</div>
-      <div class="track-item" data-name="The Mountain's Violinist" data-src="the-mountains-violinist.mp3" onclick="selectTrack(this)">The Mountain's Violinist</div>
-      <div class="track-item" data-name="Time Keeps Crumbling" data-src="time-keeps-crumbling.mp3" onclick="selectTrack(this)">Time Keeps Crumbling</div>
-      <div class="track-item" data-name="Wands at the Ready" data-src="wands-at-the-ready.mp3" onclick="selectTrack(this)">Wands at the Ready</div>
-      <div class="track-item" data-name="War is Over" data-src="war-is-over.mp3" onclick="selectTrack(this)">War is Over</div>
-    </div>
+    <button class="composer-pill" id="pill-beethoven" onclick="selectPlaylist('beethoven')">
+      <span>Beethoven</span>
+      <span class="eq-bars" id="eq-beethoven"><span></span><span></span><span></span></span>
+    </button>
+    <button class="composer-pill" id="pill-mozart" onclick="selectPlaylist('mozart')">
+      <span>Mozart</span>
+      <span class="eq-bars" id="eq-mozart"><span></span><span></span><span></span></span>
+    </button>
+    <button class="composer-pill" id="pill-tchaikovsky" onclick="selectPlaylist('tchaikovsky')">
+      <span>Tchaikovsky</span>
+      <span class="eq-bars" id="eq-tchaikovsky"><span></span><span></span><span></span></span>
+    </button>
   </div>
 
   <div class="sidebar-footer">
@@ -1410,7 +1403,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
 
-<script type="module" src="src/main.js?v=156"></script>
+<script type="module" src="src/main.js?v=158"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -157,9 +157,7 @@ Object.assign(window, {
   swReset: clockMod.swReset,
 
   // music.js
-  toggleMute: musicMod.toggleMute,
-  toggleTrackMenu: musicMod.toggleTrackMenu,
-  selectTrack: musicMod.selectTrack,
+  selectPlaylist: musicMod.selectPlaylist,
 
   // greeting.js
   dismissGreeting: greetingMod.dismissGreeting,
