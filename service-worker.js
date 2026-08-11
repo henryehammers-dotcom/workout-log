@@ -1,4 +1,4 @@
-const CACHE = 'tallyup-v146';
+const CACHE = 'tallyup-v147';
 const FILES = [
   './index.html',
   './exercises-data.js',
