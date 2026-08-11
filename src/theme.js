@@ -6,6 +6,7 @@ import { KEYS, currentUnits, setCurrentUnits, showInstructionsIcons, setShowInst
 import { renderDayContent } from './schedule-day.js';
 import { updateBwDisplay } from './bodyweight.js';
 import { maybeShowGreeting } from './greeting.js';
+import { renderLastBackupLine } from './backup.js';
 
 /* ─── APP VERSION (from version.json) ─── */
 // APP_VERSION is read from version.json at runtime. To ship a new version,
@@ -158,6 +159,7 @@ export function openSettings(isFirstLaunch) {
   syncThemeBaseLabel(base);
   renderAccentSwatches();
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
+  renderLastBackupLine();
 }
 export function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
 

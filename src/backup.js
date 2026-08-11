@@ -96,6 +96,56 @@ export function saveFile() {
   a.download = 'tallyup-backup-' + stamp + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
+  try { localStorage.setItem(KEYS.lastBackupAt, new Date().toISOString()); } catch {}
+  renderLastBackupLine();
+}
+
+// Renders the "last backed up" line in Settings, if that element is present
+// (it only exists while the settings sheet's markup is in the DOM — this is
+// a no-op harmlessly whenever it's not, e.g. before first paint).
+export function renderLastBackupLine() {
+  const el = document.getElementById('settings-last-backup');
+  if (!el) return;
+  const raw = localStorage.getItem(KEYS.lastBackupAt);
+  if (!raw) { el.textContent = 'No backup yet'; return; }
+  const d = new Date(raw);
+  if (isNaN(d)) { el.textContent = 'No backup yet'; return; }
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const label = sameDay
+    ? 'today at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  el.textContent = 'Last backed up ' + label;
+}
+
+/* ─── AUTO-BACKUP ON SESSION START ───
+   Browsers block file downloads that aren't triggered by a real user
+   gesture (click/tap) — a silent download on page load alone gets blocked.
+   So instead: arm a flag on load, then piggyback on whatever the user
+   clicks first each session to fire one silent, unannounced backup
+   download. This means at most one session's worth of data is ever at
+   risk, without ever interrupting the person with a prompt. */
+let _autoBackupArmed = false;
+let _autoBackupListenerAttached = false;
+
+export function armAutoBackupForSession() {
+  // Skip entirely if there's nothing worth backing up yet (fresh install,
+  // no schedule or history saved) — no point downloading an empty shell.
+  const hasSchedule = !!localStorage.getItem(KEYS.schedule);
+  const hasHistory = localStorage.getItem(KEYS.history) && localStorage.getItem(KEYS.history) !== '{}';
+  if (!hasSchedule && !hasHistory) return;
+
+  _autoBackupArmed = true;
+  if (_autoBackupListenerAttached) return;
+  _autoBackupListenerAttached = true;
+  document.addEventListener('click', fireAutoBackupOnce, { capture: true });
+}
+function fireAutoBackupOnce() {
+  if (!_autoBackupArmed) return;
+  _autoBackupArmed = false;
+  document.removeEventListener('click', fireAutoBackupOnce, { capture: true });
+  _autoBackupListenerAttached = false;
+  try { saveFile(); } catch (e) { console.warn('Auto-backup failed silently:', e); }
 }
 
 export function openRestoreSheet() {
@@ -105,6 +155,22 @@ export function openRestoreSheet() {
 }
 export function closeRestoreSheet() {
   document.getElementById('restore-wrap').classList.remove('show');
+}
+// Wired to the file input's onchange: reads the picked .json file and drops
+// its text into the same textarea applyRestore() already reads from, so the
+// rest of the restore flow (validation, orphan handling, etc.) is untouched.
+export function handleRestoreFileSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('restore-textarea').value = reader.result;
+  };
+  reader.onerror = () => {
+    alert('Could not read that file — try again or paste its contents manually.');
+  };
+  reader.readAsText(file);
+  input.value = ''; // reset so picking the same file again still fires onchange
 }
 let _restorePendingParsed = null; // holds the parsed backup between the confirm modal and the orphan-choice step
 

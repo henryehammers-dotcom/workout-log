@@ -27,6 +27,7 @@ export const KEYS = {
   blurbsV2:  'wl_blurbs_v2',
   showInstr: 'wl_show_instr_icons',
   monthViewMode: 'wl_month_view_mode',
+  lastBackupAt: 'wl_last_backup_at',
 };
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 export const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -63,21 +64,46 @@ export const MUSCLE_GROUPS_V2 = [
 // then any saved edits/additions are merged on top at load time.
 export let DEFAULT_LIBRARY_V2 = JSON.parse(JSON.stringify(DEFAULT_LIBRARY_V2_BASE));
 
+// Bump this whenever the exercise object *shape* changes in a way that makes
+// older saved libraries incompatible (fields renamed/removed, new required
+// fields, etc.) — NOT for ordinary additions of new exercises, which are
+// backward-compatible. This is what loadLibraryV2() checks instead of
+// guessing from array length or field presence.
+const LIBRARY_SCHEMA_VERSION = 1;
+
 export function saveLibraryV2() {
-  try { localStorage.setItem(KEYS.libraryV2, JSON.stringify(DEFAULT_LIBRARY_V2)); } catch {}
+  try {
+    const payload = { schemaVersion: LIBRARY_SCHEMA_VERSION, exercises: DEFAULT_LIBRARY_V2 };
+    localStorage.setItem(KEYS.libraryV2, JSON.stringify(payload));
+  } catch {}
 }
 export function loadLibraryV2() {
   try {
     const saved = localStorage.getItem(KEYS.libraryV2);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Guard against stale saved copies from before the 242-exercise library
-      // rebuild silently overwriting the fresh data with old/incompatible
-      // exercise objects (missing muscles/equipment/blurb/etc, mismatched IDs).
-      // A real modern save always has more than the old ~105-exercise count and
-      // every entry carries the new `blurb` field, which old saves never had.
-      const looksModern = Array.isArray(parsed) && parsed.length > 150 && parsed.every(e => e && typeof e.blurb === 'string');
-      if (looksModern) DEFAULT_LIBRARY_V2 = parsed;
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+
+    // Current format: { schemaVersion, exercises }. Trust the version number
+    // directly — no guessing from shape.
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Array.isArray(parsed.exercises)) {
+      if (parsed.schemaVersion === LIBRARY_SCHEMA_VERSION) {
+        DEFAULT_LIBRARY_V2 = parsed.exercises;
+      }
+      // A schemaVersion that doesn't match means this save predates a
+      // breaking shape change — fall back to the fresh defaults rather than
+      // loading incompatible data (same as if nothing were saved at all).
+      return;
+    }
+
+    // One-time migration path: a save from before schemaVersion existed (a
+    // bare array, no wrapper). Use the same heuristic the old code relied on
+    // to decide whether it's worth keeping, then immediately re-save it in
+    // the new wrapped format so this branch is never needed again for this
+    // user going forward.
+    const looksModern = Array.isArray(parsed) && parsed.length > 150 && parsed.every(e => e && typeof e.blurb === 'string');
+    if (looksModern) {
+      DEFAULT_LIBRARY_V2 = parsed;
+      saveLibraryV2();
     }
   } catch {}
 }
