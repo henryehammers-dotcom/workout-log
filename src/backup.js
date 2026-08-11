@@ -118,36 +118,6 @@ export function renderLastBackupLine() {
   el.textContent = 'Last backed up ' + label;
 }
 
-/* ─── AUTO-BACKUP ON SESSION START ───
-   Browsers block file downloads that aren't triggered by a real user
-   gesture (click/tap) — a silent download on page load alone gets blocked.
-   So instead: arm a flag on load, then piggyback on whatever the user
-   clicks first each session to fire one silent, unannounced backup
-   download. This means at most one session's worth of data is ever at
-   risk, without ever interrupting the person with a prompt. */
-let _autoBackupArmed = false;
-let _autoBackupListenerAttached = false;
-
-export function armAutoBackupForSession() {
-  // Skip entirely if there's nothing worth backing up yet (fresh install,
-  // no schedule or history saved) — no point downloading an empty shell.
-  const hasSchedule = !!localStorage.getItem(KEYS.schedule);
-  const hasHistory = localStorage.getItem(KEYS.history) && localStorage.getItem(KEYS.history) !== '{}';
-  if (!hasSchedule && !hasHistory) return;
-
-  _autoBackupArmed = true;
-  if (_autoBackupListenerAttached) return;
-  _autoBackupListenerAttached = true;
-  document.addEventListener('click', fireAutoBackupOnce, { capture: true });
-}
-function fireAutoBackupOnce() {
-  if (!_autoBackupArmed) return;
-  _autoBackupArmed = false;
-  document.removeEventListener('click', fireAutoBackupOnce, { capture: true });
-  _autoBackupListenerAttached = false;
-  try { saveFile(); } catch (e) { console.warn('Auto-backup failed silently:', e); }
-}
-
 export function openRestoreSheet() {
   document.getElementById('restore-textarea').value = '';
   document.getElementById('restore-wrap').classList.add('show');

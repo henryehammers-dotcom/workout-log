@@ -275,7 +275,6 @@ function migrateIds() {
         themeMod.updateAppTitle();
         bodyweightMod.updateBwDisplay();
         scheduleDayMod.renderDayContent();
-        backupMod.armAutoBackupForSession();
 
         // Hamburger button sits in normal flow at the top of the page (so it
         // never overlaps the Day view's date/title), and only becomes a
