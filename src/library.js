@@ -278,11 +278,17 @@ function renderLibSimilar() {
   resultsEl.innerHTML = `<div class="lib-similar-group-label">${escHtml(activeCat.name)}</div>` +
     (activeCat.results.length
       ? activeCat.results.map(r => `
-        <div class="lib-similar-result" onclick="openExerciseDetail('${r.id}')">
+        <div class="lib-similar-result" onclick="openExerciseFromSimilar('${r.id}')">
           <div class="lib-similar-result-name">${escHtml(r.name)}</div>
           <div class="lib-similar-result-desc">${escHtml(r.card || '')}</div>
         </div>`).join('')
       : `<div class="empty">Nothing else matches yet.</div>`);
+}
+// Clicking a result inside the Similar Exercises popup should replace it with
+// that exercise's own detail view, not stack a second overlay on top of it.
+export function openExerciseFromSimilar(idOrName) {
+  closeLibSimilar();
+  openExerciseDetail(idOrName);
 }
 
 /* ─── ADD TO DAY (calendar + repeat) ─── */

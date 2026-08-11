@@ -70,6 +70,7 @@ Object.assign(window, {
   closeLibSearch: libraryMod.closeLibSearch,
   libSearchInput: libraryMod.libSearchInput,
   openExerciseDetail: libraryMod.openExerciseDetail,
+  openExerciseFromSimilar: libraryMod.openExerciseFromSimilar,
   closeExerciseDetail: libraryMod.closeExerciseDetail,
   openExerciseInstructions: libraryMod.openExerciseInstructions,
   closeExerciseInstructions: libraryMod.closeExerciseInstructions,
