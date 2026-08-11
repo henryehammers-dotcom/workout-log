@@ -346,6 +346,10 @@ export function deleteSession() {
   const exKey = _editSession.exKey;
   const date = _editSession._openedFromDate;
   const name = _editSession.name;
+  // Close the edit-session sheet before showing the confirmation modal — its
+  // overlay sits at a higher z-index than the modal, which would otherwise
+  // bury the modal underneath it and make "Continue"/"Delete" unclickable.
+  closeEditSession();
   showModal('Delete this session?', `Permanently remove the ${date.replace(/\w+,\s/, '')} session for ${name}?`, () => {
     const hist = getHistory();
     const dayEntries = hist[date];
@@ -358,7 +362,6 @@ export function deleteSession() {
       }
     }
     closeModal();
-    closeEditSession();
     renderHistory(exerciseStillHasSessions(exKey) ? exKey : undefined);
   });
 }

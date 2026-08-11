@@ -568,6 +568,11 @@ export function deleteLibExercise() {
     schedule[d].exercises.some(e => ex.id && e.exId === ex.id)
   ).map(d => FULL_DAYS[d]);
 
+  // Close the exercise-edit form before showing the confirmation modal — its
+  // overlay sits at a higher z-index than the modal, which would otherwise
+  // bury the modal underneath it and make "Continue"/"Delete" unclickable.
+  closeLibExerciseForm();
+
   const doDelete = () => {
     const idx = DEFAULT_LIBRARY_V2.findIndex(e => e.id === ex.id);
     if (idx !== -1) DEFAULT_LIBRARY_V2.splice(idx, 1);
@@ -576,7 +581,6 @@ export function deleteLibExercise() {
     });
     saveLibraryV2();
     saveSchedule();
-    closeLibExerciseForm();
     if (libActiveGroupKey) renderLibCategory();
     renderLibGroupsGrid();
     if (schedule[currentDay]) renderDayContent();

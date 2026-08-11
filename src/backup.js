@@ -153,6 +153,10 @@ export function applyRestore() {
   if (!parsed || !(parsed.tallyup_backup || parsed.tallymark_backup) || !parsed.data) {
     alert('That doesn\u2019t look like a Tally Up backup file.'); return;
   }
+  // Close the restore sheet before showing the confirmation modal — the sheet's
+  // overlay sits at a higher z-index than the modal, so leaving it open would
+  // visually bury the modal underneath it and make "Continue" unclickable.
+  closeRestoreSheet();
   showModal('Replace all data?', 'This will overwrite your current routine, history, and settings with the backup. This cannot be undone.', function() {
     closeModal();
     _restorePendingParsed = parsed;
