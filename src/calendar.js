@@ -1,59 +1,62 @@
 /* ════════════════════════════════════════════
    Tally Up — Calendar (Day / Week / Month / Year)
-   Replaces the old always-"today" Log tab with a date-aware
-   Day view, plus Week/Month/Year rollup views.
    ════════════════════════════════════════════ */
+import { KEYS, DAY_NAMES, schedule, currentDay, setCurrentDay, dayEditMode, currentUnits,
+         sessionSets, exerciseTimers, showInstructionsIcons, getHistory, saveHistory, getCleanBw,
+         viewedDate, setViewedDate, formatISODate, parseISODate, cloneDate,
+         escAttr, escHtml } from './state.js';
+import { flushInputs, resolveScheduledExercise, getSetData, registerCalendarRenderer } from './schedule-day.js';
+import { destroyCharts, getExerciseIndex, sessionBestE1RM, parseSessionDate } from './history.js';
+import { timerKeyFor, startTimer } from './timers.js';
+import { initDrag } from './drag.js';
 
 /* ─── STATE ─── */
-let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
-let viewedDate = new Date();    // the date currently shown in Day/Week/Month
-viewedDate.setHours(0,0,0,0);
-let monthViewMode = localStorage.getItem(KEYS.monthViewMode) || 'trends';   // 'labels' | 'trends' | 'none'
+export let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
+export let monthViewMode = localStorage.getItem(KEYS.monthViewMode) || 'trends';   // 'labels' | 'trends' | 'none'
 
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+export const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 /* ─── DATE HELPERS ─── */
 // Formats a Date the same way the rest of the app keys history: "Wednesday, Jul 22, 2026"
-function formatHistoryDate(date) {
+export function formatHistoryDate(date) {
   return date.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
 }
-function isSameDate(a, b) {
+export function isSameDate(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
-function cloneDate(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function addDays(d, n) { const r = cloneDate(d); r.setDate(r.getDate() + n); return r; }
-function addMonths(d, n) { const r = cloneDate(d); r.setMonth(r.getMonth() + n); return r; }
-function startOfWeek(d) { return addDays(d, -d.getDay()); } // Sunday start
-function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-function daysInMonth(d) { return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+export function addDays(d, n) { const r = cloneDate(d); r.setDate(r.getDate() + n); return r; }
+export function addMonths(d, n) { const r = cloneDate(d); r.setMonth(r.getMonth() + n); return r; }
+export function startOfWeek(d) { return addDays(d, -d.getDay()); } // Sunday start
+export function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+export function daysInMonth(d) { return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
 
 /* ─── PIVOT: switching Day/Week/Month/Year ─── */
-function switchCalendarView(view, opts) {
+export function switchCalendarView(view, opts) {
   opts = opts || {};
   flushInputs();
   calendarView = view;
-  if (opts.date) viewedDate = cloneDate(opts.date);
+  if (opts.date) setViewedDate(cloneDate(opts.date));
   renderCalendarRoot();
 }
-function calendarNav(dir) {
+export function calendarNav(dir) {
   flushInputs();
-  if (calendarView === 'day') viewedDate = addDays(viewedDate, dir);
-  else if (calendarView === 'week') viewedDate = addDays(viewedDate, dir * 7);
-  else if (calendarView === 'month') viewedDate = addMonths(viewedDate, dir);
+  if (calendarView === 'day') setViewedDate(addDays(viewedDate, dir));
+  else if (calendarView === 'week') setViewedDate(addDays(viewedDate, dir * 7));
+  else if (calendarView === 'month') setViewedDate(addMonths(viewedDate, dir));
   renderCalendarRoot();
 }
-function jumpToDate(date) {
+export function jumpToDate(date) {
   flushInputs();
-  viewedDate = cloneDate(date);
+  setViewedDate(cloneDate(date));
   calendarView = 'day';
   renderCalendarRoot();
 }
-function jumpToMonth(monthIdx, year) {
-  viewedDate = new Date(year, monthIdx, 1);
+export function jumpToMonth(monthIdx, year) {
+  setViewedDate(new Date(year, monthIdx, 1));
   calendarView = 'month';
   renderCalendarRoot();
 }
-function setMonthViewMode(mode) {
+export function setMonthViewMode(mode) {
   // "labels" and "trends" are mutually exclusive; clicking an active one turns it off.
   monthViewMode = (monthViewMode === mode) ? 'none' : mode;
   localStorage.setItem(KEYS.monthViewMode, monthViewMode);
@@ -61,12 +64,12 @@ function setMonthViewMode(mode) {
 }
 
 /* ─── HISTORY LOOKUPS FOR A GIVEN DATE ─── */
-function historyEntriesForDate(date) {
+export function historyEntriesForDate(date) {
   const hist = getHistory();
   return hist[formatHistoryDate(date)] || [];
 }
 // Was anything logged on this date, and was any of it a PR (best-ever e1RM for that exercise)?
-function dayLogSummary(date) {
+export function dayLogSummary(date) {
   const entries = historyEntriesForDate(date);
   if (!entries.length) return { logged: false, pr: false };
   const hist = getHistory();
@@ -87,7 +90,7 @@ function dayLogSummary(date) {
 }
 // Rolls up a trend arrow for a day: compares each logged exercise that day to its
 // own immediately-preceding session (by e1RM), and returns the majority direction.
-function dayTrend(date) {
+export function dayTrend(date) {
   const entries = historyEntriesForDate(date);
   if (!entries.length) return null;
   const hist = getHistory();
@@ -123,14 +126,14 @@ function dayLabelSuffix(date) {
 }
 
 /* ─── ROOT RENDER ─── */
-function renderCalendarRoot() {
+export function renderCalendarRoot() {
   const container = document.getElementById('day-content');
   if (!container) return;
   destroyCharts();
   // Keep the legacy day-of-week variable in sync with whatever date is being
   // viewed — lots of existing code (rest-day toggle, copy-to-all-days, the
   // library's "add to day" flow, etc.) still reads `currentDay` directly.
-  currentDay = DAY_NAMES[viewedDate.getDay()];
+  setCurrentDay(DAY_NAMES[viewedDate.getDay()]);
 
   const pill = `
     <div class="cal-pill" id="cal-pill">
@@ -295,12 +298,9 @@ function renderDayView() {
   const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibV2ForDay('${dn}')">+ Add exercise</button>` : '';
   return top + actionsRow + `<div id="drag-zone">${exCards}</div>` + addBtn;
 }
-// ISO yyyy-mm-dd, used only for safely embedding a date in an onclick attribute
-function formatISODate(date) { return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0'); }
-function parseISODate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
 
 // Writes history under an arbitrary date instead of always "today".
-function logExerciseOnDate(d, idx, isoDate) {
+export function logExerciseOnDate(d, idx, isoDate) {
   flushInputs();
   const date = parseISODate(isoDate);
   const data = getSetData(d, idx);
@@ -327,7 +327,6 @@ function logExerciseOnDate(d, idx, isoDate) {
   renderCalendarRoot();
   startTimer(ex.restSecs || 90, d, idx, isoDate);
 }
-
 /* ─── WEEK VIEW ─── */
 function renderWeekView() {
   const weekStart = startOfWeek(viewedDate);
@@ -476,3 +475,8 @@ document.addEventListener('click', (e) => {
     document.getElementById('cal-month-dropdown')?.classList.remove('show');
   }
 });
+
+// Give schedule-day.js's legacy renderDayContent() a way to trigger our render
+// without creating a circular top-level import (see registerCalendarRenderer
+// in schedule-day.js for the rationale).
+registerCalendarRenderer(renderCalendarRoot);

@@ -3,12 +3,21 @@
    A blank log page: pick any exercise from the library, freeform
    sets/reps, editable date, saves straight to history.
    ════════════════════════════════════════════ */
+import { currentUnits, getHistory, saveHistory, viewedDate, formatISODate,
+         escHtml, escAttr } from './state.js';
+import { cloneDate } from './state.js';
+import { formatHistoryDate, jumpToDate } from './calendar.js';
+import { switchTab } from './tabs.js';
 
 let _customLog = null; // { date: Date, entries: [{ exId, name, sets:[{reps,weight}] }] }
+let _customLogPicking = false; // set when Library is opened to pick an exercise for the custom log
 
-function openCustomLog(isoDate) {
+export function isCustomLogPicking() { return _customLogPicking; }
+export function setCustomLogPicking(v) { _customLogPicking = v; }
+
+export function openCustomLog(isoDate) {
   try {
-    const date = isoDate ? parseISODate(isoDate) : cloneDate(viewedDate);
+    const date = isoDate ? parseISODateLocal(isoDate) : cloneDate(viewedDate);
     _customLog = { date, entries: [] };
     const wrap = document.getElementById('custom-log-wrap');
     if (!wrap) { alert('Custom log failed to open (missing sheet). Please reload the app.'); return; }
@@ -19,11 +28,13 @@ function openCustomLog(isoDate) {
     alert('Custom log failed to open: ' + err.message);
   }
 }
-function closeCustomLog() {
+function parseISODateLocal(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+
+export function closeCustomLog() {
   _customLog = null;
   document.getElementById('custom-log-wrap')?.classList.remove('show');
 }
-function customLogSetDate(val) {
+export function customLogSetDate(val) {
   if (!_customLog || !val) return;
   const [y,m,d] = val.split('-').map(Number);
   _customLog.date = new Date(y, m-1, d);
@@ -38,7 +49,7 @@ function renderCustomLogHeader() {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
   </span>`;
 }
-function customLogDateEditToggle() {
+export function customLogDateEditToggle() {
   if (!_customLog) return;
   const el = document.getElementById('custom-log-date');
   const iso = formatISODate(_customLog.date);
@@ -50,46 +61,45 @@ function customLogDateEditToggle() {
   });
   input.focus();
 }
-function customLogAddExercise() {
+export function customLogAddExercise() {
   openLibV2ForCustomLog();
 }
 // Bridges the existing Library-V2 picker into custom-log mode
-let _customLogPicking = false;
 function openLibV2ForCustomLog() {
   _customLogPicking = true;
   document.getElementById('custom-log-wrap').classList.remove('show');
   switchTab('library');
 }
-function customLogReceiveExercise(ex) {
+export function customLogReceiveExercise(ex) {
   if (!_customLog) return;
   _customLog.entries.push({ exId: ex.id||'', name: ex.name, type: ex.type, sets: [{reps:'',weight:''}] });
   document.getElementById('custom-log-wrap').classList.add('show');
   renderCustomLog();
 }
-function customLogRemoveEntry(i) {
+export function customLogRemoveEntry(i) {
   if (!_customLog) return;
   _customLog.entries.splice(i, 1);
   renderCustomLog();
 }
-function customLogAddSet(i) {
+export function customLogAddSet(i) {
   if (!_customLog || !_customLog.entries[i]) return;
   _customLog.entries[i].sets.push({reps:'',weight:''});
   renderCustomLog();
 }
-function customLogRemoveSet(i, si) {
+export function customLogRemoveSet(i, si) {
   if (!_customLog || !_customLog.entries[i]) return;
   _customLog.entries[i].sets.splice(si, 1);
   if (!_customLog.entries[i].sets.length) _customLog.entries[i].sets.push({reps:'',weight:''});
   renderCustomLog();
 }
-function customLogFlush() {
+export function customLogFlush() {
   if (!_customLog) return;
   document.querySelectorAll('#custom-log-entries [data-cli]').forEach(el => {
     const i = Number(el.dataset.cli), si = Number(el.dataset.clsi), field = el.dataset.field;
     if (_customLog.entries[i] && _customLog.entries[i].sets[si]) _customLog.entries[i].sets[si][field] = el.value;
   });
 }
-function renderCustomLog() {
+export function renderCustomLog() {
   if (!_customLog) return;
   try {
     renderCustomLogHeader();
@@ -133,7 +143,7 @@ function renderCustomLog() {
     if (entriesEl) entriesEl.innerHTML = `<div class="empty">Something went wrong loading this — ${escHtml(err.message)}</div>`;
   }
 }
-function saveCustomLog() {
+export function saveCustomLog() {
   if (!_customLog) return;
   customLogFlush();
   const dateKey = formatHistoryDate(_customLog.date);
@@ -150,6 +160,7 @@ function saveCustomLog() {
   });
   if (!hist[dateKey].length) delete hist[dateKey];
   saveHistory(hist);
+  const dateForJump = _customLog ? _customLog.date : new Date();
   closeCustomLog();
-  jumpToDate(_customLog ? _customLog.date : new Date());
+  jumpToDate(dateForJump);
 }

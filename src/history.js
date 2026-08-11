@@ -1,14 +1,17 @@
 /* ════════════════════════════════════════════
-   Tally Up — application logic, part 2
-   (history, library, clock, greeting, music)
+   Tally Up — History (list, momentum chart, edit session)
    ════════════════════════════════════════════ */
+import { activeCharts, currentUnits, getHistory, saveHistory,
+         escAttr, escHtml } from './state.js';
+import { formatHistoryDate } from './calendar.js';
+import { showModal, closeModal } from './modal.js';
 
 /* ─── HISTORY ─── */
-function destroyCharts() { activeCharts.forEach(c => { try { c.destroy(); } catch {} }); activeCharts = []; }
+export function destroyCharts() { activeCharts.forEach(c => { try { c.destroy(); } catch {} }); activeCharts.length = 0; }
 // Parses "Wednesday, Jul 22, 2026" or legacy "Wednesday, Jul 22" (no year) into a real Date.
 // Legacy entries assume the most recent past occurrence of that month/day, since they predate
 // year-tagging and we can't know which year they were actually logged in.
-function parseSessionDate(str) {
+export function parseSessionDate(str) {
   const parts = str.split(',').map(s => s.trim());
   const monthDay = parts[1] || '';
   const yearPart = parts[2];
@@ -25,7 +28,7 @@ function parseSessionDate(str) {
   }
   return new Date(0); // unparseable fallback, sorts first
 }
-function getExerciseIndex(hist) {
+export function getExerciseIndex(hist) {
   const idx = {};
   Object.entries(hist).forEach(([date, entries]) => {
     entries.forEach(e => {
@@ -39,14 +42,15 @@ function getExerciseIndex(hist) {
   });
   return idx;
 }
-function getHistoryDisplayNames(index) { return Object.entries(index).map(([key, val]) => ({ key, name: val.name })).sort((a,b) => a.name.localeCompare(b.name)); }
-function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Number(s.reps)||0) * (Number(s.weight)||0), 0); }
+export function getHistoryDisplayNames(index) { return Object.entries(index).map(([key, val]) => ({ key, name: val.name })).sort((a,b) => a.name.localeCompare(b.name)); }
+export function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Number(s.reps)||0) * (Number(s.weight)||0), 0); }
 // Estimated 1-rep max for a single set (Epley formula), used for strength trend
-function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
+export function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
 // A session's strength score = its best single-set e1RM (not summed across sets)
-function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
+export function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
+
 let histSearchQuery = '';
-function openHistSearch() {
+export function openHistSearch() {
   document.getElementById('hist-header-row').classList.add('searching');
   document.getElementById('hist-search-btn').style.display = 'none';
   document.getElementById('hist-search-pill').classList.add('show');
@@ -55,18 +59,18 @@ function openHistSearch() {
   histSearchQuery = '';
   setTimeout(() => input.focus(), 200);
 }
-function closeHistSearch() {
+export function closeHistSearch() {
   document.getElementById('hist-header-row').classList.remove('searching');
   document.getElementById('hist-search-btn').style.display = '';
   document.getElementById('hist-search-pill').classList.remove('show');
   histSearchQuery = '';
   renderHistory();
 }
-function histSearchInput(query) {
+export function histSearchInput(query) {
   histSearchQuery = query.trim();
   renderHistory();
 }
-function renderHistory(selected) {
+export function renderHistory(selected) {
   destroyCharts();
   const container = document.getElementById('history-container');
   const backBtn = document.getElementById('log-back-btn');
@@ -108,7 +112,6 @@ function renderHistory(selected) {
   const labels = sessions.map(s => s.date.replace(/\w+,\s/, ''));
   const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));
   const totalVol = sessions.reduce((sum, s) => sum + sessionVolume(s.sets), 0);
-  const volPerSession = sessions.map(s => sessionVolume(s.sets));
   const e1rmPerSession = sessions.map(s => sessionBestE1RM(s.sets));
 
   let trendStr = '—', trendColor = 'var(--text3)';
@@ -212,7 +215,7 @@ function renderHistory(selected) {
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   });
 }
-function showFormulaInfo() {
+export function showFormulaInfo() {
   showModal(
     'How session momentum is measured',
     `Each bar shows your estimated one-rep max for that session — the heaviest single set, scaled up using the Epley formula: weight × (1 + reps ÷ 30). This rewards genuine strength gains over just doing more total reps at a lighter weight.`,
@@ -223,7 +226,7 @@ function showFormulaInfo() {
 /* ─── EDIT SESSION SHEET ─── */
 let _editSession = null; // { exKey, date, sets: [...], name, exId }
 
-function openEditSession(exKey, date) {
+export function openEditSession(exKey, date) {
   const hist = getHistory();
   if (!hist[date]) return;
   const i = hist[date].findIndex(e => (e.exId || e.name) === exKey);
@@ -241,7 +244,7 @@ function openEditSession(exKey, date) {
   renderEditSession();
   document.getElementById('edit-session-wrap').classList.add('show');
 }
-function closeEditSession() {
+export function closeEditSession() {
   _editSession = null;
   document.getElementById('edit-session-wrap').classList.remove('show');
 }
@@ -251,13 +254,12 @@ function closeEditSession() {
 function renderEditSessionDate() {
   const el = document.getElementById('edit-session-date');
   if (!el || !_editSession) return;
-  const d = parseSessionDate(_editSession.date);
   const display = _editSession.date.replace(/\w+,\s/, '');
   el.innerHTML = `<span class="edit-session-date-big" id="edit-session-date-display" onclick="editSessionDateEditToggle()">${escHtml(display)}
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
   </span>`;
 }
-function editSessionDateEditToggle() {
+export function editSessionDateEditToggle() {
   if (!_editSession) return;
   const el = document.getElementById('edit-session-date');
   const d = parseSessionDate(_editSession.date);
@@ -293,7 +295,7 @@ function renderEditSession() {
     });
   });
 }
-function saveEditSession() {
+export function saveEditSession() {
   if (!_editSession) return;
   // Flush any in-progress input values (mobile keyboards sometimes lag)
   document.getElementById('edit-session-sets').querySelectorAll('.edit-set-input').forEach(el => {
@@ -339,7 +341,7 @@ function saveEditSession() {
   renderHistory(exerciseStillHasSessions(exKey) ? exKey : undefined);
 }
 
-function deleteSession() {
+export function deleteSession() {
   if (!_editSession) return;
   const exKey = _editSession.exKey;
   const date = _editSession._openedFromDate;
@@ -365,296 +367,4 @@ function exerciseStillHasSessions(exKey) {
   if (!exKey) return false;
   const hist = getHistory();
   return Object.values(hist).some(entries => entries.some(e => (e.exId || e.name) === exKey));
-}
-
-/* ─── VALIDATION ─── */
-document.addEventListener('keydown', e => {
-  if (e.target.type === 'number' && ['e','E','+','-'].includes(e.key)) e.preventDefault();
-});
-
-/* ─── MUSIC ─── */
-const audio = document.getElementById('audio-player');
-let muted = true;
-audio.src = 'mozart-on-meth.mp3';
-audio.volume = 0.5;
-function setMusicIcons(playing) {
-  const playIcon = document.getElementById('play-icon');
-  const pauseIcon = document.getElementById('pause-icon');
-  const eq = document.getElementById('eq-bars');
-  if (playIcon) playIcon.style.display = playing ? 'none' : '';
-  if (pauseIcon) pauseIcon.style.display = playing ? '' : 'none';
-  if (eq) eq.classList.toggle('playing', playing);
-}
-function toggleMute() {
-  if (muted) { audio.play().catch(()=>{}); muted = false; setMusicIcons(true); }
-  else { audio.pause(); muted = true; setMusicIcons(false); }
-}
-function toggleTrackMenu() {
-  const m = document.getElementById('track-menu');
-  m.classList.toggle('show');
-}
-function selectTrack(el) {
-  const wasPlaying = !muted;
-  audio.src = el.dataset.src; audio.load();
-  document.getElementById('track-name').textContent = el.dataset.name;
-  document.getElementById('track-menu').classList.remove('show');
-  if (wasPlaying) audio.play().catch(()=>{});
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('#track-btn') && !e.target.closest('#track-menu')) {
-    document.getElementById('track-menu').classList.remove('show');
-  }
-});
-
-/* ─── CLOCK ─── */
-function switchClockTab(sub, el) {
-  document.querySelectorAll('#tab-clock .clock-subtab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('clock-timer').style.display = sub === 'timer' ? '' : 'none';
-  document.getElementById('clock-stopwatch').style.display = sub === 'stopwatch' ? '' : 'none';
-}
-
-function buildDrum(id) {
-  const drum = document.getElementById(id);
-  if (!drum || drum.querySelector('.drum-inner')) return;
-  const max = parseInt(drum.dataset.max);
-  const inner = document.createElement('div');
-  inner.className = 'drum-inner';
-  for (let i = 0; i <= max; i++) {
-    const item = document.createElement('div');
-    item.className = 'drum-item' + (i === 0 ? ' drum-selected' : '');
-    item.textContent = String(i).padStart(2, '0');
-    inner.appendChild(item);
-  }
-  const ft = document.createElement('div'); ft.className = 'drum-fade-top';
-  const fb = document.createElement('div'); fb.className = 'drum-fade-bot';
-  drum.appendChild(inner); drum.appendChild(ft); drum.appendChild(fb);
-  setDrumValue(drum, 0);
-  initDrumInteraction(drum);
-}
-function setDrumValue(drum, val) {
-  const max = parseInt(drum.dataset.max);
-  val = Math.max(0, Math.min(max, val));
-  drum.dataset.val = val;
-  const inner = drum.querySelector('.drum-inner');
-  inner.style.transform = `translateY(${50 - val * 50}px)`;
-  drum.querySelectorAll('.drum-item').forEach((el, i) => el.classList.toggle('drum-selected', i === val));
-  updateClockCountdown();
-}
-function initDrumInteraction(drum) {
-  let startY = 0, startVal = 0, dragging = false;
-  function onStart(y) { startY = y; startVal = parseInt(drum.dataset.val); dragging = true; }
-  function onMove(y) { if (!dragging) return; const delta = Math.round((startY - y) / 50); setDrumValue(drum, startVal + delta); }
-  function onEnd() { dragging = false; }
-  drum.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, { passive: false });
-  drum.addEventListener('touchmove', e => { e.preventDefault(); onMove(e.touches[0].clientY); }, { passive: false });
-  drum.addEventListener('touchend', onEnd);
-  drum.addEventListener('mousedown', e => { onStart(e.clientY); });
-  document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
-  document.addEventListener('mouseup', onEnd);
-  drum.addEventListener('wheel', e => { e.preventDefault(); const delta = e.deltaY > 0 ? 1 : -1; setDrumValue(drum, parseInt(drum.dataset.val) + delta); }, { passive: false });
-}
-function updateClockCountdown() {
-  const h = parseInt(document.getElementById('drum-h')?.dataset.val || 0);
-  const m = parseInt(document.getElementById('drum-m')?.dataset.val || 0);
-  const s = parseInt(document.getElementById('drum-s')?.dataset.val || 0);
-  const el = document.getElementById('clock-countdown');
-  if (el && !ctRunning) el.textContent = formatClockTime(h * 3600 + m * 60 + s);
-}
-function formatClockTime(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  return h + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-}
-
-let ctInterval = null, ctRemaining = 0, ctRunning = false;
-function clockTimerToggle() {
-  if (!ctRunning) {
-    const h = parseInt(document.getElementById('drum-h').dataset.val);
-    const m = parseInt(document.getElementById('drum-m').dataset.val);
-    const s = parseInt(document.getElementById('drum-s').dataset.val);
-    if (!ctRemaining) ctRemaining = h * 3600 + m * 60 + s;
-    if (!ctRemaining) return;
-    ctRunning = true;
-    document.getElementById('ct-start').textContent = 'Pause';
-    document.getElementById('ct-start').classList.add('running');
-    document.getElementById('clock-drums').style.display = 'none';
-    document.getElementById('clock-countdown').style.display = '';
-    document.getElementById('clock-countdown').textContent = formatClockTime(ctRemaining);
-    ctInterval = setInterval(() => {
-      ctRemaining--;
-      document.getElementById('clock-countdown').textContent = formatClockTime(ctRemaining);
-      if (ctRemaining <= 0) {
-        clearInterval(ctInterval); ctRunning = false; ctRemaining = 0;
-        document.getElementById('ct-start').textContent = 'Start';
-        document.getElementById('ct-start').classList.remove('running');
-        document.getElementById('clock-drums').style.display = 'grid';
-        document.getElementById('clock-countdown').style.display = 'none';
-        updateClockCountdown();
-      }
-    }, 1000);
-  } else {
-    clearInterval(ctInterval); ctRunning = false;
-    document.getElementById('ct-start').textContent = 'Resume';
-    document.getElementById('ct-start').classList.remove('running');
-  }
-}
-function clockTimerReset() {
-  clearInterval(ctInterval); ctRunning = false; ctRemaining = 0;
-  document.getElementById('ct-start').textContent = 'Start';
-  document.getElementById('ct-start').classList.remove('running');
-  document.getElementById('clock-drums').style.display = 'grid';
-  document.getElementById('clock-countdown').style.display = 'none';
-  setDrumValue(document.getElementById('drum-h'), 0);
-  setDrumValue(document.getElementById('drum-m'), 0);
-  setDrumValue(document.getElementById('drum-s'), 0);
-  updateClockCountdown();
-}
-window._clockBuilt = false;
-function ensureClockBuilt() { if (!window._clockBuilt) { buildDrum('drum-h'); buildDrum('drum-m'); buildDrum('drum-s'); window._clockBuilt = true; } }
-
-/* ── Stopwatch ── */
-let swRunning = false, swStart = 0, swElapsed = 0, swInterval = null, swLaps = [], swLastLap = 0;
-function swToggle() {
-  if (!swRunning) {
-    swStart = Date.now() - swElapsed;
-    swRunning = true;
-    document.getElementById('sw-start-btn').textContent = 'Stop';
-    document.getElementById('sw-start-btn').classList.add('running');
-    document.getElementById('sw-lap-btn').disabled = false;
-    document.getElementById('sw-lap-btn').style.display = '';
-    document.getElementById('sw-reset-btn').style.display = 'none';
-    swInterval = setInterval(swTick, 10);
-  } else {
-    clearInterval(swInterval); swRunning = false;
-    document.getElementById('sw-start-btn').textContent = 'Start';
-    document.getElementById('sw-start-btn').classList.remove('running');
-    document.getElementById('sw-lap-btn').disabled = true;
-    document.getElementById('sw-lap-btn').style.display = 'none';
-    document.getElementById('sw-reset-btn').style.display = '';
-  }
-}
-function swTick() {
-  swElapsed = Date.now() - swStart;
-  const total = Math.floor(swElapsed / 10);
-  const cs = total % 100;
-  const s = Math.floor(total / 100) % 60;
-  const m = Math.floor(total / 6000) % 60;
-  const h = Math.floor(total / 360000);
-  document.getElementById('sw-display').textContent = (h ? h + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  const csEl = document.querySelector('.sw-display .cs'); if (csEl) csEl.textContent = '.' + String(cs).padStart(2,'0');
-}
-function formatSw(ms) {
-  const total = Math.floor(ms / 10);
-  const cs = total % 100;
-  const s = Math.floor(total / 100) % 60;
-  const m = Math.floor(total / 6000) % 60;
-  const h = Math.floor(total / 360000);
-  return (h ? h + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0') + '.' + String(cs).padStart(2,'0');
-}
-function swLap() {
-  if (!swRunning) return;
-  const split = swElapsed - swLastLap;
-  swLastLap = swElapsed;
-  swLaps.unshift({ n: swLaps.length + 1, total: swElapsed, split });
-  document.getElementById('sw-laps').innerHTML = swLaps.map(l =>
-    `<div class="sw-lap-row"><span class="sw-lap-num">Lap ${l.n}</span><span class="sw-lap-split">${formatSw(l.split)}</span><span class="sw-lap-time">${formatSw(l.total)}</span></div>`
-  ).join('');
-}
-function swReset() {
-  clearInterval(swInterval);
-  swRunning = false; swStart = 0; swElapsed = 0; swLaps = []; swLastLap = 0;
-  document.getElementById('sw-display').textContent = '00:00';
-  const csEl = document.querySelector('.sw-display .cs'); if (csEl) csEl.textContent = '.00';
-  document.getElementById('sw-laps').innerHTML = '';
-  document.getElementById('sw-start-btn').textContent = 'Start';
-  document.getElementById('sw-start-btn').classList.remove('running');
-  document.getElementById('sw-lap-btn').disabled = true;
-  document.getElementById('sw-lap-btn').style.display = 'none';
-  document.getElementById('sw-reset-btn').style.display = 'none';
-}
-
-/* ─── GREETING ─── */
-const GREET_MESSAGES = [
-  { msg: "You've been putting in the work. Today's no different.", reminder: "Remember to stay hydrated!" },
-  { msg: "Another day, another chance to get better. Let's do it.", reminder: "Don't forget to warm up properly!" },
-  { msg: "You've been doing great. Keep that momentum going today.", reminder: "Make sure you've eaten something before you start!" },
-  { msg: "Take it one set at a time and enjoy it. You've got this.", reminder: "Don't rush your rest!" },
-  { msg: "Today's a great day to feel strong. Go enjoy it.", reminder: "Focus on your form today!" },
-  { msg: "Just remember why you started. Now let's go get it.", reminder: "Get a good stretch in after!" },
-  { msg: "Believe in the process. Today's session is adding up to something.", reminder: "Log everything — progress matters!" },
-  { msg: "Give it everything you've got today — you'll be glad you did.", reminder: "Drink some water before you start!" },
-  { msg: "Have a great one today. You've earned it.", reminder: "Make sure you get enough sleep tonight to recover!" },
-  { msg: "You're doing something most people won't. Remember that.", reminder: "Take a few deep breaths before you start — it helps!" },
-];
-function getGreetMessage() {
-  let order = [];
-  try { order = JSON.parse(localStorage.getItem(KEYS.greetOrder) || '[]'); } catch {}
-  if (!order.length) {
-    order = [...Array(GREET_MESSAGES.length).keys()];
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
-  }
-  const idx = order.shift();
-  localStorage.setItem(KEYS.greetOrder, JSON.stringify(order));
-  return GREET_MESSAGES[idx];
-}
-function maybeShowGreeting() {
-  if (!localStorage.getItem(KEYS.welcomed)) return;
-  const today = new Date().toISOString().slice(0, 10);
-  if (localStorage.getItem(KEYS.greetDate) === today) return;
-  localStorage.setItem(KEYS.greetDate, today);
-  const name = localStorage.getItem(KEYS.name) || '';
-  const day = DAY_NAMES[new Date().getDay()];
-  const dayFull = FULL_DAYS[day];
-  const sched = schedule[day];
-  const { msg } = getGreetMessage();
-  document.getElementById('greeting-day').textContent = name ? `Happy ${dayFull}, ${name}!` : `Happy ${dayFull}!`;
-  if (sched.restDay) {
-    document.getElementById('greeting-workout').textContent = '';
-    document.getElementById('greeting-msg').textContent = "What are you doing here? You should be resting! 😁";
-  } else {
-    const suffix = sched.label.includes('—') ? sched.label.replace(/^.+?—\s*/, '').trim() : '';
-    document.getElementById('greeting-workout').textContent = suffix ? `Today is ${suffix}` : "Today's workout";
-    document.getElementById('greeting-msg').textContent = msg;
-  }
-  document.getElementById('greeting-wrap').classList.add('show');
-}
-function dismissGreeting() { document.getElementById('greeting-wrap').classList.remove('show'); }
-
-/* ─── UPDATE BANNER ─── */
-let _updateAvailable = false;
-function applyUpdate() { document.getElementById('update-banner').classList.remove('show'); _updateAvailable = false; window.location.reload(true); }
-function checkForUpdate() {
-  try {
-    if (_updateAvailable) return;
-    fetch('./app.js?v=' + Date.now(), { cache: 'no-store' })
-      .then(r => r.text())
-      .then(js => {
-        const match = js.match(/APP_VERSION\s*=\s*'(v\d+)'/);
-        if (match && match[1] !== APP_VERSION) {
-          _updateAvailable = true;
-          const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.add('show');
-        }
-      }).catch(() => {});
-  } catch (e) { /* never let update-checking break the app */ }
-}
-try { checkForUpdate(); } catch (e) {}
-setInterval(() => { try { checkForUpdate(); } catch (e) {} }, 5 * 60 * 1000);
-
-/* ─── SERVICE WORKER ─── */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').then(reg => {
-    reg.update();
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) checkForUpdate();
-      });
-    });
-  }).catch(() => {});
 }

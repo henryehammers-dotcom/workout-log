@@ -1,15 +1,30 @@
-const CACHE = 'tallyup-v147';
+const CACHE = 'tallyup-v148';
 const FILES = [
   './index.html',
-  './exercises-data.js',
-  './muscle-group-icons.js',
-  './app.js',
-  './app2.js',
-  './calendar.js',
-  './custom-log.js',
   './manifest.json',
+  './version.json',
   './Tallyup-Icon-192.png',
-  './Tallyup-Icon-512.png'
+  './Tallyup-Icon-512.png',
+  './src/state.js',
+  './src/exercises-data.js',
+  './src/muscle-group-icons.js',
+  './src/theme.js',
+  './src/bodyweight.js',
+  './src/backup.js',
+  './src/modal.js',
+  './src/library.js',
+  './src/calendar.js',
+  './src/schedule-day.js',
+  './src/drag.js',
+  './src/timers.js',
+  './src/history.js',
+  './src/custom-log.js',
+  './src/tabs.js',
+  './src/sidebar.js',
+  './src/clock.js',
+  './src/music.js',
+  './src/greeting.js',
+  './src/main.js'
 ];
 
 // Install: cache all files individually (not addAll) so a single missing/failed

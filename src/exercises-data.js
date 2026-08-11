@@ -17,7 +17,7 @@
 //   dumbbell   — dumbbell-loaded
 //   bodyweight — bodyweight-loaded (adds user bodyweight to volume calcs)
 //   custom     — cardio/duration-based, no set/rep scheme
-const DEFAULT_LIBRARY_V2_BASE = [
+export const DEFAULT_LIBRARY_V2_BASE = [
 
 /* ─────────────────────────────────────────────
    CHEST — Presses
