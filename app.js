@@ -724,10 +724,13 @@ function renderLibGroupsGrid() {
       if (!g) return '';
       const count = DEFAULT_LIBRARY_V2.filter(e => e.group === key).length;
       const active = libActiveGroupKey === key ? ' active' : '';
+      const icon = (typeof MUSCLE_GROUP_ICONS !== 'undefined' && MUSCLE_GROUP_ICONS[key]) || '';
       return `<button class="lib-group-tile${active}" onclick="openLibCategory('${g.key}')">
-        <div class="lib-group-tile-dot"></div>
-        <div class="lib-group-tile-name">${escHtml(g.label)}</div>
-        <div class="lib-group-tile-count">${count} exercises</div>
+        <div class="lib-group-tile-text">
+          <div class="lib-group-tile-name">${escHtml(g.label)}</div>
+          <div class="lib-group-tile-count">${count} exercises</div>
+        </div>
+        <div class="lib-group-tile-icon">${icon}</div>
       </button>`;
     }).join('');
     return `<div class="lib-section-label">${escHtml(sec.label)}</div><div class="lib-group-grid">${tiles}</div>`;
