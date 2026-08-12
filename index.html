@@ -243,8 +243,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    BW chip (used inside sidebar header)
    ────────────────────────────────────────────────────────── */
-.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1.5px solid var(--border2);border-radius:var(--r-pill);background:transparent;cursor:pointer;transition:border-color .15s,background .15s}
-.bw-chip:hover{border-color:var(--border2);background:var(--bg3)}
+.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1.5px solid var(--border2);border-radius:var(--r-pill);background:transparent}
 .bw-chip-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.04em}
 .bw-chip-value{font-size:14px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
 .bw-chip-unit{font-size:11px;color:var(--text3)}
@@ -341,6 +340,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .cal-year-item:hover{color:var(--accent)}
 .cal-year-item:active{opacity:0.7}
 .cal-year-item-chev{color:var(--text3);font-size:16px}
+.cal-year-item-current{color:var(--accent)}
+.cal-year-item-current .cal-year-item-chev{color:var(--accent)}
 
 /* ──────────────────────────────────────────────────────────
    DAY MENU — overflow (···) button + dropdown for day-level actions
@@ -478,9 +479,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .ex-detail-title{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-0.01em;color:var(--text);line-height:1.25;flex:1}
 .ex-detail-gear{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
 .ex-detail-gear:active{transform:scale(0.93)}
-.ex-detail-badges{display:flex;gap:6px;margin-bottom:12px}
+.ex-detail-badges{display:flex;align-items:center;gap:6px;margin-bottom:12px}
 .ex-detail-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
 .ex-detail-badge-neutral{background:var(--accent-dim);color:var(--accent)}
+.ex-instr-speak-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;transition:background .15s,border-color .15s,color .15s}
+.ex-instr-speak-btn:hover{background:var(--bg3)}
+.ex-instr-speak-btn:active{transform:scale(0.92)}
+.ex-instr-speak-btn.speaking{border-color:var(--accent);color:var(--accent)}
 .ex-detail-blurb{font-size:14px;line-height:1.55;color:var(--text2);margin-bottom:16px}
 .ex-detail-stats{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:16px;border-top:1px solid var(--border);padding-top:10px}
 .ex-detail-stats td{padding:6px 0;border-bottom:none}
@@ -840,11 +845,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-title" id="sidebar-title">Tally Up</div>
-    <button class="bw-chip" onclick="closeSidebar();openSettings(false);setTimeout(()=>document.getElementById('settings-bw')?.focus(),100)" title="Edit bodyweight">
+    <div class="bw-chip">
       <span class="bw-chip-label">BW</span>
       <span class="bw-chip-value" id="bw-display">—</span>
       <span class="bw-chip-unit" id="bw-unit-label">lbs</span>
-    </button>
+    </div>
   </div>
   <div class="sidebar-nav">
     <button class="sidebar-nav-item active" id="snav-log" onclick="switchTab('log')"><span class="sidebar-nav-dot"></span>Log</button>
@@ -1403,7 +1408,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
 
-<script type="module" src="src/main.js?v=160"></script>
+<script type="module" src="src/main.js?v=162"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

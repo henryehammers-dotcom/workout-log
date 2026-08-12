@@ -1,4 +1,4 @@
-const CACHE = 'tallyup-v160';
+const CACHE = 'tallyup-v162';
 const FILES = [
   './index.html',
   './manifest.json',
@@ -14,6 +14,7 @@ const FILES = [
   './src/modal.js',
   './src/library.js',
   './src/calendar.js',
+  './src/speech.js',
   './src/schedule-day.js',
   './src/drag.js',
   './src/timers.js',
