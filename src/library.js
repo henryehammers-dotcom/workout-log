@@ -3,7 +3,8 @@
    Landing (muscle groups) → category (exercise cards) → detail popup.
    Also: search, similar-exercises, add-to-day, and the add/edit form.
    ════════════════════════════════════════════ */
-import { DAY_NAMES, FULL_DAYS, MUSCLE_GROUPS_V2, DEFAULT_LIBRARY_V2, saveLibraryV2, genLibV2Id,
+import { DAY_NAMES, FULL_DAYS, MUSCLE_GROUPS_V2, ALL_MUSCLES, MOVEMENT_PATTERNS_BY_GROUP, FIELD_HELP,
+         DEFAULT_LIBRARY_V2, saveLibraryV2, genLibV2Id,
          schedule, saveSchedule, currentDay, getHistory, saveHistory, escAttr, escHtml,
          viewedDate, formatISODate, parseISODate, cloneDate } from './state.js';
 import { MUSCLE_GROUP_ICONS } from './muscle-group-icons.js';
@@ -169,7 +170,7 @@ export function openExerciseDetail(idOrName) {
   const primary = (ex.muscles && ex.muscles.primary) || [];
   const secondary = (ex.muscles && ex.muscles.secondary) || [];
   const worksText = primary.length
-    ? primary.join(', ') + (secondary.length ? ` <span style="color:var(--text3)">+${secondary.length} more</span>` : '')
+    ? primary.join(', ') + (secondary.length ? ` <span class="ex-detail-more-toggle" id="ex-detail-more-toggle" onclick="toggleExDetailSecondary()">+${secondary.length} more</span><span class="ex-detail-secondary" id="ex-detail-secondary" style="display:none">${escHtml(secondary.join(', '))}</span>` : '')
     : '—';
   const equipText = (ex.equipment && ex.equipment.length) ? ex.equipment.join(', ') : '—';
   const setsRepsText = [ex.sets ? ex.sets + ' sets' : '', ex.reps ? ex.reps + ' reps' : ''].filter(Boolean).join(' · ') || '—';
@@ -199,6 +200,14 @@ export function openExerciseDetail(idOrName) {
 }
 export function closeExerciseDetail() {
   document.getElementById('ex-detail-wrap').classList.remove('show');
+}
+export function toggleExDetailSecondary() {
+  const toggle = document.getElementById('ex-detail-more-toggle');
+  const secondary = document.getElementById('ex-detail-secondary');
+  if (!toggle || !secondary) return;
+  const showing = secondary.style.display !== 'none';
+  secondary.style.display = showing ? 'none' : '';
+  toggle.style.display = showing ? '' : 'none';
 }
 export function speakExerciseInstructions() {
   const ex = findLibExById(_libDetailExId);
@@ -435,36 +444,81 @@ export function libFormSyncSubs() {
   const subSel = document.getElementById('lf-sub');
   const subs = groupObj ? groupObj.subs : [];
   subSel.innerHTML = subs.map(s => `<option value="${escAttr(s)}">${escHtml(s)}</option>`).join('');
+  libFormSyncMovementOptions();
+}
+// Rebuilds the Movement Pattern dropdown to only show patterns relevant to the
+// form's currently-selected muscle group (#8). Preserves the current value if
+// it's still valid for the new group; otherwise falls back to the first option.
+function libFormSyncMovementOptions(keepValue) {
+  const groupKey = document.getElementById('lf-group').value;
+  const patterns = MOVEMENT_PATTERNS_BY_GROUP[groupKey] || [];
+  const sel = document.getElementById('lf-movement');
+  const prevValue = keepValue !== undefined ? keepValue : sel.value;
+  sel.innerHTML = patterns.map(p => `<option value="${escAttr(p)}">${escHtml(p)}</option>`).join('');
+  if (prevValue && patterns.includes(prevValue)) sel.value = prevValue;
+}
+// Rebuilds the Secondary Muscles dropdown picker, excluding muscles already
+// added as tags. Disabled (with an explanatory placeholder) once the 3-muscle
+// cap is reached (#7).
+function libFormSyncSecondaryPicker() {
+  const sel = document.getElementById('lf-secondary-picker');
+  const atLimit = _libFormSecondary.length >= 3;
+  if (atLimit) {
+    sel.innerHTML = `<option value="">Limit reached (3 max) — remove one to add another</option>`;
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  const available = ALL_MUSCLES.filter(m => !_libFormSecondary.includes(m));
+  sel.innerHTML = `<option value="">Add a secondary muscle…</option>` +
+    available.map(m => `<option value="${escAttr(m)}">${escHtml(m)}</option>`).join('');
+}
+export function libFormAddSecondaryFromPicker() {
+  const sel = document.getElementById('lf-secondary-picker');
+  const val = sel.value;
+  if (!val || _libFormSecondary.length >= 3) return;
+  _libFormSecondary.push(val);
+  libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
+  libFormSyncSecondaryPicker();
 }
 function libFormRenderTags(containerId, items, removeFn) {
   document.getElementById(containerId).innerHTML = items.map((item, i) =>
     `<span class="lib-tag-pill">${escHtml(item)}<button onclick="${removeFn}(${i})" aria-label="Remove">✕</button></span>`
   ).join('');
 }
-export function libFormRemoveSecondary(i) { _libFormSecondary.splice(i, 1); libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary'); }
-export function libFormRemoveEquipment(i) { _libFormEquipment.splice(i, 1); libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment'); }
+export function libFormRemoveSecondary(i) {
+  _libFormSecondary.splice(i, 1);
+  libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
+  libFormSyncSecondaryPicker();
+}
+export function libFormRemoveEquipment(i) {
+  _libFormEquipment.splice(i, 1);
+  libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
+  const eqInput = document.getElementById('lf-equipment-input');
+  if (eqInput) {
+    eqInput.disabled = false;
+    eqInput.placeholder = 'Type and press enter to add';
+  }
+}
 function libFormWireTagInputs() {
-  const secInput = document.getElementById('lf-secondary-input');
-  secInput.onkeydown = (e) => {
-    if (e.key === 'Enter' && secInput.value.trim()) {
-      e.preventDefault();
-      _libFormSecondary.push(secInput.value.trim());
-      secInput.value = '';
-      libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
-    }
-  };
   const eqInput = document.getElementById('lf-equipment-input');
   eqInput.onkeydown = (e) => {
     if (e.key === 'Enter' && eqInput.value.trim()) {
       e.preventDefault();
+      if (_libFormEquipment.length >= 3) return;
       _libFormEquipment.push(eqInput.value.trim());
       eqInput.value = '';
       libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
+      eqInput.placeholder = _libFormEquipment.length >= 3 ? 'Limit reached (3 max)' : 'Type and press enter to add';
+      eqInput.disabled = _libFormEquipment.length >= 3;
     }
   };
 }
 export function openLibExerciseForm(exId) {
   libFormWireTagInputs();
+  const eqInput = document.getElementById('lf-equipment-input');
+  eqInput.disabled = false;
+  eqInput.placeholder = 'Type and press enter to add';
   if (exId) {
     const ex = findLibExById(exId);
     if (!ex) return;
@@ -475,23 +529,36 @@ export function openLibExerciseForm(exId) {
     libFormSyncSubs();
     if (ex.sub) document.getElementById('lf-sub').value = ex.sub;
     document.getElementById('lf-primary').value = (ex.muscles && ex.muscles.primary && ex.muscles.primary.join(', ')) || '';
-    _libFormSecondary = (ex.muscles && ex.muscles.secondary) ? [...ex.muscles.secondary] : [];
-    _libFormEquipment = ex.equipment ? [...ex.equipment] : [];
-    document.getElementById('lf-movement').value = ex.movementPattern || '';
+    _libFormSecondary = (ex.muscles && ex.muscles.secondary) ? [...ex.muscles.secondary].slice(0, 3) : [];
+    _libFormEquipment = ex.equipment ? [...ex.equipment].slice(0, 3) : [];
+    libFormSyncMovementOptions(ex.movementPattern || '');
     document.getElementById('lf-type').value = ex.exerciseType || 'compound';
     document.getElementById('lf-difficulty').value = ex.difficulty || 'beginner';
     document.getElementById('lf-laterality').value = ex.laterality || 'bilateral';
     document.getElementById('lf-position').value = ex.position || 'standing';
     document.getElementById('lf-sets').value = ex.sets != null ? ex.sets : '';
     document.getElementById('lf-reps').value = ex.reps || '';
-    document.getElementById('lf-rest').value = ex.rest || '';
+    // Split the stored restSecs back into a plain number + unit for the two
+    // fields (#10). Falls back to parsing the legacy free-text `rest` string
+    // if restSecs is somehow missing, then defaults to 60 secs.
+    const restSecsVal = (typeof ex.restSecs === 'number' && ex.restSecs > 0) ? ex.restSecs : null;
+    if (restSecsVal !== null && restSecsVal % 60 === 0 && restSecsVal >= 60) {
+      document.getElementById('lf-rest-value').value = restSecsVal / 60;
+      document.getElementById('lf-rest-unit').value = 'mins';
+    } else if (restSecsVal !== null) {
+      document.getElementById('lf-rest-value').value = restSecsVal;
+      document.getElementById('lf-rest-unit').value = 'secs';
+    } else {
+      document.getElementById('lf-rest-value').value = 60;
+      document.getElementById('lf-rest-unit').value = 'secs';
+    }
     document.getElementById('lf-card').value = ex.card || '';
     document.getElementById('lf-blurb').value = ex.blurb || '';
     document.getElementById('lib-form-btn-row').style.display = '';
   } else {
     _libFormEditingId = null;
     document.getElementById('lib-form-title').textContent = 'New exercise';
-    ['lf-name','lf-primary','lf-movement','lf-sets','lf-reps','lf-rest','lf-card','lf-blurb'].forEach(id => document.getElementById(id).value = '');
+    ['lf-name','lf-primary','lf-sets','lf-reps','lf-card','lf-blurb'].forEach(id => document.getElementById(id).value = '');
     _libFormSecondary = [];
     _libFormEquipment = [];
     libFormPopulateGroupSelect(MUSCLE_GROUPS_V2[0].key);
@@ -500,10 +567,13 @@ export function openLibExerciseForm(exId) {
     document.getElementById('lf-difficulty').value = 'beginner';
     document.getElementById('lf-laterality').value = 'bilateral';
     document.getElementById('lf-position').value = 'standing';
+    document.getElementById('lf-rest-value').value = 60;
+    document.getElementById('lf-rest-unit').value = 'secs';
     document.getElementById('lib-form-btn-row').style.display = 'none';
   }
   libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
   libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
+  libFormSyncSecondaryPicker();
   document.getElementById('lib-form-wrap').classList.add('show');
 }
 export function closeLibExerciseForm() {
@@ -524,17 +594,21 @@ export function saveLibExerciseForm() {
   const setsRaw = document.getElementById('lf-sets').value.trim();
   const sets = setsRaw ? (Math.max(0, parseInt(setsRaw)) || 0) : undefined;
   const reps = document.getElementById('lf-reps').value.trim() || '8-12';
-  const restRaw = document.getElementById('lf-rest').value.trim() || '60 sec';
-  const restSecsMatchMin = restRaw.match(/(\d+)\s*min/);
-  const restSecsMatchSec = restRaw.match(/(\d+)\s*sec/);
-  const restSecs = restSecsMatchMin ? parseInt(restSecsMatchMin[1]) * 60 : (restSecsMatchSec ? parseInt(restSecsMatchSec[1]) : 60);
+  // Rebuild rest/restSecs from the split value+unit fields (#10).
+  const restValueRaw = parseFloat(document.getElementById('lf-rest-value').value);
+  const restValue = (!isNaN(restValueRaw) && restValueRaw >= 0) ? restValueRaw : 60;
+  const restUnit = document.getElementById('lf-rest-unit').value;
+  const restSecs = restUnit === 'mins' ? Math.round(restValue * 60) : Math.round(restValue);
+  const restRaw = restUnit === 'mins'
+    ? `${restValue} min${restValue === 1 ? '' : 's'}`
+    : `${restValue} sec${restValue === 1 ? '' : 's'}`;
   const card = document.getElementById('lf-card').value.trim();
   const blurb = document.getElementById('lf-blurb').value.trim();
   const type = _libFormEquipment.includes('Dumbbell') ? 'dumbbell'
     : _libFormEquipment.includes('Bodyweight') ? 'bodyweight'
     : 'gym';
 
-  const muscles = { primary, secondary: [..._libFormSecondary], stabilizers: [] };
+  const muscles = { primary, secondary: [..._libFormSecondary].slice(0, 3), stabilizers: [] };
 
   if (_libFormEditingId) {
     const ex = findLibExById(_libFormEditingId);
@@ -605,6 +679,21 @@ export function deleteLibExercise() {
   } else {
     showModal('Delete exercise?', `Delete "${ex.name}" from the library? This can't be undone.`, () => { doDelete(); closeModal(); });
   }
+}
+
+/* ─── FIELD HELP POPUP (#5, #9) ─── */
+export function openFieldHelp(fieldKey) {
+  const data = FIELD_HELP[fieldKey];
+  if (!data) return;
+  document.getElementById('field-help-title').textContent = data.title;
+  document.getElementById('field-help-intro').textContent = data.intro;
+  document.getElementById('field-help-options').innerHTML = data.options.map(([name, desc]) =>
+    `<div><div class="field-help-option-name">${escHtml(name)}</div><div class="field-help-option-desc">${escHtml(desc)}</div></div>`
+  ).join('');
+  document.getElementById('field-help-wrap').classList.add('show');
+}
+export function closeFieldHelp() {
+  document.getElementById('field-help-wrap').classList.remove('show');
 }
 
 export function openLibV2ForDay(day) {

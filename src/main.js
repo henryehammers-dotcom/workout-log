@@ -70,6 +70,7 @@ Object.assign(window, {
   closeLibSearch: libraryMod.closeLibSearch,
   libSearchInput: libraryMod.libSearchInput,
   openExerciseDetail: libraryMod.openExerciseDetail,
+  toggleExDetailSecondary: libraryMod.toggleExDetailSecondary,
   openExerciseFromSimilar: libraryMod.openExerciseFromSimilar,
   speakExerciseInstructions: libraryMod.speakExerciseInstructions,
   closeExerciseDetail: libraryMod.closeExerciseDetail,
@@ -85,12 +86,15 @@ Object.assign(window, {
   libSelectRepeat: libraryMod.libSelectRepeat,
   confirmLibAddDay: libraryMod.confirmLibAddDay,
   libFormSyncSubs: libraryMod.libFormSyncSubs,
+  libFormAddSecondaryFromPicker: libraryMod.libFormAddSecondaryFromPicker,
   libFormRemoveSecondary: libraryMod.libFormRemoveSecondary,
   libFormRemoveEquipment: libraryMod.libFormRemoveEquipment,
   openLibExerciseForm: libraryMod.openLibExerciseForm,
   closeLibExerciseForm: libraryMod.closeLibExerciseForm,
   saveLibExerciseForm: libraryMod.saveLibExerciseForm,
   deleteLibExercise: libraryMod.deleteLibExercise,
+  openFieldHelp: libraryMod.openFieldHelp,
+  closeFieldHelp: libraryMod.closeFieldHelp,
   openLibV2ForDay: libraryMod.openLibV2ForDay,
 
   // calendar.js

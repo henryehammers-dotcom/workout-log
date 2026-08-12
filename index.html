@@ -492,6 +492,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .ex-detail-stats td:first-child{color:var(--text3);width:42%}
 .ex-detail-stats td:last-child{text-align:right;color:var(--text)}
 .ex-detail-stats svg{vertical-align:-2px;margin-right:5px}
+.ex-detail-more-toggle{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ex-detail-secondary{color:var(--text3)}
 .ex-detail-btn-row{display:flex;flex-direction:column;gap:8px}
 .ex-detail-btn{width:100%;padding:12px 10px;border-radius:12px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .ex-detail-btn:active{transform:scale(0.98)}
@@ -553,6 +555,19 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .lib-tag-pill{font-size:12px;padding:5px 10px 5px 12px;background:var(--bg3);border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--text)}
 .lib-tag-pill button{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:0;display:flex;font-size:12px}
 .lib-form-btn-row{display:flex;gap:10px;margin-top:6px}
+.lib-field-hint{text-transform:none;font-weight:500;letter-spacing:normal;color:var(--text3);font-size:11px}
+.lib-field-label-row{display:flex;align-items:center;justify-content:space-between;margin:14px 2px 6px}
+.lib-field-label-row .lib-field-label{margin:0}
+.lib-help-btn{width:20px;height:20px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;flex-shrink:0}
+.lib-help-btn:active{transform:scale(0.92)}
+.lib-rest-input-group{display:flex;gap:4px}
+.lib-rest-input-group .lib-form-input{margin-bottom:0}
+.lib-rest-input-group input[type=number]{width:44%;min-width:0}
+.lib-rest-unit{width:56%;min-width:0;padding-left:6px;padding-right:6px}
+.field-help-intro{font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:14px}
+.field-help-options{display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow-y:auto}
+.field-help-option-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.field-help-option-desc{font-size:12.5px;color:var(--text2);line-height:1.45}
 
 /* Scroll-hint chevrons on horizontal filter rows */
 .libv2-scroll-hint{position:absolute;right:0;top:0;bottom:0;width:28px;display:flex;align-items:center;justify-content:flex-end;background:linear-gradient(to right, transparent, var(--bg) 65%);pointer-events:none;color:var(--text3)}
@@ -1091,20 +1106,25 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="lib-field-label">Primary muscle</div>
     <input type="text" class="lib-form-input" id="lf-primary" placeholder="Rear delts">
 
-    <div class="lib-field-label">Secondary muscles</div>
+    <div class="lib-field-label">Secondary muscles <span class="lib-field-hint">(up to 3)</span></div>
     <div class="lib-tag-row" id="lf-secondary-tags"></div>
-    <input type="text" class="lib-form-input" id="lf-secondary-input" placeholder="Type and press enter to add">
+    <select class="lib-form-input" id="lf-secondary-picker" onchange="libFormAddSecondaryFromPicker()">
+      <option value="">Add a secondary muscle…</option>
+    </select>
 
-    <div class="lib-field-label">Equipment</div>
+    <div class="lib-field-label">Equipment <span class="lib-field-hint">(up to 3)</span></div>
     <div class="lib-tag-row" id="lf-equipment-tags"></div>
     <input type="text" class="lib-form-input" id="lf-equipment-input" placeholder="Type and press enter to add">
 
     <div class="lib-field-label">Movement pattern</div>
-    <input type="text" class="lib-form-input" id="lf-movement" placeholder="Horizontal pull">
+    <select class="lib-form-input" id="lf-movement"></select>
 
     <div class="lib-form-row-2">
       <div>
-        <div class="lib-field-label">Type</div>
+        <div class="lib-field-label-row">
+          <div class="lib-field-label">Type</div>
+          <button class="lib-help-btn" type="button" onclick="openFieldHelp('type')" aria-label="What does Type mean?">?</button>
+        </div>
         <select class="lib-form-input" id="lf-type">
           <option value="compound">Compound</option>
           <option value="isolation">Isolation</option>
@@ -1115,7 +1135,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         </select>
       </div>
       <div>
-        <div class="lib-field-label">Difficulty</div>
+        <div class="lib-field-label-row">
+          <div class="lib-field-label">Difficulty</div>
+          <button class="lib-help-btn" type="button" onclick="openFieldHelp('difficulty')" aria-label="What does Difficulty mean?">?</button>
+        </div>
         <select class="lib-form-input" id="lf-difficulty">
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
@@ -1126,7 +1149,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
     <div class="lib-form-row-2">
       <div>
-        <div class="lib-field-label">Laterality</div>
+        <div class="lib-field-label-row">
+          <div class="lib-field-label">Laterality</div>
+          <button class="lib-help-btn" type="button" onclick="openFieldHelp('laterality')" aria-label="What does Laterality mean?">?</button>
+        </div>
         <select class="lib-form-input" id="lf-laterality">
           <option value="bilateral">Bilateral</option>
           <option value="unilateral">Unilateral</option>
@@ -1146,11 +1172,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       </div>
     </div>
 
-    <div class="lib-field-label">Sets · Reps · Rest</div>
+    <div class="lib-field-label-row">
+      <div class="lib-field-label">Sets · Reps · Rest</div>
+      <button class="lib-help-btn" type="button" onclick="openFieldHelp('setsRepsRest')" aria-label="What do these mean?">?</button>
+    </div>
     <div class="lib-form-row-3">
       <input type="text" class="lib-form-input" id="lf-sets" placeholder="3">
       <input type="text" class="lib-form-input" id="lf-reps" placeholder="8-12">
-      <input type="text" class="lib-form-input" id="lf-rest" placeholder="60 sec">
+      <div class="lib-rest-input-group">
+        <input type="number" min="0" class="lib-form-input" id="lf-rest-value" placeholder="60">
+        <select class="lib-form-input lib-rest-unit" id="lf-rest-unit">
+          <option value="secs">secs</option>
+          <option value="mins">min(s)</option>
+        </select>
+      </div>
     </div>
 
     <div class="lib-field-label">Card description</div>
@@ -1163,6 +1198,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <button class="ex-detail-btn" id="lf-delete-btn" style="color:var(--red);border-color:var(--red-border)" onclick="deleteLibExercise()">Delete</button>
       <button class="ex-detail-btn ex-detail-btn-primary" onclick="saveLibExerciseForm()">Save</button>
     </div>
+  </div>
+</div>
+
+<!-- ── Field help popup (Type/Difficulty/Laterality/Position/Sets·Reps·Rest) ── -->
+<div class="ex-detail-wrap" id="field-help-wrap" onclick="if(event.target===this) closeFieldHelp()">
+  <div class="ex-detail-card">
+    <div class="ex-detail-top-row">
+      <div class="ex-detail-title" style="font-size:16px" id="field-help-title"></div>
+      <button class="lib-back-btn" onclick="closeFieldHelp()" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="field-help-intro" id="field-help-intro"></div>
+    <div class="field-help-options" id="field-help-options"></div>
   </div>
 </div>
 

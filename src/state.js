@@ -59,6 +59,82 @@ export const MUSCLE_GROUPS_V2 = [
   { key:'cardio',    label:'Cardio',    color:'gray',   subs:['Running','Walking','Cycling','Rowing','Other'] },
 ];
 
+// Every muscle name used anywhere in muscles.primary/secondary/stabilizers across
+// the library, alphabetized. Powers the Secondary Muscles dropdown picker in the
+// edit/new exercise form (#7). Kept as a flat list rather than per-group since a
+// handful of muscles (e.g. Core, Forearms) are legitimately relevant across
+// multiple groups as secondary/stabilizer muscles.
+export const ALL_MUSCLES = [
+  'Adductors', 'Arms', 'Back', 'Biceps', 'Brachialis', 'Brachioradialis', 'Calves',
+  'Cardiovascular system', 'Chest', 'Core', 'Forearms', 'Front delts', 'Full body',
+  'Glutes', 'Hamstrings', 'Hand muscles', 'Hip flexors', 'Lats', 'Legs', 'Lower abs',
+  'Obliques', 'Quads', 'Rear delts', 'Rotator cuff', 'Serratus anterior', 'Shoulders',
+  'Side delts', 'Spinal erectors', 'Teres major', 'Tibialis anterior', 'Traps',
+  'Triceps', 'Upper abs', 'Upper back', 'Upper chest', 'Upper traps', 'Wrist extensors',
+  'Wrist flexors',
+];
+
+// Movement patterns actually used within each muscle group, derived from the
+// existing exercise data. Powers the Movement Pattern dropdown in the edit/new
+// exercise form (#8), filtered by the form's currently-selected muscle group.
+export const MOVEMENT_PATTERNS_BY_GROUP = {
+  chest:     ['Horizontal push', 'Diagonal push', 'Horizontal adduction', 'Diagonal adduction'],
+  back:      ['Vertical pull', 'Horizontal pull', 'Shoulder extension', 'Scapular elevation'],
+  shoulders: ['Vertical push', 'Shoulder flexion', 'Shoulder abduction', 'Horizontal abduction'],
+  arms:      ['Elbow flexion', 'Elbow extension', 'Horizontal push', 'Vertical push', 'Flexion', 'Extension', 'Carry'],
+  legs:      ['Squat', 'Lunge', 'Hip hinge', 'Hip extension', 'Extension', 'Flexion', 'Abduction', 'Step'],
+  core:      ['Flexion', 'Rotation', 'Anti-rotation'],
+  fullbody:  ['Squat', 'Hip hinge', 'Olympic pull', 'Vertical push', 'Carry'],
+  cardio:    ['Cardio'],
+};
+
+/* ═══════════════════════════════════════════════════════════
+   FORM FIELD HELP TEXT — powers the "?" popups in the add/edit
+   exercise form (Type, Difficulty, Laterality, Position, and the
+   Sets/Reps/Rest section).
+   ═══════════════════════════════════════════════════════════ */
+export const FIELD_HELP = {
+  type: {
+    title: 'Type',
+    intro: 'What kind of movement this is, mechanically.',
+    options: [
+      ['Compound', 'Works multiple joints and muscle groups at once (e.g. a squat or bench press). Usually the priority for building overall strength and size.'],
+      ['Isolation', 'Works one joint and one main muscle (e.g. a bicep curl). Good for targeting a specific muscle after compound work.'],
+      ['Isometric', 'The muscle holds tension without the joint moving (e.g. a plank). Builds stability and endurance rather than moving through a range of motion.'],
+      ['Carry', 'Loaded walking (e.g. a farmer\u2019s carry). Builds grip, core stability, and total-body tension under load.'],
+      ['Conditioning', 'High-effort, fatigue-driven work meant to raise heart rate and challenge work capacity, more than build max strength.'],
+      ['Cardio', 'Sustained aerobic activity (e.g. running, cycling) aimed at heart and lung endurance rather than muscle loading.'],
+    ],
+  },
+  difficulty: {
+    title: 'Difficulty',
+    intro: 'How much technique, stability, or strength the movement demands before it\u2019s safe and effective.',
+    options: [
+      ['Beginner', 'Straightforward to learn, forgiving of imperfect form, low injury risk. Good starting point for someone new to the movement.'],
+      ['Intermediate', 'Requires some technique or stability built up from beginner movements. A natural next step once the basics feel easy.'],
+      ['Advanced', 'Demands more coordination, mobility, or strength to perform safely \u2014 usually best attempted once the intermediate version is comfortable.'],
+    ],
+  },
+  laterality: {
+    title: 'Laterality',
+    intro: 'Whether both sides of the body work together or independently.',
+    options: [
+      ['Bilateral', 'Both limbs move together and share the load (e.g. a barbell squat). Generally allows more total weight.'],
+      ['Unilateral', 'One limb (or side) works at a time (e.g. a single-arm row). Helps fix side-to-side imbalances and challenges stability more.'],
+    ],
+  },
+  setsRepsRest: {
+    title: 'Sets, Reps & Rest',
+    intro: 'These three work together to determine what kind of adaptation you\u2019re training for.',
+    options: [
+      ['Strength (heavy, low reps)', 'Roughly 1\u20135 reps, 3\u20135+ min rest. Trains your nervous system to produce maximal force. Best on compound lifts.'],
+      ['Hypertrophy (muscle growth)', 'Roughly 6\u201312 reps, 60\u201390 sec rest. The classic muscle-building range \u2014 enough load to challenge the muscle, enough volume to accumulate fatigue.'],
+      ['Endurance (light, high reps)', 'Roughly 12\u201320+ reps, 30\u201360 sec rest. Builds muscular stamina and work capacity more than raw size or strength.'],
+      ['How to know when to increase weight', 'If, for two sessions in a row, you finish all sets at the top of your rep range and still feel like you can do 1-2 more, go up in weight. Increase in small increments at a time.'],
+    ],
+  },
+};
+
 // Live, mutable working copy of the library — this is what the rest of the app
 // reads from and writes to. Starts as a fresh copy of the hardcoded defaults,
 // then any saved edits/additions are merged on top at load time.

@@ -30,7 +30,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Chest"], secondary: ["Front delts", "Triceps"], stabilizers: ["Rotator cuff"] },
   equipment: ["Barbell", "Bench"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "intermediate",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "beginner",
   card: "A barbell press performed while lying on a flat bench.",
   blurb: "Lie on a flat bench and press a loaded barbell up from your chest until your arms are straight, then lower it back down under control. It's one of the most common ways to build chest strength and size, and it also works your shoulders and triceps. Keep your feet planted and shoulder blades pulled back for a stable base.",
   reps: "6-10", rest: "2 min", restSecs: 120, type: "gym", sets: 3
@@ -54,7 +54,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Chest"], secondary: ["Triceps", "Front delts"], stabilizers: ["Rotator cuff"] },
   equipment: ["Barbell", "Decline bench"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "intermediate",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "advanced",
   card: "A barbell press performed on a declined bench.",
   blurb: "This is a bench press done on a bench tilted the opposite way, with your head lower than your feet. It shifts emphasis toward the lower chest and can feel more natural on your shoulders for some people. Make sure the bench has foot supports so you don't slide around.",
   reps: "8-10", rest: "2 min", restSecs: 120, type: "gym", sets: 3
@@ -78,7 +78,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Upper chest"], secondary: ["Front delts", "Triceps"], stabilizers: ["Rotator cuff"] },
   equipment: ["Dumbbell", "Incline bench"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "beginner",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "intermediate",
   card: "A dumbbell press performed on an incline to emphasize the upper chest.",
   blurb: "An incline press done with dumbbells instead of a barbell, which lets your arms move through a slightly more natural path. Like other incline presses, it shifts more of the work to your upper chest. Go a little lighter than you would on the barbell version until you're used to balancing two independent weights.",
   reps: "8-12", rest: "90 sec", restSecs: 90, type: "dumbbell", sets: 3
@@ -90,7 +90,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Chest"], secondary: ["Triceps", "Front delts"], stabilizers: ["Rotator cuff"] },
   equipment: ["Dumbbell", "Decline bench"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "beginner",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "advanced",
   card: "A dumbbell chest press performed on a declined bench.",
   blurb: "A dumbbell version of the decline bench press, performed on a bench angled with your head below your feet. It targets the lower chest while letting each arm move independently. Start light since stabilizing two dumbbells upside-down takes some getting used to.",
   reps: "8-12", rest: "90 sec", restSecs: 90, type: "dumbbell", sets: 3
@@ -114,7 +114,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Chest"], secondary: ["Triceps", "Front delts"], stabilizers: [] },
   equipment: ["Barbell"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "intermediate",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "beginner",
   card: "A barbell press from the floor that limits the bottom portion of the movement.",
   blurb: "Same idea as the dumbbell floor press, but with a barbell instead. The floor stops your elbows before your shoulders are under strain, which makes this a good option if you have shoulder issues with a full-range bench press. It's also handy for practicing lockout strength.",
   reps: "6-10", rest: "2 min", restSecs: 120, type: "gym", sets: 3
@@ -122,7 +122,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
 {
   id: "g39x4",
   name: "Close-Grip Bench Press",
-  group: "chest", sub: "Presses",
+  group: "arms", sub: "Triceps",
   muscles: { primary: ["Triceps"], secondary: ["Chest", "Front delts"], stabilizers: ["Rotator cuff"] },
   equipment: ["Barbell", "Bench"],
   movementPattern: "Horizontal push",
@@ -150,7 +150,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Upper chest"], secondary: ["Front delts", "Triceps"], stabilizers: [] },
   equipment: ["Smith machine", "Incline bench"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "beginner",
+  exerciseType: "compound", laterality: "bilateral", position: "supine", difficulty: "intermediate",
   card: "An incline chest press performed with the guided bar of a Smith machine.",
   blurb: "An incline press using the guided bar of a Smith machine rather than a free barbell. You get the upper-chest emphasis of an incline press with the added stability of a fixed bar path. A good choice if you want to push closer to failure safely.",
   reps: "8-12", rest: "90 sec", restSecs: 90, type: "gym", sets: 3
@@ -174,7 +174,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
   muscles: { primary: ["Upper chest"], secondary: ["Front delts", "Triceps"], stabilizers: [] },
   equipment: ["Machine"],
   movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "seated", difficulty: "beginner",
+  exerciseType: "compound", laterality: "bilateral", position: "seated", difficulty: "intermediate",
   card: "A machine chest press performed on an incline.",
   blurb: "Basically the same as the machine chest press, but the handles and seat are angled to emphasize your upper chest. It offers the same guided, easy-to-learn movement as the flat version. A solid option when the incline bench and dumbbells are taken.",
   reps: "8-12", rest: "90 sec", restSecs: 90, type: "gym", sets: 3
@@ -310,18 +310,6 @@ export const DEFAULT_LIBRARY_V2_BASE = [
    ───────────────────────────────────────────── */
 
 {
-  id: "96te4",
-  name: "Push-Up",
-  group: "chest", sub: "Bodyweight",
-  muscles: { primary: ["Chest"], secondary: ["Triceps", "Front delts", "Core"], stabilizers: ["Core"] },
-  equipment: ["Bodyweight"],
-  movementPattern: "Horizontal push",
-  exerciseType: "compound", laterality: "bilateral", position: "kneeling", difficulty: "beginner",
-  card: "A bodyweight horizontal press performed from a plank position.",
-  blurb: "The classic bodyweight chest exercise: hands on the floor, body straight, lower yourself down and push back up. It trains your chest, shoulders, and triceps together, plus your core has to work to keep your body in a straight line. No equipment needed, which makes it easy to do almost anywhere.",
-  reps: "12-20", rest: "60 sec", restSecs: 60, type: "bodyweight", sets: 3
-},
-{
   id: "5oswz",
   name: "Wide Push-Up",
   group: "chest", sub: "Bodyweight",
@@ -336,7 +324,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
 {
   id: "32c3x",
   name: "Close-Grip Push-Up",
-  group: "chest", sub: "Bodyweight",
+  group: "arms", sub: "Triceps",
   muscles: { primary: ["Triceps"], secondary: ["Chest", "Front delts"], stabilizers: ["Core"] },
   equipment: ["Bodyweight"],
   movementPattern: "Horizontal push",
@@ -3084,7 +3072,7 @@ export const DEFAULT_LIBRARY_V2_BASE = [
 },
 {
   id: "l2q0i", // kept — logged history (4 sets, as "Push Ups"), custom user exercise
-  name: "Push Ups",
+  name: "Push-Up",
   group: "chest", sub: "Bodyweight",
   muscles: { primary: ["Chest"], secondary: ["Triceps", "Front delts", "Core"], stabilizers: ["Core"] },
   equipment: ["Bodyweight"],
