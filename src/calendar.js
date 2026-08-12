@@ -460,12 +460,15 @@ function trendArrowSvg(dir) {
 /* ─── YEAR VIEW ─── */
 function renderYearView() {
   const year = viewedDate.getFullYear();
+  const now = new Date();
+  const isCurrentYear = year === now.getFullYear();
+  const currentMonthIdx = now.getMonth();
   return `
     <div class="cal-card-header">
       <div class="cal-title">${year}</div>
     </div>
     <div class="cal-year-list">
-      ${MONTH_NAMES.map((m,i) => `<button class="cal-year-item" onclick="jumpToMonth(${i},${year})"><span>${m}</span><span class="cal-year-item-chev">›</span></button>`).join('')}
+      ${MONTH_NAMES.map((m,i) => `<button class="cal-year-item${isCurrentYear && i === currentMonthIdx ? ' cal-year-item-current' : ''}" onclick="jumpToMonth(${i},${year})"><span>${m}</span><span class="cal-year-item-chev">›</span></button>`).join('')}
     </div>`;
 }
 
