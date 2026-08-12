@@ -232,10 +232,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .settings-trigger-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .settings-trigger-btn:hover{background:var(--bg3);border-color:var(--border2)}
 .settings-trigger-btn:active{transform:scale(0.96)}
-.composer-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.composer-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.composer-pills{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.composer-pill{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-radius:14px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s,color .15s;width:100%}
 .composer-pill:hover{background:var(--bg3)}
-.composer-pill:active{transform:scale(0.96)}
+.composer-pill:active{transform:scale(0.98)}
 .composer-pill.active{border-color:var(--accent);color:var(--text)}
 .composer-pill .eq-bars{display:none}
 .composer-pill.active .eq-bars{display:flex}
@@ -855,20 +855,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
   <!-- ── Composer playlist pills ── -->
   <div class="composer-pills" id="composer-pills">
-    <button class="composer-pill" id="pill-bach" onclick="selectPlaylist('bach')">
-      <span>Bach</span>
-      <span class="eq-bars" id="eq-bach"><span></span><span></span><span></span></span>
-    </button>
     <button class="composer-pill" id="pill-beethoven" onclick="selectPlaylist('beethoven')">
-      <span>Beethoven</span>
+      <span>LV Beethoven</span>
       <span class="eq-bars" id="eq-beethoven"><span></span><span></span><span></span></span>
     </button>
     <button class="composer-pill" id="pill-mozart" onclick="selectPlaylist('mozart')">
-      <span>Mozart</span>
+      <span>WA Mozart</span>
       <span class="eq-bars" id="eq-mozart"><span></span><span></span><span></span></span>
     </button>
+    <button class="composer-pill" id="pill-bach" onclick="selectPlaylist('bach')">
+      <span>JS Bach</span>
+      <span class="eq-bars" id="eq-bach"><span></span><span></span><span></span></span>
+    </button>
     <button class="composer-pill" id="pill-tchaikovsky" onclick="selectPlaylist('tchaikovsky')">
-      <span>Tchaikovsky</span>
+      <span>PI Tchaikovsky</span>
       <span class="eq-bars" id="eq-tchaikovsky"><span></span><span></span><span></span></span>
     </button>
   </div>
@@ -1403,7 +1403,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
 
-<script type="module" src="src/main.js?v=159"></script>
+<script type="module" src="src/main.js?v=160"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
