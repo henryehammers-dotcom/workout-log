@@ -614,7 +614,7 @@ export function saveLibExerciseForm() {
     const ex = findLibExById(_libFormEditingId);
     if (ex) {
       const oldName = ex.name;
-      Object.assign(ex, { name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type });
+      Object.assign(ex, { name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type, _userEdited: true });
       if (sets !== undefined) ex.sets = sets;
       if (oldName !== name) {
         let schedTouched = false;
@@ -633,7 +633,7 @@ export function saveLibExerciseForm() {
       }
     }
   } else {
-    const newEx = { id: genLibV2Id(), name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type };
+    const newEx = { id: genLibV2Id(), name, group, sub, muscles, equipment: [..._libFormEquipment], movementPattern, exerciseType, laterality, position, difficulty, card, blurb, reps, rest: restRaw, restSecs, type, _userEdited: true };
     if (sets !== undefined) newEx.sets = sets;
     DEFAULT_LIBRARY_V2.push(newEx);
   }

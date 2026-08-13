@@ -153,6 +153,46 @@ export function saveLibraryV2() {
     localStorage.setItem(KEYS.libraryV2, JSON.stringify(payload));
   } catch {}
 }
+// Merges a saved (localStorage) library with the current base file, exercise
+// by exercise, rather than letting the saved copy blindly win everywhere.
+// Without this, any code update to exercises-data.js (bug fixes, recategorized
+// exercises, new difficulty ratings, etc.) would be silently invisible to any
+// user who has ever saved so much as one edit through the in-app form — the
+// saved snapshot would shadow the entire base file forever, not just the
+// exercises actually edited.
+//
+// Relies on an explicit `_userEdited: true` flag stamped onto an exercise by
+// saveLibExerciseForm() at the moment the user actually saves it through the
+// form — a plain diff against the current base file doesn't work here, since
+// a code fix to the base file changes its contents *by definition*, making
+// "differs from current base" indistinguishable from "user edited it".
+//
+// Rule per exercise ID:
+//  - Flagged _userEdited in saved data → user customized it, keep their
+//    saved version untouched.
+//  - Not flagged, but exists in the base file → user never touched it
+//    (just carried along in the saved blob), take the current base file
+//    version so bug fixes/updates always reach it.
+//  - Exists only in saved data with no base-file counterpart → a user-created
+//    exercise with no _userEdited flag from before this flag existed; keep it
+//    regardless, since there's nothing to refresh it from.
+//  - Exists only in the base file (added since the user's last save) →
+//    include it.
+function mergeLibraryWithBase(savedExercises) {
+  const baseById = new Map(DEFAULT_LIBRARY_V2_BASE.map(e => [e.id, e]));
+  const seenIds = new Set();
+  const merged = savedExercises.map(savedEx => {
+    seenIds.add(savedEx.id);
+    const baseEx = baseById.get(savedEx.id);
+    if (!baseEx) return savedEx; // user-created, no base counterpart
+    if (savedEx._userEdited) return savedEx; // explicitly customized, keep it
+    return baseEx; // untouched, refresh from the current base file
+  });
+  DEFAULT_LIBRARY_V2_BASE.forEach(baseEx => {
+    if (!seenIds.has(baseEx.id)) merged.push(baseEx); // new since user's last save
+  });
+  return merged;
+}
 export function loadLibraryV2() {
   try {
     const saved = localStorage.getItem(KEYS.libraryV2);
@@ -163,7 +203,8 @@ export function loadLibraryV2() {
     // directly — no guessing from shape.
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Array.isArray(parsed.exercises)) {
       if (parsed.schemaVersion === LIBRARY_SCHEMA_VERSION) {
-        DEFAULT_LIBRARY_V2 = parsed.exercises;
+        DEFAULT_LIBRARY_V2 = mergeLibraryWithBase(parsed.exercises);
+        saveLibraryV2(); // persist the merged result so the next load is already up to date
       }
       // A schemaVersion that doesn't match means this save predates a
       // breaking shape change — fall back to the fresh defaults rather than
@@ -178,7 +219,7 @@ export function loadLibraryV2() {
     // user going forward.
     const looksModern = Array.isArray(parsed) && parsed.length > 150 && parsed.every(e => e && typeof e.blurb === 'string');
     if (looksModern) {
-      DEFAULT_LIBRARY_V2 = parsed;
+      DEFAULT_LIBRARY_V2 = mergeLibraryWithBase(parsed);
       saveLibraryV2();
     }
   } catch {}
