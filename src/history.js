@@ -73,15 +73,13 @@ export function histSearchInput(query) {
 export function renderHistory(selected) {
   destroyCharts();
   const container = document.getElementById('history-container');
-  const backBtn = document.getElementById('log-back-btn');
   let hist, index;
   try { hist = getHistory(); index = getExerciseIndex(hist); }
-  catch { container.innerHTML = '<div class="empty">Could not load history.</div>'; if (backBtn) backBtn.classList.remove('show'); return; }
+  catch { container.innerHTML = '<div class="empty">Could not load history.</div>'; return; }
   const exercises = Object.keys(index);
-  if (!exercises.length) { container.innerHTML = '<div class="empty">No history yet. Log a workout to see it here.</div>'; if (backBtn) backBtn.classList.remove('show'); return; }
+  if (!exercises.length) { container.innerHTML = '<div class="empty">No history yet. Log a workout to see it here.</div>'; return; }
 
   if (!selected) {
-    if (backBtn) backBtn.classList.remove('show');
     let list = getHistoryDisplayNames(index);
     if (typeof histSearchQuery !== 'undefined' && histSearchQuery) {
       const q = histSearchQuery.toLowerCase();
@@ -107,7 +105,6 @@ export function renderHistory(selected) {
   }
 
   const entry = index[selected]; if (!entry) { renderHistory(); return; }
-  if (backBtn) backBtn.classList.add('show');
   const sessions = entry.sessions;
   const labels = sessions.map(s => s.date.replace(/\w+,\s/, ''));
   const best = Math.max(...sessions.flatMap(s => s.sets.map(x => Number(x.weight)||0)));

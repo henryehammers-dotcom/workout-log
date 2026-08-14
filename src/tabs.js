@@ -28,14 +28,15 @@ export function switchTab(tab) {
     setCustomLogPicking(false);
   }
   ['log','history','library','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none'; });
+  // Global "back to day log" button: visible from anywhere except the log tab itself.
+  document.getElementById('log-back-btn')?.classList.toggle('show', tab !== 'log');
   if (tab === 'history') renderHistory();
   else if (tab === 'library') {
     renderLibV2();
-    document.getElementById('log-back-btn')?.classList.remove('show');
     requestAnimationFrame(() => renderLibV2()); // safety re-render once tab is actually visible
   }
-  else if (tab === 'clock') { ensureClockBuilt(); document.getElementById('log-back-btn')?.classList.remove('show'); }
-  else { destroyCharts(); renderDayContent(); document.getElementById('log-back-btn')?.classList.remove('show'); requestAnimationFrame(() => renderDayContent()); }
+  else if (tab === 'clock') { ensureClockBuilt(); }
+  else { destroyCharts(); renderDayContent(); requestAnimationFrame(() => renderDayContent()); }
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
   closeSidebar();
 }
@@ -43,6 +44,7 @@ export function openExerciseHistory(key) {
   document.querySelectorAll('.sidebar-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('snav-history').classList.add('active');
   ['log','history','clock'].forEach(t => { document.getElementById('tab-' + t).style.display = t === 'history' ? '' : 'none'; });
+  document.getElementById('log-back-btn')?.classList.add('show');
   renderHistory(key);
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
 }

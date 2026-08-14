@@ -25,6 +25,15 @@ export function loadAppVersion() {
 
 /* ─── UNITS ─── */
 export function setUnits(u) {
+  if (u === currentUnits) return;
+  // Convert the stored bodyweight number itself, not just its display label —
+  // otherwise "180" silently relabels from lbs to kg (a ~2.2x real-world jump)
+  // and throws off any bodyweight-exercise volume math downstream.
+  const bw = getCleanBw();
+  if (bw != null) {
+    const converted = u === 'kg' ? bw / 2.20462 : bw * 2.20462;
+    localStorage.setItem(KEYS.bw, Math.round(converted * 10) / 10);
+  }
   setCurrentUnits(u);
   localStorage.setItem(KEYS.units, u);
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === u));

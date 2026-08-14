@@ -9,6 +9,7 @@ import { flushInputs, resolveScheduledExercise, getSetData, registerCalendarRend
 import { destroyCharts, getExerciseIndex, sessionBestE1RM, parseSessionDate } from './history.js';
 import { timerKeyFor, startTimer } from './timers.js';
 import { initDrag } from './drag.js';
+import { openCustomLog } from './custom-log.js';
 
 /* ─── STATE ─── */
 export let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
@@ -45,6 +46,10 @@ export function calendarNav(dir) {
   else if (calendarView === 'month') setViewedDate(addMonths(viewedDate, dir));
   renderCalendarRoot();
 }
+export function openCustomLogForViewedDate() {
+  openCustomLog(formatISODate(viewedDate));
+}
+
 export function jumpToDate(date) {
   flushInputs();
   setViewedDate(cloneDate(date));
@@ -184,7 +189,7 @@ function renderDayView() {
       <button class="day-menu-btn cal-day-menu-btn" id="day-menu-btn" onclick="toggleDayMenu()" aria-label="Day options">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
-      <button class="cal-custom-log-btn" onclick="openCustomLog(formatISODate(viewedDate))" aria-label="Custom log">
+      <button class="cal-custom-log-btn" onclick="openCustomLogForViewedDate()" aria-label="Custom log">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="day-menu-dropdown" id="day-menu-dropdown">
@@ -255,7 +260,6 @@ function renderDayView() {
             <span class="set-num">${setNumber}</span>
             <input class="set-input" type="number" min="0" placeholder="Reps" value="${escAttr(s.reps)}" data-day="${dn}" data-ex="${i}" data-si="${si}" data-reps="1" ${data.logged?'disabled':''}>
             <input class="set-input" type="number" min="0" placeholder="Weight" value="${escAttr(s.weight)}" data-day="${dn}" data-ex="${i}" data-si="${si}" data-weight="1" ${data.logged?'disabled':''}>
-            <button class="del-set" onclick="clearSet('${dn}',${i},${si})" ${data.logged?'disabled':''} aria-label="Clear">✕</button>
           </div>`).join('');
 
         const timerKey = timerKeyFor(dn, i, formatISODate(date));
@@ -285,7 +289,6 @@ function renderDayView() {
               <span class="sets-thead-cell center">Set</span>
               <span class="sets-thead-cell center">Reps</span>
               <span class="sets-thead-cell center">Weight (${u})</span>
-              <span></span>
             </div>
             ${rows}
           </div>

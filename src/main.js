@@ -101,6 +101,7 @@ Object.assign(window, {
   switchCalendarView: calendarMod.switchCalendarView,
   calendarNav: calendarMod.calendarNav,
   jumpToDate: calendarMod.jumpToDate,
+  openCustomLogForViewedDate: calendarMod.openCustomLogForViewedDate,
   jumpToMonth: calendarMod.jumpToMonth,
   setMonthViewMode: calendarMod.setMonthViewMode,
   logExerciseOnDate: calendarMod.logExerciseOnDate,
@@ -173,6 +174,38 @@ Object.assign(window, {
    on startup if a newer version is available. Guards against reload loops
    (e.g. if version.json is somehow permanently ahead) using a per-tab flag
    in sessionStorage — reload happens at most once per browser tab/session. */
+// A plain reload() only re-fetches index.html — the service worker is
+// cache-first for every other file, so old JS modules (library.js, etc.)
+// can keep being served indefinitely even after version.json changes and
+// the app "thinks" it's current. This forces the browser-level cache
+// storage to clear and the newest service worker to take over first.
+function forceFreshReload() {
+  const doReload = () => window.location.reload();
+  try {
+    if ('caches' in window) {
+      caches.keys()
+        .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .then(() => {
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.getRegistration().then(reg => {
+              if (reg && reg.waiting) {
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true });
+                setTimeout(doReload, 1500); // fallback if controllerchange never fires
+              } else {
+                doReload();
+              }
+            }).catch(doReload);
+          } else {
+            doReload();
+          }
+        }).catch(doReload);
+    } else {
+      doReload();
+    }
+  } catch (e) { doReload(); }
+}
+
 function checkForUpdate() {
   try {
     fetch('./version.json?v=' + Date.now(), { cache: 'no-store' })
@@ -187,7 +220,7 @@ function checkForUpdate() {
           try { alreadyReloadedForThisVersion = sessionStorage.getItem('wl_update_reloaded') === data.version; } catch {}
           if (alreadyReloadedForThisVersion) return; // avoid a reload loop if something's stuck
           try { sessionStorage.setItem('wl_update_reloaded', data.version); } catch {}
-          window.location.reload(true);
+          forceFreshReload();
         });
       }).catch(() => {});
   } catch (e) { /* never let update-checking break the app */ }
