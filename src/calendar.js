@@ -206,7 +206,7 @@ function renderDayView() {
   const hasCustomOnRestDay = day.restDay && customEntries.length > 0;
 
   if (day.restDay && !hasCustomOnRestDay) {
-    return top + actionsRow + `<div class="rest-screen"><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
+    return top + actionsRow + `<div class="rest-screen"><div class="rest-zzz-wrap"><span>z</span><span>Z</span><span>Z</span></div><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
   }
 
   if (day.restDay && hasCustomOnRestDay) {
