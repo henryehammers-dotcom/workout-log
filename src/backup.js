@@ -92,12 +92,24 @@ export function saveFile() {
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  // Build the filename stamp from LOCAL date/time parts, not toISOString()
+  // (which is UTC and can roll over to the next calendar day depending on
+  // timezone/time of day — e.g. 9:37 PM Eastern is already 1:37 AM UTC).
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate())
+    + '-' + pad(now.getHours()) + '-' + pad(now.getMinutes());
   a.download = 'tallyup-backup-' + stamp + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  // Record the timestamp and refresh the ticker BEFORE triggering the
+  // download click, not after. On mobile (especially iOS Safari in an
+  // installed PWA), a.click() on a download link can hand off to an OS-level
+  // save/share sheet that suspends the page's JS — so anything placed after
+  // the click isn't guaranteed to run promptly, or at all, even though the
+  // download itself completes fine.
   try { localStorage.setItem(KEYS.lastBackupAt, new Date().toISOString()); } catch {}
   renderLastBackupLine();
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // Renders the "last backed up" line in Settings, if that element is present
