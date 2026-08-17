@@ -10,7 +10,7 @@ import { destroyCharts, getExerciseIndex, sessionBestE1RM, parseSessionDate } fr
 import { timerKeyFor, startTimer } from './timers.js';
 import { initDrag } from './drag.js';
 import { openCustomLog } from './custom-log.js';
-import { isMusicPlaying, pauseMusic } from './music.js';
+import { isMusicPlaying, pauseMusic, registerSnorePauser } from './music.js';
 
 /* ─── STATE ─── */
 export let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
@@ -164,27 +164,40 @@ export function renderCalendarRoot() {
   updateSnoreAudio();
 }
 
-// Plays/stops the rest-day snoring loop. Only ever on while the Log tab is
-// actually visible AND the plain rest screen is what's showing — switching
-// tabs, changing calendar view, or navigating to any other day all re-run
-// renderCalendarRoot (or hide the tab), so this stays in sync automatically
-// without needing its own teardown hooks elsewhere.
+// Stops the rest-day snoring loop whenever the plain rest screen stops being
+// shown — leaving the Log tab, changing calendar view, or navigating to any
+// other day all re-run renderCalendarRoot (or hide the tab), so this stays in
+// sync automatically without needing its own teardown hooks elsewhere.
+// Playback itself is no longer automatic (browsers block autoplay without a
+// user gesture) — it's started by tapping the zzz animation, via
+// toggleSnoreAudio() below.
 function updateSnoreAudio() {
   const snore = document.getElementById('snore-player');
   if (!snore) return;
   const logTab = document.getElementById('tab-log');
   const logTabVisible = logTab && logTab.style.display !== 'none';
-  const shouldPlay = logTabVisible && calendarView === 'day' && lastRenderWasPureRestScreen;
+  const shouldStayOn = logTabVisible && calendarView === 'day' && lastRenderWasPureRestScreen;
 
-  if (shouldPlay) {
-    if (snore.paused) {
-      if (isMusicPlaying()) pauseMusic();
-      snore.play().catch(err => console.error('[snore] play() failed:', err));
-    }
-  } else if (!snore.paused) {
+  if (!shouldStayOn && !snore.paused) snore.pause();
+}
+
+// Tapping the zzz animation toggles the snoring loop on/off. Starting it
+// pauses the music player (mirroring music.js's own pause-snore-on-start
+// behavior), so only one audio source ever plays at once.
+export function toggleSnoreAudio() {
+  const snore = document.getElementById('snore-player');
+  if (!snore) return;
+  if (snore.paused) {
+    if (isMusicPlaying()) pauseMusic();
+    snore.play().catch(err => console.error('[snore] play() failed:', err));
+  } else {
     snore.pause();
   }
 }
+registerSnorePauser(() => {
+  const snore = document.getElementById('snore-player');
+  if (snore && !snore.paused) snore.pause();
+});
 
 /* ─── DAY VIEW (this is the old Log tab, now date-aware) ─── */
 function renderDayView() {
@@ -245,7 +258,7 @@ function renderDayView() {
     // No overflow menu / custom-log button on the plain rest screen — nothing
     // there applies (can't edit/copy/clear a day with no workout, and custom
     // logging is what flips this into the hasCustomOnRestDay branch above).
-    return top + `<div class="rest-screen"><div class="rest-zzz-wrap"><span>z</span><span>Z</span><span>Z</span></div><p>Enjoy your recovery!</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
+    return top + `<div class="rest-screen"><div class="rest-zzz-wrap" onclick="toggleSnoreAudio()" role="button" aria-label="Play snoring sound"><span>z</span><span>Z</span><span>Z</span></div><p>Enjoy your recovery!</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
   }
   lastRenderWasPureRestScreen = false;
 

@@ -111,6 +111,13 @@ export function pauseMusic() {
   if (audio && !audio.paused) { audio.pause(); paused = true; }
 }
 
+// calendar.js registers its snore-pausing function here at load time, so
+// starting a playlist can pause the snore loop without this module importing
+// calendar.js back (calendar.js already imports from here — see the same
+// pattern/comment in schedule-day.js's registerCalendarRenderer).
+let _pauseSnore = null;
+export function registerSnorePauser(fn) { _pauseSnore = fn; }
+
 export function initMusic() {
   audio = document.getElementById('audio-player');
   audio.removeAttribute('loop'); // looping is handled manually per-playlist below
@@ -156,6 +163,10 @@ export function selectPlaylist(key) {
 
   // Switching to a different composer — clear the previous one's eq bars.
   if (currentPlaylistKey) setEqPlaying(currentPlaylistKey, false);
+
+  // Starting music pauses the snore loop, mirroring toggleSnoreAudio()'s own
+  // pause-music-on-start behavior, so only one audio source plays at once.
+  if (_pauseSnore) _pauseSnore();
 
   currentPlaylistKey = key;
   // Random starting track each time a composer is picked fresh.

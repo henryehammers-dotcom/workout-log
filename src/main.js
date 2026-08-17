@@ -105,6 +105,7 @@ Object.assign(window, {
   jumpToMonth: calendarMod.jumpToMonth,
   setMonthViewMode: calendarMod.setMonthViewMode,
   logExerciseOnDate: calendarMod.logExerciseOnDate,
+  toggleSnoreAudio: calendarMod.toggleSnoreAudio,
 
   // schedule-day.js
   toggleDayMenu: scheduleDayMod.toggleDayMenu,
