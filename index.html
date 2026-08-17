@@ -407,16 +407,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .empty{text-align:center;color:var(--text3);font-size:13px;padding:32px 16px}
 .rest-screen{text-align:center;padding:48px 16px;color:var(--text2);position:relative}
 .rest-screen p{margin-bottom:16px}
-.rest-zzz-wrap{position:relative;height:56px;margin-bottom:4px}
+.rest-zzz-wrap{position:relative;height:78px;margin-bottom:4px}
 .rest-zzz-wrap span{position:absolute;left:50%;bottom:0;color:var(--accent);font-family:var(--display);font-weight:700;opacity:0;animation:rest-zzz-float 3.2s ease-in infinite}
-.rest-zzz-wrap span:nth-child(1){font-size:14px;animation-delay:0s;margin-left:-4px}
-.rest-zzz-wrap span:nth-child(2){font-size:18px;animation-delay:1.05s;margin-left:6px}
-.rest-zzz-wrap span:nth-child(3){font-size:22px;animation-delay:2.1s;margin-left:-2px}
+.rest-zzz-wrap span:nth-child(1){font-size:20px;animation-delay:0s;margin-left:-6px}
+.rest-zzz-wrap span:nth-child(2){font-size:26px;animation-delay:1.05s;margin-left:8px}
+.rest-zzz-wrap span:nth-child(3){font-size:31px;animation-delay:2.1s;margin-left:-3px}
 @keyframes rest-zzz-float{
   0%{opacity:0;transform:translate(0,0) rotate(-6deg);}
   15%{opacity:0.7;}
   80%{opacity:0.35;}
-  100%{opacity:0;transform:translate(14px,-40px) rotate(8deg);}
+  100%{opacity:0;transform:translate(20px,-56px) rotate(8deg);}
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -1274,7 +1274,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="greeting-day" id="greeting-day"></div>
     <div class="greeting-workout" id="greeting-workout"></div>
     <div class="greeting-msg" id="greeting-msg"></div>
-    <button class="welcome-cta" style="height:44px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
+    <button class="welcome-cta" id="greeting-cta" style="height:44px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
   </div>
 </div>
 
@@ -1467,6 +1467,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Music player (always visible, sits above settings) ── -->
 <audio id="audio-player" loop></audio>
+<audio id="snore-player" src="sfx/man-snoring.mp3" loop preload="none"></audio>
 
 <script type="module" src="src/main.js?v=163"></script>
 <script>

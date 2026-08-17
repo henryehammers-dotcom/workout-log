@@ -102,6 +102,15 @@ let currentPlaylistKey = null;
 let currentTrackIndex = 0;
 let paused = false;
 
+// Lets other modules (e.g. the rest-day snoring sound) check/pause playback
+// without touching this module's internals directly.
+export function isMusicPlaying() {
+  return !!(currentPlaylistKey && audio && !audio.paused);
+}
+export function pauseMusic() {
+  if (audio && !audio.paused) { audio.pause(); paused = true; }
+}
+
 export function initMusic() {
   audio = document.getElementById('audio-player');
   audio.removeAttribute('loop'); // looping is handled manually per-playlist below

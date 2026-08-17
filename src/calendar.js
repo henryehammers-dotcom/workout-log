@@ -10,10 +10,16 @@ import { destroyCharts, getExerciseIndex, sessionBestE1RM, parseSessionDate } fr
 import { timerKeyFor, startTimer } from './timers.js';
 import { initDrag } from './drag.js';
 import { openCustomLog } from './custom-log.js';
+import { isMusicPlaying, pauseMusic } from './music.js';
 
 /* ─── STATE ─── */
 export let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
 export let monthViewMode = localStorage.getItem(KEYS.monthViewMode) || 'trends';   // 'labels' | 'trends' | 'none'
+
+// Tracks whether the most recent renderDayView() call rendered the plain
+// rest screen (no scheduled or custom-logged workout) — read right after by
+// renderCalendarRoot() to decide whether the snoring sound should be playing.
+let lastRenderWasPureRestScreen = false;
 
 export const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -149,14 +155,35 @@ export function renderCalendarRoot() {
     </div>`;
 
   let body = '';
-  if (calendarView === 'day') body = renderDayView();
-  else if (calendarView === 'week') body = renderWeekView();
-  else if (calendarView === 'month') body = renderMonthView();
-  else body = renderYearView();
+  if (calendarView === 'day') { body = renderDayView(); }
+  else { lastRenderWasPureRestScreen = false; if (calendarView === 'week') body = renderWeekView(); else if (calendarView === 'month') body = renderMonthView(); else body = renderYearView(); }
 
   container.innerHTML = `<div class="cal-wrap">${pill}${body}</div>`;
 
   if (calendarView === 'day') initDrag(DAY_NAMES[viewedDate.getDay()]);
+  updateSnoreAudio();
+}
+
+// Plays/stops the rest-day snoring loop. Only ever on while the Log tab is
+// actually visible AND the plain rest screen is what's showing — switching
+// tabs, changing calendar view, or navigating to any other day all re-run
+// renderCalendarRoot (or hide the tab), so this stays in sync automatically
+// without needing its own teardown hooks elsewhere.
+function updateSnoreAudio() {
+  const snore = document.getElementById('snore-player');
+  if (!snore) return;
+  const logTab = document.getElementById('tab-log');
+  const logTabVisible = logTab && logTab.style.display !== 'none';
+  const shouldPlay = logTabVisible && calendarView === 'day' && lastRenderWasPureRestScreen;
+
+  if (shouldPlay) {
+    if (snore.paused) {
+      if (isMusicPlaying()) pauseMusic();
+      snore.play().catch(err => console.error('[snore] play() failed:', err));
+    }
+  } else if (!snore.paused) {
+    snore.pause();
+  }
 }
 
 /* ─── DAY VIEW (this is the old Log tab, now date-aware) ─── */
@@ -171,7 +198,15 @@ function renderDayView() {
   const weekdayStr = date.toLocaleDateString('en-US', { weekday:'long' });
   const monthDayStr = date.toLocaleDateString('en-US', { month:'long', day:'numeric' });
 
-  const titleHtml = dayEditMode
+  // A pure rest day (no custom-logged entry today) gets a static, uneditable
+  // "Rest" title instead of the normal editable workout-title field — there's
+  // nothing to name on a rest day.
+  const customEntriesForTitle = historyEntriesForDate(date);
+  const isPureRestDay = day.restDay && customEntriesForTitle.length === 0;
+
+  const titleHtml = isPureRestDay
+    ? `<div class="day-title-input day-title-readonly">Rest</div>`
+    : dayEditMode
     ? `<input class="day-title-input" value="${escAttr(labelSuffix)}" placeholder="Add workout title..."
         oninput="schedule['${dn}'].label=FULL_DAYS['${dn}']+' — '+this.value;saveSchedule()">`
     : `<div class="day-title-input day-title-readonly">${labelSuffix ? escHtml(labelSuffix) : '<span class="day-title-placeholder">Add workout title…</span>'}</div>`;
@@ -202,12 +237,17 @@ function renderDayView() {
 
   // A rest day that has a custom-logged entry for this exact date shows as a normal
   // workout day instead of the rest screen, scoped only to this date.
-  const customEntries = historyEntriesForDate(date);
+  const customEntries = customEntriesForTitle;
   const hasCustomOnRestDay = day.restDay && customEntries.length > 0;
 
-  if (day.restDay && !hasCustomOnRestDay) {
-    return top + actionsRow + `<div class="rest-screen"><div class="rest-zzz-wrap"><span>z</span><span>Z</span><span>Z</span></div><p>Rest day — enjoy your recovery.</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
+  if (isPureRestDay) {
+    lastRenderWasPureRestScreen = true;
+    // No overflow menu / custom-log button on the plain rest screen — nothing
+    // there applies (can't edit/copy/clear a day with no workout, and custom
+    // logging is what flips this into the hasCustomOnRestDay branch above).
+    return top + `<div class="rest-screen"><div class="rest-zzz-wrap"><span>z</span><span>Z</span><span>Z</span></div><p>Enjoy your recovery!</p><button class="btn" style="padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleRestDay()">Mark as workout day</button></div>`;
   }
+  lastRenderWasPureRestScreen = false;
 
   if (day.restDay && hasCustomOnRestDay) {
     // Render the custom-logged sets read-only for this rest day (no scheduled exercises exist to log against).

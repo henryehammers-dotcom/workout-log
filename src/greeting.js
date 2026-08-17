@@ -41,13 +41,16 @@ export function maybeShowGreeting() {
   const sched = schedule[day];
   const { msg } = getGreetMessage();
   document.getElementById('greeting-day').textContent = name ? `Happy ${dayFull}, ${name}!` : `Happy ${dayFull}!`;
+  const ctaBtn = document.getElementById('greeting-cta');
   if (sched.restDay) {
-    document.getElementById('greeting-workout').textContent = '';
-    document.getElementById('greeting-msg').textContent = "What are you doing here? You should be resting! 😁";
+    document.getElementById('greeting-workout').textContent = 'Today is Rest';
+    document.getElementById('greeting-msg').textContent = "What are you doing here? You should be resting 😴";
+    if (ctaBtn) ctaBtn.textContent = 'Continue anyway';
   } else {
     const suffix = sched.label.includes('—') ? sched.label.replace(/^.+?—\s*/, '').trim() : '';
     document.getElementById('greeting-workout').textContent = suffix ? `Today is ${suffix}` : "Today's workout";
     document.getElementById('greeting-msg').textContent = msg;
+    if (ctaBtn) ctaBtn.textContent = "Let's go!";
   }
   document.getElementById('greeting-wrap').classList.add('show');
 }
