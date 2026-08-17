@@ -1,104 +1,82 @@
 /* ════════════════════════════════════════════
    Tally Up — Music player
-   Four always-visible composer pills. Clicking one starts that composer's
-   playlist on a random track and shows the eq bars next to it; clicking the
-   same (already active) pill again pauses/resumes it. Tracks auto-advance
-   in order from the random starting point, looping back to the start of
-   the playlist array when the last track finishes.
+   Composer pills. Clicking one starts that composer's playlist on a random
+   track and shows the eq bars next to it; clicking the same (already
+   active) pill again pauses/resumes it. Tracks auto-advance in order from
+   the random starting point, looping back to the start of the playlist
+   array when the last track finishes.
 
-   NOTE: filenames use the folder casing actually present in the repo
-   (Bach/Beethoven/Mozart/Tchaikovsky), matching what's on GitHub Pages —
-   keep this in sync with the repo's music/ folder if files are renamed.
+   TRACK LISTS: each composer's tracklist lives in its own folder as
+   music/<Folder>/tracks.json — a plain JSON array of filenames, e.g.:
+     ["01-aria.mp3", "02-variation1.mp3"]
+   To add a track: drop the mp3 in the composer's folder and add its
+   filename to that folder's tracks.json. Nothing in this file, index.html,
+   or the service worker needs to change for a track-only addition.
+   To add a whole new composer: add one line to COMPOSERS below (the key
+   used elsewhere, e.g. in selectPlaylist('key'), and the folder name on
+   disk — folder casing must match the repo/GitHub Pages exactly), plus one
+   pill button in index.html's #composer-pills block.
+
+   OFFLINE CACHING: playlists are NOT precached by the service worker (see
+   service-worker.js's FILES list — intentionally excludes music, so a
+   fresh install stays small regardless of composer count). Instead, the
+   first time a composer is played, its tracks are explicitly saved into
+   a dedicated cache (MUSIC_CACHE) in the background, so replays after that
+   are instant/offline. Until that finishes, playback still works fine via
+   a normal network fetch — caching is a background nice-to-have, never a
+   blocker for play().
    ════════════════════════════════════════════ */
-const PLAYLISTS = {
-  bach: {
-    label: 'Bach',
-    tracks: [
-      'music/Bach/01-aria.mp3',
-      'music/Bach/02-variation1.mp3',
-      'music/Bach/03-variation2.mp3',
-      'music/Bach/04-variation3.mp3',
-      'music/Bach/05-variation4.mp3',
-      'music/Bach/06-variation5.mp3',
-      'music/Bach/07-variation6.mp3',
-      'music/Bach/08-variation7.mp3',
-      'music/Bach/09-variation8.mp3',
-      'music/Bach/10-variation9.mp3',
-      'music/Bach/11-variation10.mp3',
-      'music/Bach/12-variation11.mp3',
-      'music/Bach/13-variation12.mp3',
-      'music/Bach/14-variation13.mp3',
-      'music/Bach/15-variation14.mp3',
-      'music/Bach/16-variation15.mp3',
-      'music/Bach/17-variation16.mp3',
-      'music/Bach/18-variation17.mp3',
-      'music/Bach/19-variation18.mp3',
-      'music/Bach/20-variation19.mp3',
-      'music/Bach/21-variation20.mp3',
-      'music/Bach/22-variation21.mp3',
-      'music/Bach/23-variation22.mp3',
-      'music/Bach/24-variation23.mp3',
-      'music/Bach/25-variation24.mp3',
-      'music/Bach/26-variation25.mp3',
-      'music/Bach/27-variation26.mp3',
-      'music/Bach/28-variation27.mp3',
-      'music/Bach/29-variation28.mp3',
-      'music/Bach/30-variation29.mp3',
-      'music/Bach/31-variation30.mp3',
-      'music/Bach/32-aria-da-capo.mp3',
-      'music/Bach/33-toccata-fugue-dminor.mp3',
-      'music/Bach/34-prelude-fugue-eminor.mp3',
-    ],
-  },
-  beethoven: {
-    label: 'Beethoven',
-    tracks: [
-      'music/Beethoven/01-coriolan-overture.mp3',
-      'music/Beethoven/02-egmont-overture.mp3',
-      'music/Beethoven/03-quartet6-1.mp3',
-      'music/Beethoven/04-quartet6-2.mp3',
-      'music/Beethoven/05-quartet6-3.mp3',
-      'music/Beethoven/06-quartet6-4.mp3',
-      'music/Beethoven/07-eroica-1.mp3',
-      'music/Beethoven/08-eroica-2.mp3',
-      'music/Beethoven/09-eroica-3.mp3',
-      'music/Beethoven/10-eroica-4.mp3',
-    ],
-  },
-  mozart: {
-    label: 'Mozart',
-    tracks: [
-      'music/Mozart/01-eine-kleine-nachtmusik.mp3',
-      'music/Mozart/02-magic-flute-overture.mp3',
-      'music/Mozart/03-marriage-of-figaro.mp3',
-      'music/Mozart/04-symphony40-1.mp3',
-      'music/Mozart/05-symphony40-2.mp3',
-      'music/Mozart/06-symphony40-3.mp3',
-      'music/Mozart/07-symphony40-4.mp3',
-      'music/Mozart/08-rondo-alla-turca.mp3',
-      'music/Mozart/09-quartet15-1.mp3',
-      'music/Mozart/10-quartet15-4.mp3',
-    ],
-  },
-  tchaikovsky: {
-    label: 'Tchaikovsky',
-    tracks: [
-      'music/Tchaikovsky/01-piano-concerto1.mp3',
-      'music/Tchaikovsky/02-swan-lake-scene.mp3',
-      'music/Tchaikovsky/03-sleeping-beauty-waltz.mp3',
-      'music/Tchaikovsky/04-swan-lake-waltz.mp3',
-      'music/Tchaikovsky/05-nutcracker-chinese-dance.mp3',
-      'music/Tchaikovsky/06-1812-overture.mp3',
-      'music/Tchaikovsky/07-pathetique-1.mp3',
-      'music/Tchaikovsky/08-pathetique-2.mp3',
-      'music/Tchaikovsky/09-pathetique-3.mp3',
-      'music/Tchaikovsky/10-pathetique-4.mp3',
-    ],
-  },
+
+// key used by selectPlaylist('key') → folder name on disk under music/
+const COMPOSERS = {
+  bach: 'Bach',
+  beethoven: 'Beethoven',
+  mozart: 'Mozart',
+  tchaikovsky: 'Tchaikovsky',
+  rachmaninoff: 'Rachmaninoff',
 };
+
+const MUSIC_CACHE = 'tallyup-music-v1';
+const CACHED_KEY = 'wl_cached_composers';
+const cachedComposers = new Set(JSON.parse(localStorage.getItem(CACHED_KEY) || '[]'));
+
+// In-memory cache of fetched tracklists, keyed by composer key, so we only
+// fetch each folder's tracks.json once per session.
+const playlistCache = {};
+
+async function getPlaylist(key) {
+  if (playlistCache[key]) return playlistCache[key];
+  const folder = COMPOSERS[key];
+  if (!folder) return null;
+  const res = await fetch(`music/${folder}/tracks.json`);
+  if (!res.ok) throw new Error(`tracks.json fetch failed for ${folder}: ${res.status}`);
+  const filenames = await res.json();
+  const playlist = {
+    label: folder,
+    tracks: filenames.map(f => `music/${folder}/${f}`),
+  };
+  playlistCache[key] = playlist;
+  return playlist;
+}
+
+// Explicitly saves a composer's tracks for offline playback, once, in the
+// background. Failure is non-fatal — playback still works via normal
+// fetch, this just means replays won't be guaranteed-offline yet.
+async function ensureComposerCached(key, playlist) {
+  if (cachedComposers.has(key)) return;
+  try {
+    const cache = await caches.open(MUSIC_CACHE);
+    await cache.addAll(playlist.tracks);
+    cachedComposers.add(key);
+    localStorage.setItem(CACHED_KEY, JSON.stringify([...cachedComposers]));
+  } catch (err) {
+    console.warn('[music] failed to cache composer', key, err);
+  }
+}
 
 let audio = null;
 let currentPlaylistKey = null;
+let currentPlaylist = null; // resolved { label, tracks } for currentPlaylistKey
 let currentTrackIndex = 0;
 let paused = false;
 
@@ -136,7 +114,7 @@ export function initMusic() {
 }
 
 function setActivePill(key) {
-  ['bach', 'beethoven', 'mozart', 'tchaikovsky'].forEach(k => {
+  Object.keys(COMPOSERS).forEach(k => {
     document.getElementById('pill-' + k)?.classList.toggle('active', k === key);
   });
 }
@@ -145,9 +123,8 @@ function setEqPlaying(key, playing) {
   document.getElementById('eq-' + key)?.classList.toggle('playing', playing);
 }
 
-export function selectPlaylist(key) {
-  const playlist = PLAYLISTS[key];
-  if (!playlist) return;
+export async function selectPlaylist(key) {
+  if (!COMPOSERS[key]) return;
 
   // Clicking the already-active pill toggles pause/resume instead of restarting.
   if (key === currentPlaylistKey) {
@@ -161,6 +138,15 @@ export function selectPlaylist(key) {
     return;
   }
 
+  let playlist;
+  try {
+    playlist = await getPlaylist(key);
+  } catch (err) {
+    console.error('[music] failed to load playlist for', key, err);
+    return;
+  }
+  if (!playlist || !playlist.tracks.length) return;
+
   // Switching to a different composer — clear the previous one's eq bars.
   if (currentPlaylistKey) setEqPlaying(currentPlaylistKey, false);
 
@@ -169,6 +155,7 @@ export function selectPlaylist(key) {
   if (_pauseSnore) _pauseSnore();
 
   currentPlaylistKey = key;
+  currentPlaylist = playlist;
   // Random starting track each time a composer is picked fresh.
   currentTrackIndex = Math.floor(Math.random() * playlist.tracks.length);
   paused = false;
@@ -177,18 +164,19 @@ export function selectPlaylist(key) {
   audio.play().catch(err => {
     console.error('[music] play() failed on selectPlaylist:', err, 'src=', audio.src);
   });
+
+  // Fire-and-forget: don't block playback on caching finishing.
+  ensureComposerCached(key, playlist);
 }
 
 function loadCurrentTrack() {
-  const playlist = PLAYLISTS[currentPlaylistKey];
-  if (!playlist) return;
-  audio.src = playlist.tracks[currentTrackIndex];
+  if (!currentPlaylist) return;
+  audio.src = currentPlaylist.tracks[currentTrackIndex];
   audio.load();
 }
 function playNextTrack() {
-  const playlist = PLAYLISTS[currentPlaylistKey];
-  if (!playlist) return;
-  currentTrackIndex = (currentTrackIndex + 1) % playlist.tracks.length;
+  if (!currentPlaylist) return;
+  currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.tracks.length;
   loadCurrentTrack();
   audio.play().catch(err => console.error('[music] play() failed on playNextTrack:', err));
 }
