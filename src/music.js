@@ -34,6 +34,7 @@ const COMPOSERS = {
   mozart: 'Mozart',
   tchaikovsky: 'Tchaikovsky',
   rachmaninoff: 'Rachmaninoff',
+  chopin: 'Chopin',
 };
 
 const MUSIC_CACHE = 'tallyup-music-v1';
