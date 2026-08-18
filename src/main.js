@@ -9,7 +9,7 @@
    ════════════════════════════════════════════ */
 import { KEYS, DAY_NAMES, escAttr, formatISODate, saveSchedule,
          loadSchedule, loadLibraryV2, currentUnits, setCurrentUnits,
-         showInstructionsIcons, setShowInstructionsIcons } from './state.js';
+         showInstructionsIcons, setShowInstructionsIcons, setHideBodyweight } from './state.js';
 import * as themeMod from './theme.js';
 import * as bodyweightMod from './bodyweight.js';
 import * as backupMod from './backup.js';
@@ -48,6 +48,7 @@ Object.assign(window, {
 
   // bodyweight.js
   saveBodyweight: bodyweightMod.saveBodyweight,
+  toggleHideBodyweight: bodyweightMod.toggleHideBodyweight,
 
   // backup.js
   shareApp: backupMod.shareApp,
@@ -66,6 +67,7 @@ Object.assign(window, {
   openLibCategory: libraryMod.openLibCategory,
   closeLibCategory: libraryMod.closeLibCategory,
   libSelectFilterSub: libraryMod.libSelectFilterSub,
+  libSelectFilterDifficulty: libraryMod.libSelectFilterDifficulty,
   openLibSearch: libraryMod.openLibSearch,
   closeLibSearch: libraryMod.closeLibSearch,
   libSearchInput: libraryMod.libSearchInput,
@@ -103,7 +105,6 @@ Object.assign(window, {
   jumpToDate: calendarMod.jumpToDate,
   openCustomLogForViewedDate: calendarMod.openCustomLogForViewedDate,
   jumpToMonth: calendarMod.jumpToMonth,
-  setMonthViewMode: calendarMod.setMonthViewMode,
   logExerciseOnDate: calendarMod.logExerciseOnDate,
   toggleSnoreAudio: calendarMod.toggleSnoreAudio,
 
@@ -303,6 +304,7 @@ function migrateIds() {
       migrateIds().then(() => {
         setCurrentUnits(localStorage.getItem(KEYS.units) || 'lbs');
         setShowInstructionsIcons(localStorage.getItem(KEYS.showInstr) === '1');
+        setHideBodyweight(localStorage.getItem(KEYS.hideBw) === '1');
 
         // Sync visible toggles
         document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));

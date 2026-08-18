@@ -439,7 +439,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .lib-header-btn:active{transform:scale(0.95)}
 .lib-back-btn{width:34px;height:34px;border-radius:10px;border:none;background:transparent;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
 .lib-back-btn:active{transform:scale(0.92)}
-.lib-difficulty-filter{flex-shrink:0;font-size:12px;font-weight:600;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:6px 8px;font-family:inherit;cursor:pointer;max-width:110px}
 .lib-section-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:0 0 8px 2px}
 .lib-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .lib-group-tile{position:relative;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:10px 10px 10px 17px;cursor:pointer;text-align:left;overflow:hidden;min-height:92px;display:flex;align-items:stretch;justify-content:space-between;gap:4px}
@@ -1027,7 +1026,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       </button>
       <div class="page-title" style="margin-bottom:0" id="lib-category-title"></div>
-      <select class="lib-difficulty-filter" id="lib-difficulty-filter" onchange="libSelectFilterDifficulty(this.value || null)" aria-label="Filter by difficulty"></select>
     </div>
     <div class="lib-category-count" id="lib-category-count"></div>
     <div class="lib-scroll-wrap">
@@ -1113,7 +1111,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
     <div class="lib-field-label">Name</div>
     <input type="text" class="lib-form-input" id="lf-name" placeholder="Cable face pull">
-    <div class="welcome-error" id="lib-form-error"></div>
 
     <div class="lib-field-label">Muscle group</div>
     <select class="lib-form-input" id="lf-group" onchange="libFormSyncSubs()"></select>

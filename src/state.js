@@ -28,6 +28,7 @@ export const KEYS = {
   showInstr: 'wl_show_instr_icons',
   monthViewMode: 'wl_month_view_mode',
   lastBackupAt: 'wl_last_backup_at',
+  hideBw:    'wl_hide_bw',
 };
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 export const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -245,6 +246,7 @@ export let exerciseTimers = {};
 export let activeCharts = [];
 export let currentUnits = 'lbs';
 export let showInstructionsIcons = false;
+export let hideBodyweight = false;
 export let APP_VERSION = '';
 
 export function setSchedule(s) { schedule = s; }
@@ -253,6 +255,7 @@ export function setDayEditMode(v) { dayEditMode = v; }
 export function setSessionSets(s) { sessionSets = s; }
 export function setCurrentUnits(u) { currentUnits = u; }
 export function setShowInstructionsIcons(v) { showInstructionsIcons = v; }
+export function setHideBodyweight(v) { hideBodyweight = v; }
 export function setAppVersion(v) { APP_VERSION = v; }
 
 /* ─── VIEWED DATE ───

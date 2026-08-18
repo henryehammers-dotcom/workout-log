@@ -1,20 +1,19 @@
 /* ════════════════════════════════════════════
    Tally Up — Calendar (Day / Week / Month / Year)
    ════════════════════════════════════════════ */
-import { KEYS, DAY_NAMES, schedule, currentDay, setCurrentDay, dayEditMode, currentUnits,
+import { DAY_NAMES, schedule, currentDay, setCurrentDay, dayEditMode, currentUnits,
          sessionSets, exerciseTimers, showInstructionsIcons, getHistory, saveHistory, getCleanBw,
          viewedDate, setViewedDate, formatISODate, parseISODate, cloneDate,
          escAttr, escHtml } from './state.js';
 import { flushInputs, resolveScheduledExercise, getSetData, registerCalendarRenderer } from './schedule-day.js';
 import { destroyCharts, getExerciseIndex, sessionBestE1RM, parseSessionDate } from './history.js';
-import { timerKeyFor, startTimer } from './timers.js';
+import { timerKeyFor, startTimer, registerSetCommitter } from './timers.js';
 import { initDrag } from './drag.js';
 import { openCustomLog } from './custom-log.js';
 import { isMusicPlaying, pauseMusic, registerSnorePauser } from './music.js';
 
 /* ─── STATE ─── */
 export let calendarView = 'day';       // 'day' | 'week' | 'month' | 'year'
-export let monthViewMode = localStorage.getItem(KEYS.monthViewMode) || 'trends';   // 'labels' | 'trends' | 'none'
 
 // Tracks whether the most recent renderDayView() call rendered the plain
 // rest screen (no scheduled or custom-logged workout) — read right after by
@@ -65,12 +64,6 @@ export function jumpToDate(date) {
 export function jumpToMonth(monthIdx, year) {
   setViewedDate(new Date(year, monthIdx, 1));
   calendarView = 'month';
-  renderCalendarRoot();
-}
-export function setMonthViewMode(mode) {
-  // "labels" and "trends" are mutually exclusive; clicking an active one turns it off.
-  monthViewMode = (monthViewMode === mode) ? 'none' : mode;
-  localStorage.setItem(KEYS.monthViewMode, monthViewMode);
   renderCalendarRoot();
 }
 
@@ -127,6 +120,35 @@ export function dayTrend(date) {
   if (up > down) return 'up';
   if (down > up) return 'down';
   return 'flat';
+}
+// Per-exercise status (not day-level rollup) — used by week view's exercise
+// list, where each logged exercise gets its own highlight rather than one
+// shared per-day color. Compares this entry's e1RM against its all-time best
+// (for PR) and its immediately-preceding session (for trend), reusing the
+// same sessions/e1RM machinery as dayLogSummary/dayTrend above.
+function exerciseEntryStatus(entry, date) {
+  const hist = getHistory();
+  const index = getExerciseIndex(hist);
+  const key = entry.exId || entry.name;
+  const allSessions = index[key] ? index[key].sessions : [];
+  const thisScore = sessionBestE1RM(entry.sets);
+
+  const bestEver = Math.max(0, ...allSessions.map(s => sessionBestE1RM(s.sets)));
+  const pr = bestEver > 0 && thisScore >= bestEver && thisScore > 0;
+
+  const dateStr = formatHistoryDate(date);
+  const sorted = allSessions.slice().sort((a,b) => parseSessionDate(a.date) - parseSessionDate(b.date));
+  const thisIdx = sorted.findIndex(s => s.date === dateStr && JSON.stringify(s.sets) === JSON.stringify(entry.sets));
+  const cutIdx = thisIdx >= 0 ? thisIdx : sorted.length - 1;
+  let trend = null;
+  if (cutIdx > 0) {
+    const prevScore = sessionBestE1RM(sorted[cutIdx-1].sets);
+    if (prevScore > 0) {
+      const pctChange = (thisScore - prevScore) / prevScore;
+      trend = Math.abs(pctChange) < 0.01 ? 'flat' : (pctChange > 0 ? 'up' : 'down');
+    }
+  }
+  return { pr, trend };
 }
 function dayLabelSuffix(date) {
   const dn = DAY_NAMES[date.getDay()];
@@ -356,18 +378,44 @@ function renderDayView() {
 }
 
 // Writes history under an arbitrary date instead of always "today".
+// NOTE: the actual history write is deliberately deferred until the rest
+// timer finishes or is skipped (see commitPendingSet, called from
+// timers.js's finishTimer). Logging a set only locks the inputs and starts
+// the timer here — set number, reps, and weight stay exactly as logged
+// on-screen throughout the rest period, only advancing once rest is done.
+// This function is registered with timers.js via registerSetCommitter at
+// load time (bottom of this file) so timers.js can trigger the write
+// without importing calendar.js's history internals directly.
 export function logExerciseOnDate(d, idx, isoDate) {
   flushInputs();
-  const date = parseISODate(isoDate);
   const data = getSetData(d, idx);
   const valid = data.sets.filter(s => s.reps !== '' || s.weight !== '');
   if (!valid.length) return;
+  const ex = schedule[d].exercises[idx];
+  // Stash exactly what was entered — this is what commitPendingSet will
+  // write to history once rest ends. Keeping it on `data` (not local scope)
+  // means it survives the re-render that happens right after this call.
+  data.pendingSets = valid.map(s => ({ reps: s.reps, weight: s.weight }));
+  data.logged = true;
+  renderCalendarRoot();
+  startTimer(ex.restSecs || 90, d, idx, isoDate);
+}
+
+// Called by timers.js when a rest timer finishes naturally or is skipped.
+// This is where the pending set actually gets written to history — the
+// point at which the set number, reps, and weight are allowed to advance.
+export function commitPendingSet(d, idx, isoDate) {
+  const date = parseISODate(isoDate);
+  const data = getSetData(d, idx);
+  const pending = data.pendingSets;
+  if (!pending || !pending.length) return;
   const dateKey = formatHistoryDate(date);
   const hist = getHistory();
   if (!hist[dateKey]) hist[dateKey] = [];
-  const ex = schedule[d].exercises[idx];
+  const ex = schedule[d] && schedule[d].exercises[idx];
+  if (!ex) return;
   const bw = ex.type === 'bodyweight' ? getCleanBw() : null;
-  const newSets = valid.map(s => {
+  const newSets = pending.map(s => {
     const weight = s.weight !== '' ? Number(s.weight)||0 : (bw != null ? bw : 0);
     return { reps: Number(s.reps)||0, weight };
   });
@@ -378,11 +426,9 @@ export function logExerciseOnDate(d, idx, isoDate) {
     hist[dateKey].push({ exId: ex.exId||'', name: ex.name, sets: newSets });
   }
   saveHistory(hist);
-  data.logged = true;
-  data.lastLoggedCount = newSets.length;
-  renderCalendarRoot();
-  startTimer(ex.restSecs || 90, d, idx, isoDate);
+  data.pendingSets = null;
 }
+registerSetCommitter(commitPendingSet);
 /* ─── WEEK VIEW ─── */
 function renderWeekView() {
   const weekStart = startOfWeek(viewedDate);
@@ -400,7 +446,6 @@ function renderWeekView() {
       <div class="cal-card-header-top">
         <div class="cal-title"><span class="cal-title-accent">${escHtml(label)}</span></div>
       </div>
-      ${monthModeToggleHtml()}
     </div>
     <div class="cal-week-list">
       ${days.map(d => calWeekRowHtml(d)).join('')}
@@ -427,47 +472,24 @@ function renderMonthView() {
           <span class="cal-title-accent">${MONTH_NAMES[viewedDate.getMonth()].toUpperCase()}</span> ${viewedDate.getFullYear()}
         </div>
       </div>
-      ${monthModeToggleHtml()}
     </div>
     <div class="cal-grid cal-grid-month">
       ${dowHeaders}
       ${cells.map(d => calDayCellHtml(d, d.getMonth() === viewedDate.getMonth())).join('')}
     </div>`;
 }
-function monthModeToggleHtml() {
-  return `
-    <div class="cal-mode-toggles">
-      <button class="cal-mode-toggle" onclick="setMonthViewMode('labels')">
-        <span>Day Labels</span>
-        <span class="cal-mode-dot${monthViewMode==='labels'?' filled':''}"></span>
-      </button>
-      <button class="cal-mode-toggle" onclick="setMonthViewMode('trends')">
-        <span>Daily Trends</span>
-        <span class="cal-mode-dot${monthViewMode==='trends'?' filled':''}"></span>
-      </button>
-    </div>`;
-}
 function calDayCellHtml(date, inCurrentPeriod) {
   const today = new Date(); today.setHours(0,0,0,0);
   const isToday = isSameDate(date, today);
   const summary = dayLogSummary(date);
-  const badge = summary.logged
-    ? (summary.pr
-        ? `<span class="cal-cell-badge cal-cell-pr" title="PR">★</span>`
-        : `<span class="cal-cell-badge cal-cell-check" title="Logged">✓</span>`)
-    : '';
-  let bottom = '';
-  if (monthViewMode === 'labels') {
-    const label = dayLabelSuffix(date);
-    if (label) bottom = `<div class="cal-cell-label">${escHtml(label)}</div>`;
-  } else if (monthViewMode === 'trends') {
-    const trend = dayTrend(date);
-    if (trend) bottom = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
-  }
+  const trend = dayTrend(date);
+  // PR takes visual priority over a plain up/down/flat trend.
+  const highlightClass = summary.pr ? 'cal-trend-pr' : (trend ? 'cal-trend-' + trend : '');
+  const label = dayLabelSuffix(date);
+  const bottom = label ? `<div class="cal-cell-label${highlightClass ? ' ' + highlightClass : ''}">${escHtml(label)}</div>` : '';
   return `<div class="cal-cell${inCurrentPeriod?'':' cal-cell-dim'}" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
     <div class="cal-cell-top">
       <span class="cal-cell-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
-      ${badge}
     </div>
     ${bottom}
   </div>`;
@@ -478,39 +500,22 @@ function calDayCellHtml(date, inCurrentPeriod) {
 function calWeekRowHtml(date) {
   const today = new Date(); today.setHours(0,0,0,0);
   const isToday = isSameDate(date, today);
-  const summary = dayLogSummary(date);
-  const badge = summary.logged
-    ? (summary.pr
-        ? `<span class="cal-cell-badge cal-cell-pr" title="PR">★</span>`
-        : `<span class="cal-cell-badge cal-cell-check" title="Logged">✓</span>`)
-    : '';
-  let modeBit = '';
-  if (monthViewMode === 'labels') {
-    const label = dayLabelSuffix(date);
-    if (label) modeBit = `<div class="cal-week-row-tag">${escHtml(label)}</div>`;
-  } else if (monthViewMode === 'trends') {
-    const trend = dayTrend(date);
-    if (trend) modeBit = `<div class="cal-cell-trend cal-trend-${trend}">${trendArrowSvg(trend)}</div>`;
-  }
   const entries = historyEntriesForDate(date);
   const exList = entries.length
-    ? `<div class="cal-week-row-exercises">${entries.map(e => `<span class="cal-week-row-ex">${escHtml(e.name)}</span>`).join('')}</div>`
+    ? `<div class="cal-week-row-exercises">${entries.map(e => {
+        const status = exerciseEntryStatus(e, date);
+        const cls = status.pr ? 'cal-trend-pr' : (status.trend ? 'cal-trend-' + status.trend : '');
+        return `<div class="cal-week-row-ex${cls ? ' ' + cls : ''}">${escHtml(e.name)}</div>`;
+      }).join('')}</div>`
     : '';
   const weekdayName = date.toLocaleDateString('en-US', { weekday: 'long' });
   return `<div class="cal-week-row" onclick="jumpToDate(new Date(${date.getFullYear()},${date.getMonth()},${date.getDate()}))">
     <div class="cal-week-row-head">
       <span class="cal-week-row-day${isToday?' cal-cell-date-today':''}">${weekdayName}</span>
       <span class="cal-week-row-date${isToday?' cal-cell-date-today':''}">${date.getDate()}</span>
-      ${badge}
     </div>
-    ${modeBit}
     ${exList}
   </div>`;
-}
-function trendArrowSvg(dir) {
-  if (dir === 'up') return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"/><polyline points="9 6 18 6 18 15"/></svg>`;
-  if (dir === 'down') return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><polyline points="18 9 18 18 9 18"/></svg>`;
-  return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
 }
 
 /* ─── YEAR VIEW ─── */

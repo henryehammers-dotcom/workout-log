@@ -2,7 +2,7 @@
    Tally Up — Theme, Units, Settings Sheet
    ════════════════════════════════════════════ */
 import { KEYS, currentUnits, setCurrentUnits, showInstructionsIcons, setShowInstructionsIcons,
-         getCleanBw, APP_VERSION, setAppVersion } from './state.js';
+         hideBodyweight, getCleanBw, APP_VERSION, setAppVersion } from './state.js';
 import { renderDayContent } from './schedule-day.js';
 import { updateBwDisplay } from './bodyweight.js';
 import { maybeShowGreeting } from './greeting.js';
@@ -168,6 +168,7 @@ export function openSettings(isFirstLaunch) {
   syncThemeBaseLabel(base);
   renderAccentSwatches();
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
+  document.getElementById('hide-bw-toggle')?.classList.toggle('on', hideBodyweight);
   renderLastBackupLine();
 }
 export function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }

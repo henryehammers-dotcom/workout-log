@@ -21,6 +21,7 @@ export function clearLibPickingDay() { _libPickingDay = null; }
 
 let libActiveGroupKey = null; // group shown in category view, or highlighted on landing after a visit
 let libActiveFilterSub = null; // sub-group filter chip selected within a category
+let libActiveFilterDifficulty = null; // 'beginner' | 'intermediate' | 'advanced' | null (all)
 let libSearchQuery = '';
 export function getLibActiveGroupKey() { return libActiveGroupKey; }
 export function resetLibNavState() {
@@ -64,6 +65,7 @@ export function renderLibGroupsGrid() {
 export function openLibCategory(groupKey) {
   libActiveGroupKey = groupKey;
   libActiveFilterSub = null;
+  libActiveFilterDifficulty = null;
   document.getElementById('lib-landing').style.display = 'none';
   document.getElementById('lib-category').style.display = '';
   renderLibCategory();
@@ -75,6 +77,10 @@ export function closeLibCategory() {
 }
 export function libSelectFilterSub(sub) {
   libActiveFilterSub = (libActiveFilterSub === sub) ? null : sub;
+  renderLibCategory();
+}
+export function libSelectFilterDifficulty(diff) {
+  libActiveFilterDifficulty = (libActiveFilterDifficulty === diff) ? null : diff;
   renderLibCategory();
 }
 export function renderLibCategory() {
@@ -91,7 +97,17 @@ export function renderLibCategory() {
     return `<button class="lib-filter-chip${active ? ' active' : ''}" onclick="libSelectFilterSub(${isAll ? 'null' : `'${escAttr(sub)}'`})">${escHtml(sub)}</button>`;
   }).join('');
 
-  const filtered = libActiveFilterSub ? all.filter(e => e.sub === libActiveFilterSub) : all;
+  const diffFilterEl = document.getElementById('lib-difficulty-filter');
+  if (diffFilterEl) {
+    const diffs = ['beginner', 'intermediate', 'advanced'];
+    diffFilterEl.innerHTML = `
+      <option value=""${!libActiveFilterDifficulty ? ' selected' : ''}>All levels</option>
+      ${diffs.map(d => `<option value="${d}"${libActiveFilterDifficulty === d ? ' selected' : ''}>${d.charAt(0).toUpperCase() + d.slice(1)}</option>`).join('')}
+    `;
+  }
+
+  let filtered = libActiveFilterSub ? all.filter(e => e.sub === libActiveFilterSub) : all;
+  if (libActiveFilterDifficulty) filtered = filtered.filter(e => (e.difficulty || 'beginner') === libActiveFilterDifficulty);
   const cardsEl = document.getElementById('lib-exercise-cards');
   if (!filtered.length) {
     cardsEl.innerHTML = `<div class="empty">No exercises match this filter yet.</div>`;
@@ -516,6 +532,7 @@ function libFormWireTagInputs() {
 }
 export function openLibExerciseForm(exId) {
   libFormWireTagInputs();
+  clearLibFormError();
   const eqInput = document.getElementById('lf-equipment-input');
   eqInput.disabled = false;
   eqInput.placeholder = 'Type and press enter to add';
@@ -554,7 +571,7 @@ export function openLibExerciseForm(exId) {
     }
     document.getElementById('lf-card').value = ex.card || '';
     document.getElementById('lf-blurb').value = ex.blurb || '';
-    document.getElementById('lib-form-btn-row').style.display = '';
+    document.getElementById('lf-delete-btn').style.display = '';
   } else {
     _libFormEditingId = null;
     document.getElementById('lib-form-title').textContent = 'New exercise';
@@ -569,7 +586,9 @@ export function openLibExerciseForm(exId) {
     document.getElementById('lf-position').value = 'standing';
     document.getElementById('lf-rest-value').value = 60;
     document.getElementById('lf-rest-unit').value = 'secs';
-    document.getElementById('lib-form-btn-row').style.display = 'none';
+    // Only Delete is irrelevant for a not-yet-created exercise — Save must
+    // stay visible, since this is the only way to add a brand new exercise.
+    document.getElementById('lf-delete-btn').style.display = 'none';
   }
   libFormRenderTags('lf-secondary-tags', _libFormSecondary, 'libFormRemoveSecondary');
   libFormRenderTags('lf-equipment-tags', _libFormEquipment, 'libFormRemoveEquipment');
@@ -579,9 +598,32 @@ export function openLibExerciseForm(exId) {
 export function closeLibExerciseForm() {
   document.getElementById('lib-form-wrap').classList.remove('show');
 }
+function showLibFormError(msg) {
+  const el = document.getElementById('lib-form-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function clearLibFormError() {
+  const el = document.getElementById('lib-form-error');
+  if (el) el.style.display = 'none';
+}
 export function saveLibExerciseForm() {
   const name = document.getElementById('lf-name').value.trim();
   if (!name) { document.getElementById('lf-name').focus(); return; }
+  // Block exact-name duplicates (case-insensitive) — excludes the exercise
+  // currently being edited, so saving an edit without renaming doesn't
+  // false-positive against itself.
+  const normalizedName = name.toLowerCase();
+  const isDuplicate = DEFAULT_LIBRARY_V2.some(e =>
+    e.id !== _libFormEditingId && e.name.trim().toLowerCase() === normalizedName
+  );
+  if (isDuplicate) {
+    const nameField = document.getElementById('lf-name');
+    nameField.focus();
+    showLibFormError('An exercise named "' + name + '" already exists.');
+    return;
+  }
   const group = document.getElementById('lf-group').value;
   const sub = document.getElementById('lf-sub').value;
   const primaryRaw = document.getElementById('lf-primary').value.trim();
