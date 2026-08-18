@@ -112,6 +112,18 @@ export function initMusic() {
     console.error('[music] audio element error:', err && err.code, err && err.message, 'src=', audio.src);
     setEqPlaying(currentPlaylistKey, false);
   });
+
+  // Pre-fetch every composer's tracks.json up front (cheap — tiny JSON files,
+  // not the mp3s themselves) so selectPlaylist() never has to await a network
+  // request on first tap. This matters because iOS Safari only allows
+  // audio.play() to succeed when called synchronously within a real user
+  // gesture (click/tap); any `await` before play() — even a fast one —
+  // breaks that chain and causes play() to silently no-op with no error.
+  // With tracklists already warmed in memory, getPlaylist() resolves
+  // instantly on tap and play() stays inside the gesture.
+  Object.keys(COMPOSERS).forEach(key => {
+    getPlaylist(key).catch(err => console.warn('[music] pre-fetch failed for', key, err));
+  });
 }
 
 function setActivePill(key) {
@@ -124,7 +136,7 @@ function setEqPlaying(key, playing) {
   document.getElementById('eq-' + key)?.classList.toggle('playing', playing);
 }
 
-export async function selectPlaylist(key) {
+export function selectPlaylist(key) {
   if (!COMPOSERS[key]) return;
 
   // Clicking the already-active pill toggles pause/resume instead of restarting.
@@ -139,14 +151,22 @@ export async function selectPlaylist(key) {
     return;
   }
 
-  let playlist;
-  try {
-    playlist = await getPlaylist(key);
-  } catch (err) {
-    console.error('[music] failed to load playlist for', key, err);
+  // Use the pre-warmed playlist (fetched in initMusic) synchronously — do NOT
+  // await here. iOS Safari only allows audio.play() to succeed when called
+  // synchronously within the click handler; any await beforehand, even a
+  // fast one, breaks that chain and play() silently no-ops with no error.
+  const playlist = playlistCache[key];
+  if (!playlist) {
+    // Not warmed yet (e.g. initMusic's pre-fetch hasn't resolved, or failed).
+    // Fall back to an async load — playback may be blocked on iOS in this
+    // edge case, but at least it works everywhere else and self-heals: the
+    // next tap after this fetch completes will hit the warmed-cache path.
+    getPlaylist(key)
+      .then(pl => { playlistCache[key] = pl; })
+      .catch(err => console.error('[music] failed to load playlist for', key, err));
     return;
   }
-  if (!playlist || !playlist.tracks.length) return;
+  if (!playlist.tracks.length) return;
 
   // Switching to a different composer — clear the previous one's eq bars.
   if (currentPlaylistKey) setEqPlaying(currentPlaylistKey, false);
