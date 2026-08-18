@@ -68,6 +68,7 @@ Object.assign(window, {
   closeLibCategory: libraryMod.closeLibCategory,
   libSelectFilterSub: libraryMod.libSelectFilterSub,
   libSelectFilterDifficulty: libraryMod.libSelectFilterDifficulty,
+  toggleLibDifficultyMenu: libraryMod.toggleLibDifficultyMenu,
   openLibSearch: libraryMod.openLibSearch,
   closeLibSearch: libraryMod.closeLibSearch,
   libSearchInput: libraryMod.libSearchInput,
@@ -327,11 +328,15 @@ function migrateIds() {
           updateHamburgerFloat();
         }
 
-        // Dismiss day dropdown / day menu when clicking/tapping outside them
+        // Dismiss day dropdown / day menu / library difficulty filter when
+        // clicking/tapping outside them
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.day-header') && !e.target.closest('.cal-day-actions-row')) {
             scheduleDayMod.closeDayPicker();
             scheduleDayMod.closeDayMenu();
+          }
+          if (!e.target.closest('#lib-diff-filter-wrap')) {
+            libraryMod.closeLibDifficultyMenu();
           }
         });
 

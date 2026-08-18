@@ -79,8 +79,15 @@ export function libSelectFilterSub(sub) {
   libActiveFilterSub = (libActiveFilterSub === sub) ? null : sub;
   renderLibCategory();
 }
+export function toggleLibDifficultyMenu() {
+  document.getElementById('lib-diff-filter-menu')?.classList.toggle('show');
+}
+export function closeLibDifficultyMenu() {
+  document.getElementById('lib-diff-filter-menu')?.classList.remove('show');
+}
 export function libSelectFilterDifficulty(diff) {
   libActiveFilterDifficulty = (libActiveFilterDifficulty === diff) ? null : diff;
+  closeLibDifficultyMenu();
   renderLibCategory();
 }
 export function renderLibCategory() {
@@ -97,14 +104,16 @@ export function renderLibCategory() {
     return `<button class="lib-filter-chip${active ? ' active' : ''}" onclick="libSelectFilterSub(${isAll ? 'null' : `'${escAttr(sub)}'`})">${escHtml(sub)}</button>`;
   }).join('');
 
-  const diffFilterEl = document.getElementById('lib-difficulty-filter');
-  if (diffFilterEl) {
+  const diffMenuEl = document.getElementById('lib-diff-filter-menu');
+  if (diffMenuEl) {
     const diffs = ['beginner', 'intermediate', 'advanced'];
-    diffFilterEl.innerHTML = `
-      <option value=""${!libActiveFilterDifficulty ? ' selected' : ''}>All levels</option>
-      ${diffs.map(d => `<option value="${d}"${libActiveFilterDifficulty === d ? ' selected' : ''}>${d.charAt(0).toUpperCase() + d.slice(1)}</option>`).join('')}
-    `;
+    const opt = (val, label) => {
+      const active = libActiveFilterDifficulty === val;
+      return `<button class="day-menu-item${active ? ' active' : ''}" onclick="libSelectFilterDifficulty(${val ? `'${val}'` : 'null'})">${active ? '✓ ' : ''}${label}</button>`;
+    };
+    diffMenuEl.innerHTML = opt(null, 'All levels') + diffs.map(d => opt(d, d.charAt(0).toUpperCase() + d.slice(1))).join('');
   }
+  document.getElementById('lib-diff-filter-btn')?.classList.toggle('active', !!libActiveFilterDifficulty);
 
   let filtered = libActiveFilterSub ? all.filter(e => e.sub === libActiveFilterSub) : all;
   if (libActiveFilterDifficulty) filtered = filtered.filter(e => (e.difficulty || 'beginner') === libActiveFilterDifficulty);
