@@ -31,6 +31,7 @@ export const KEYS = {
   hideBw:    'wl_hide_bw',
   profile:   'wl_profile',
   tallyLayout: 'wl_tally_layout',
+  tallyHidden: 'wl_tally_hidden',
 };
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 export const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -378,6 +379,69 @@ export function saveProfile(patch) {
 export function hasCompletedProfile() {
   const p = getProfile();
   return !!(p.goal && p.targetFrequency);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TALLY BOX REGISTRY — every possible box the Tally page can
+   show, its width class (full spans the row alone; half pairs
+   two per row — see .tally-box-row CSS), and the default
+   layout for a fresh install (all boxes, in this order).
+   Actual rendering logic lives in tally.js; this is just the
+   catalog + persisted arrangement, matching the pattern of
+   other reference data in this file (GOAL_QUESTIONS, etc.).
+   ═══════════════════════════════════════════════════════════ */
+export const TALLY_BOX_DEFS = [
+  { id: 'weeklyQuota',   label: 'Weekly goal',       width: 'full' },
+  { id: 'overallTrend',  label: 'Overall trend',     width: 'full' },
+  { id: 'bestStreak',    label: 'Best streak',       width: 'half' },
+  { id: 'daysLogged',    label: 'Days logged',       width: 'half' },
+  { id: 'setsCompleted', label: 'Sets completed',    width: 'half' },
+  { id: 'avgSession',    label: 'Avg session length',width: 'half' },
+  { id: 'totalWeight',   label: 'Total weight lifted',width: 'full' },
+  { id: 'lastTrained',   label: 'Last trained',      width: 'full' },
+  // The highlight-mode boxes double as regular boxes when they're NOT the
+  // active highlight for the user's goal (per spec — whichever mode isn't
+  // headlining still needs to be visible somewhere on the page).
+  { id: 'prCallout',        label: 'Recent PR',          width: 'full' },
+  { id: 'weekCheckmarks',   label: 'This week',          width: 'full' },
+  { id: 'calorieRow',       label: 'Calories this week', width: 'full' },
+  { id: 'weightDelta',      label: 'Weight change',      width: 'half' },
+];
+const DEFAULT_TALLY_LAYOUT = TALLY_BOX_DEFS.map(b => b.id);
+
+export function getTallyLayout() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEYS.tallyLayout) || 'null');
+    if (Array.isArray(saved) && saved.length) {
+      // Guard against a stale saved layout referencing a box id that no
+      // longer exists (e.g. after an app update removes/renames a box) —
+      // drop unknown ids rather than let them render as blank/broken boxes.
+      const validIds = new Set(TALLY_BOX_DEFS.map(b => b.id));
+      const cleaned = saved.filter(id => validIds.has(id));
+      // Any box added since this layout was saved (a new box id not present
+      // in the saved array) gets appended at the end, so updates don't
+      // silently hide new boxes from existing users.
+      const missing = DEFAULT_TALLY_LAYOUT.filter(id => !cleaned.includes(id));
+      return cleaned.concat(missing);
+    }
+  } catch {}
+  return DEFAULT_TALLY_LAYOUT.slice();
+}
+export function saveTallyLayout(order) {
+  try { localStorage.setItem(KEYS.tallyLayout, JSON.stringify(order)); } catch {}
+}
+// Hidden/removed boxes are tracked separately from order — removing a box
+// via Edit Tally doesn't delete it from the layout array, it just marks it
+// hidden, so re-adding via the "+" picker restores its prior position
+// instead of appending it back at the end.
+export function getTallyHidden() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEYS.tallyHidden) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch { return []; }
+}
+export function saveTallyHidden(hiddenIds) {
+  try { localStorage.setItem(KEYS.tallyHidden, JSON.stringify(hiddenIds)); } catch {}
 }
 
 /* ─── CORE APP STATE ───

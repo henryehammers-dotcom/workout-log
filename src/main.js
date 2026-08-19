@@ -26,6 +26,7 @@ import * as clockMod from './clock.js';
 import * as musicMod from './music.js';
 import * as greetingMod from './greeting.js';
 import * as onboardingMod from './onboarding.js';
+import * as tallyMod from './tally.js';
 
 /* ─── WINDOW BRIDGE ───
    Every function an inline HTML handler calls by bare name must live here.
@@ -185,6 +186,18 @@ Object.assign(window, {
   // greeting.js
   dismissGreeting: greetingMod.dismissGreeting,
   maybeShowGreeting: greetingMod.maybeShowGreeting,
+
+  // tally.js
+  openTallySheet: tallyMod.openTallySheet,
+  closeTallySheet: tallyMod.closeTallySheet,
+  revealTallyBoxes: tallyMod.revealTallyBoxes,
+  toggleTallyEditMode: tallyMod.toggleTallyEditMode,
+  removeTallyBox: tallyMod.removeTallyBox,
+  addTallyBox: tallyMod.addTallyBox,
+  promptTallyWeightUpdate: tallyMod.promptTallyWeightUpdate,
+  openTallySessionTimesPopup: tallyMod.openTallySessionTimesPopup,
+  openTallyMuscleGapsPopup: tallyMod.openTallyMuscleGapsPopup,
+  openTallyTrendDay: tallyMod.openTallyTrendDay,
 });
 
 /* ─── AUTO-UPDATE ON OPEN ───
@@ -361,7 +374,7 @@ function migrateIds() {
         themeMod.loadAppVersion();
 
         if (!localStorage.getItem(KEYS.welcomed)) themeMod.openSettings(true);
-        else greetingMod.maybeShowGreeting();
+        else tallyMod.openTallySheetOnLaunch();
       });
     } catch (err) {
       console.error('Tally Up init error:', err);

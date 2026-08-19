@@ -204,6 +204,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .hamburger-btn.floating{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(20px + env(safe-area-inset-left));opacity:0.85}
 .log-back-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));left:calc(64px + env(safe-area-inset-left));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .log-back-btn.show{display:flex}
+/* Shows unconditionally for now (same bar as the hamburger) — ideally this
+   only shows on the Log tab per spec, but that requires wiring into
+   tabs.js's switchTab(), which wasn't available to review when this was
+   built. Safe to scope later by adding a .show toggle the same way
+   .log-back-btn already works, once tabs.js can be reviewed. */
+.tally-open-btn{position:fixed;top:calc(20px + env(safe-area-inset-top));right:calc(20px + env(safe-area-inset-right));width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s;z-index:70;opacity:0.85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tally-open-btn:hover{background:var(--bg3)}
+.tally-open-btn:active{transform:scale(0.96)}
 .hamburger-btn:hover{opacity:0.7}
 .hamburger-btn:active{transform:scale(0.96)}
 
@@ -859,6 +867,42 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .greeting-msg{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.4}
 
 /* ──────────────────────────────────────────────────────────
+   TALLY SHEET (bottom sheet, opens on every app launch and via
+   the tally icon in the Log tab header; see tally.js)
+   ────────────────────────────────────────────────────────── */
+.tally-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,20,15,0.55);z-index:960;display:none;align-items:flex-end;justify-content:center}
+.tally-overlay.show{display:flex}
+.tally-sheet{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(0);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+.tally-sheet.dragging{transition:none}
+.tally-grabber{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 4px;flex-shrink:0}
+.tally-scroll{overflow-y:auto;padding:4px 18px 18px}
+.tally-header{margin-bottom:14px}
+.tally-day-label{font-size:13px;color:var(--text2);margin-bottom:2px}
+.tally-workout-label{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-0.01em;color:var(--text);line-height:1.2}
+.tally-rest-banner{text-align:center;padding:12px 8px 24px;position:relative}
+.tally-rest-banner p{font-size:14px;color:var(--text2);margin:8px 0 16px;line-height:1.4}
+.tally-show-anyway-btn{background:transparent;border:1px solid var(--border2);border-radius:999px;padding:8px 18px;color:var(--text);font-size:13px;font-family:inherit;cursor:pointer}
+.tally-boxes{display:flex;flex-direction:column;gap:10px}
+.tally-boxes.hide{display:none}
+.tally-edit-row{margin-top:16px;text-align:center}
+.tally-edit-btn{background:transparent;border:none;color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;padding:8px}
+
+/* Box grid: full-width boxes get their own row; half-width boxes pair up two
+   to a row (matches the width-collision rule from the layout spec — a
+   full-width box can never share a row with anything else). */
+.tally-box-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tally-box-row.full{grid-template-columns:1fr}
+.tally-box{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative}
+.tally-box-label{font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.02em}
+.tally-box-value{font-size:22px;font-weight:600;color:var(--text)}
+.tally-box-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.tally-box.editing{animation:tally-wiggle .22s ease-in-out infinite alternate}
+.tally-box-remove{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;background:var(--red,#c03232);color:#fff;border:2px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;line-height:1}
+@keyframes tally-wiggle{from{transform:rotate(-0.6deg)}to{transform:rotate(0.6deg)}}
+.tally-add-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tally-add-chip{padding:7px 14px;border-radius:999px;font-size:13px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit}
+
+/* ──────────────────────────────────────────────────────────
    LIBRARY SHEET (removed — replaced by the new Library tab)
    ────────────────────────────────────────────────────────── */
 
@@ -967,6 +1011,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <button class="log-back-btn" id="log-back-btn" onclick="switchTab('log')" aria-label="Back to log">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+  <button class="tally-open-btn" id="tally-open-btn" onclick="openTallySheet()" aria-label="Open Tally">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
     </svg>
   </button>
 </div>
@@ -1329,13 +1378,37 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   </div>
 </div>
 
-<!-- ── Greeting ── -->
+<!-- ── Greeting (superseded by Tally sheet below; kept, unused, for easy rollback) ── -->
 <div class="greeting-wrap" id="greeting-wrap">
   <div class="greeting">
     <div class="greeting-day" id="greeting-day"></div>
     <div class="greeting-workout" id="greeting-workout"></div>
     <div class="greeting-msg" id="greeting-msg"></div>
     <button class="welcome-cta" id="greeting-cta" style="height:44px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
+  </div>
+</div>
+
+<!-- ── Tally sheet ── -->
+<div class="tally-overlay" id="tally-overlay" onclick="if(event.target===this) closeTallySheet()">
+  <div class="tally-sheet" id="tally-sheet">
+    <div class="tally-grabber" id="tally-grabber"></div>
+    <div class="tally-scroll" id="tally-scroll">
+      <div class="tally-header">
+        <div>
+          <div class="tally-day-label" id="tally-day-label"></div>
+          <div class="tally-workout-label" id="tally-workout-label"></div>
+        </div>
+      </div>
+      <div class="tally-rest-banner" id="tally-rest-banner" style="display:none">
+        <div class="rest-zzz-wrap" onclick="toggleSnoreAudio()" role="button" aria-label="Play snoring sound"><span>z</span><span>Z</span><span>Z</span></div>
+        <p>What are you doing here? You should be recovering</p>
+        <button class="tally-show-anyway-btn" onclick="revealTallyBoxes()">Show Tally</button>
+      </div>
+      <div class="tally-boxes" id="tally-boxes"></div>
+      <div class="tally-edit-row" id="tally-edit-row">
+        <button class="tally-edit-btn" id="tally-edit-btn" onclick="toggleTallyEditMode()">Edit Tally</button>
+      </div>
+    </div>
   </div>
 </div>
 
