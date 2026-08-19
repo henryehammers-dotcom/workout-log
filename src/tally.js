@@ -13,7 +13,7 @@ import { formatHistoryDate } from './calendar.js';
 import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
   getMuscleGroupsNeedingAttention, estimateCalorieRange, classifySessionType,
-  getRecentDayTrends, getTotalWeightLiftedLbs,
+  getRecentDayTrends, getTotalWeightLiftedLbs, getMilestoneWindow,
   getExerciseIndex, getHistoryDisplayNames, getDayTrendBreakdown,
 } from './history.js';
 
@@ -55,6 +55,7 @@ export function openTallySheet() {
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
   _restBoxesRevealed = false; // rest-day reveal is per-viewing, not sticky across opens
+  _weightLadderExpanded = false; // same — starts collapsed each time the sheet opens
 }
 // Called at the end of app init (see main.js) — opens on every launch per
 // spec (no once-per-day gating, unlike the old greeting).
@@ -422,15 +423,20 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" onclick="openTallySessionTimesPopup()" style="cursor:pointer;text-decoration:underline">See full week</div>`;
   },
   totalWeight(stats) {
-    const rows = WEIGHT_MILESTONES.map(m => {
-      const reached = stats.totalLbs >= m.lbs;
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #ccc;${reached?'':'opacity:0.4'}">
+    const milestones = _weightLadderExpanded
+      ? WEIGHT_MILESTONES.map(m => ({ ...m, reached: stats.totalLbs >= m.lbs }))
+      : getMilestoneWindow(stats.totalLbs, 1);
+    const rows = milestones.map(m => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #ccc;${m.reached?'':'opacity:0.4'}">
         <span style="font-size:10px;color:#555">${fmtWeight(m.lbs)}</span>
         <span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(m.label)}</span>
-      </div>`;
-    }).join('');
+      </div>`).join('');
+    const toggleLabel = _weightLadderExpanded ? 'Show less' : 'Show all';
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
       <div>${rows}</div>
+      <div style="text-align:center;margin-top:6px">
+        <span onclick="toggleTallyWeightLadder()" style="font-size:10px;color:#333;text-decoration:underline;cursor:pointer">${toggleLabel}</span>
+      </div>
       <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
         <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
@@ -513,6 +519,11 @@ function wireTrendBarClicks() {
 
 /* ─── FULL RENDER PASS ─── */
 let _lastStats = null;
+let _weightLadderExpanded = false;
+export function toggleTallyWeightLadder() {
+  _weightLadderExpanded = !_weightLadderExpanded;
+  if (_lastStats) renderFullBody(_lastStats); // re-render the whole grid so boxes below shift up/down naturally
+}
 function renderFullBody(stats) {
   const container = document.getElementById('tally-boxes');
   if (!container) return;
