@@ -2,11 +2,13 @@
    Tally Up — Theme, Units, Settings Sheet
    ════════════════════════════════════════════ */
 import { KEYS, currentUnits, setCurrentUnits, showInstructionsIcons, setShowInstructionsIcons,
-         hideBodyweight, getCleanBw, APP_VERSION, setAppVersion } from './state.js';
+         hideBodyweight, getCleanBw, APP_VERSION, setAppVersion,
+         GOAL_QUESTIONS, buildPriorityMuscleOptions, getProfile, saveProfile,
+         escAttr, escHtml } from './state.js';
 import { renderDayContent } from './schedule-day.js';
 import { updateBwDisplay } from './bodyweight.js';
-import { maybeShowGreeting } from './greeting.js';
 import { renderLastBackupLine } from './backup.js';
+import { startOnboardingQuestionnaire } from './onboarding.js';
 
 /* ─── APP VERSION (from version.json) ─── */
 // APP_VERSION is read from version.json at runtime. To ship a new version,
@@ -170,8 +172,152 @@ export function openSettings(isFirstLaunch) {
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
   document.getElementById('hide-bw-toggle')?.classList.toggle('on', hideBodyweight);
   renderLastBackupLine();
+  renderProfileSummaryCard();
 }
 export function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
+
+/* ─── PROFILE (Settings summary card + edit sheet) ─── */
+function goalLabel(value) {
+  const opt = GOAL_QUESTIONS[0].options.find(o => o.value === value);
+  return opt ? opt.label : '';
+}
+function frequencyLabel(value) {
+  const opt = GOAL_QUESTIONS[1].options.find(o => o.value === value);
+  return opt ? opt.label : '';
+}
+// Called whenever the profile might have changed — after onboarding finishes,
+// after a Settings > Profile save, and once on openSettings() so the card is
+// never stale if the user edited elsewhere (e.g. bodyweight, name).
+export function renderProfileSummaryCard() {
+  const p = getProfile();
+  const name = localStorage.getItem(KEYS.name) || '';
+  const avatarEl = document.getElementById('profile-summary-avatar');
+  if (avatarEl) avatarEl.textContent = name ? name.trim().charAt(0).toUpperCase() : '?';
+  const nameEl = document.getElementById('profile-summary-name');
+  if (nameEl) nameEl.textContent = name || 'Your profile';
+  const subEl = document.getElementById('profile-summary-sub');
+  if (subEl) {
+    const parts = [];
+    if (p.goal) parts.push(goalLabel(p.goal));
+    if (p.targetFrequency) parts.push(frequencyLabel(p.targetFrequency));
+    subEl.textContent = parts.length ? parts.join(', ') : 'Tap to set your goals';
+  }
+}
+
+// In-sheet draft of edits, committed on Save so backing out with Cancel
+// (or tapping outside the sheet) never partially applies a change.
+let profileEditDraft = null;
+export function openProfileEdit() {
+  const p = getProfile();
+  profileEditDraft = Object.assign({}, p, { priorityMuscles: (p.priorityMuscles || []).slice() });
+  renderProfileEditForm();
+  document.getElementById('profile-edit-wrap')?.classList.add('show');
+}
+export function closeProfileEdit() {
+  document.getElementById('profile-edit-wrap')?.classList.remove('show');
+  profileEditDraft = null;
+}
+function renderProfileEditForm() {
+  const container = document.getElementById('profile-edit-scroll');
+  if (!container || !profileEditDraft) return;
+  const d = profileEditDraft;
+  const name = localStorage.getItem(KEYS.name) || '';
+  const bw = getCleanBw();
+  const ft = d.heightIn != null ? Math.floor(d.heightIn / 12) : '';
+  const inch = d.heightIn != null ? d.heightIn % 12 : '';
+
+  const goalOptsHtml = GOAL_QUESTIONS[0].options.map(o =>
+    `<option value="${escAttr(o.value)}"${d.goal === o.value ? ' selected' : ''}>${escHtml(o.label)}</option>`
+  ).join('');
+  const freqOptsHtml = GOAL_QUESTIONS[1].options.map(o =>
+    `<option value="${escAttr(o.value)}"${d.targetFrequency === o.value ? ' selected' : ''}>${escHtml(o.label)}</option>`
+  ).join('');
+  const muscleChipsHtml = buildPriorityMuscleOptions().map(o => {
+    const isActive = d.priorityMuscles.includes(o.value);
+    return `<button type="button" class="pf-chip${isActive ? ' active' : ''}" onclick="toggleProfileEditMuscle('${escAttr(o.value)}')">${escHtml(o.label)}</button>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="pf-field">
+      <label class="pf-field-label">Name</label>
+      <input class="field-input" id="pf-name" type="text" value="${escAttr(name)}" oninput="profileEditDraftSet('name_display', this.value)">
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Height</label>
+      <div class="pf-height-row">
+        <input class="field-input" id="pf-height-ft" type="number" min="0" max="8" value="${ft}" oninput="profileEditSetHeight()">
+        <span>ft</span>
+        <input class="field-input" id="pf-height-in" type="number" min="0" max="11" value="${inch}" oninput="profileEditSetHeight()">
+        <span>in</span>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Current weight</label>
+      <div class="pf-weight-row">
+        <input class="field-input" id="pf-weight" type="number" min="0" step="0.1" value="${bw != null ? bw : ''}" oninput="profileEditSetWeight(this.value)">
+        <span>${currentUnits}</span>
+      </div>
+      <div class="pf-field-note" id="pf-weight-note"></div>
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Main goal</label>
+      <select class="field-select" id="pf-goal" onchange="profileEditDraftSet('goal', this.value)">${goalOptsHtml}</select>
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Weekly goal</label>
+      <select class="field-select" id="pf-frequency" onchange="profileEditDraftSet('targetFrequency', this.value)">${freqOptsHtml}</select>
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Priority muscle groups</label>
+      <div class="pf-chip-row">${muscleChipsHtml}</div>
+    </div>
+  `;
+}
+// Generic setter for straightforward text/select fields onto the in-sheet
+// draft. name_display is handled separately (see saveProfileEdit) since the
+// display name lives in KEYS.name, not on the profile object itself.
+export function profileEditDraftSet(key, value) {
+  if (!profileEditDraft) return;
+  if (key === 'name_display') { profileEditDraft._nameDisplay = value; return; }
+  profileEditDraft[key] = value;
+}
+export function profileEditSetHeight() {
+  if (!profileEditDraft) return;
+  const ft = parseInt(document.getElementById('pf-height-ft')?.value, 10) || 0;
+  const inch = parseInt(document.getElementById('pf-height-in')?.value, 10) || 0;
+  profileEditDraft.heightIn = (ft * 12) + inch;
+}
+export function profileEditSetWeight(val) {
+  if (!profileEditDraft) return;
+  profileEditDraft._weightInput = val;
+}
+export function toggleProfileEditMuscle(value) {
+  if (!profileEditDraft) return;
+  const at = profileEditDraft.priorityMuscles.indexOf(value);
+  if (at === -1) profileEditDraft.priorityMuscles.push(value);
+  else profileEditDraft.priorityMuscles.splice(at, 1);
+  renderProfileEditForm();
+}
+export function saveProfileEdit() {
+  if (!profileEditDraft) return;
+  if (profileEditDraft._nameDisplay != null) {
+    applySettingsName(profileEditDraft._nameDisplay.trim());
+  }
+  if (profileEditDraft._weightInput !== undefined && profileEditDraft._weightInput !== '') {
+    // Reuses the same storage path as the Settings bodyweight field and the
+    // Tally's own quick-update button, so all three stay in sync on one key.
+    localStorage.setItem(KEYS.bw, parseFloat(profileEditDraft._weightInput));
+    updateBwDisplay();
+  }
+  saveProfile({
+    heightIn: profileEditDraft.heightIn,
+    goal: profileEditDraft.goal,
+    targetFrequency: profileEditDraft.targetFrequency,
+    priorityMuscles: profileEditDraft.priorityMuscles,
+  });
+  renderProfileSummaryCard();
+  closeProfileEdit();
+}
 
 export function finishWelcome() {
   const nameInput = document.getElementById('welcome-name');
@@ -180,6 +326,9 @@ export function finishWelcome() {
   localStorage.setItem(KEYS.name, name);
   localStorage.setItem(KEYS.welcomed, '1');
   updateAppTitle();
-  document.getElementById('welcome-wrap').classList.remove('show');
-  setTimeout(maybeShowGreeting, 200);
+  // Welcome screen (name/theme/accent) is done — hand off to the goals
+  // questionnaire before the app proper opens. welcome-wrap itself stays
+  // visible (onboarding renders inside the same full-screen overlay) so
+  // there's no flash of the underlying app between the two steps.
+  startOnboardingQuestionnaire();
 }

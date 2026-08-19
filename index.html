@@ -776,6 +776,32 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .data-card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
 .data-card-sub{font-size:12px;color:var(--text3)}
 
+/* ──────────────────────────────────────────────────────────
+   PROFILE SUMMARY CARD (Settings) + PROFILE EDIT SHEET
+   ────────────────────────────────────────────────────────── */
+.profile-summary-card{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:14px;padding:14px 16px;text-align:left;cursor:pointer;font-family:inherit;transition:background .15s}
+.profile-summary-card:hover{background:var(--bg3)}
+.profile-summary-avatar{width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--accent);flex-shrink:0}
+.profile-summary-text{flex:1;min-width:0}
+.profile-summary-name{font-size:15px;font-weight:600;color:var(--text)}
+.profile-summary-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.profile-summary-chevron{font-size:18px;color:var(--text3);flex-shrink:0}
+
+.profile-edit{max-width:380px}
+.profile-edit-scroll{overflow-y:auto;flex:1;min-height:0;padding-right:2px}
+.pf-field{margin-bottom:16px}
+.pf-field-label{font-size:13px;color:var(--text2);margin-bottom:6px;display:block}
+.pf-field-note{font-size:11px;color:var(--text3);margin-top:4px}
+.pf-height-row{display:flex;align-items:center;gap:8px}
+.pf-height-row .field-input{width:64px;flex:none}
+.pf-height-row span{font-size:13px;color:var(--text3)}
+.pf-weight-row{display:flex;align-items:center;gap:8px}
+.pf-weight-row .field-input{width:90px;flex:none}
+.pf-chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.pf-chip{padding:7px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s,color .15s}
+.pf-chip:hover{background:var(--bg3)}
+.pf-chip.active{border-color:var(--accent);background:var(--bg3);color:var(--accent);font-weight:600}
+
 .version-line{text-align:center;color:var(--text3);font-size:11px;margin-top:18px}
 
 /* confirm modal (centered, smaller) */
@@ -805,6 +831,26 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .welcome-error{color:var(--red);font-size:12px;display:none;margin-top:4px}
 .welcome-cta{width:100%;height:50px;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;font-family:inherit}
 .welcome-cta:hover{filter:brightness(0.95)}
+
+/* ──────────────────────────────────────────────────────────
+   ONBOARDING QUESTIONNAIRE (second step inside welcome-wrap)
+   ────────────────────────────────────────────────────────── */
+.onboarding-step{width:100%;max-width:340px;display:flex;flex-direction:column;gap:0}
+.onb-progress{display:flex;gap:6px;margin-bottom:20px}
+.onb-progress-seg{flex:1;height:4px;border-radius:2px;background:var(--border2)}
+.onb-progress-seg.filled{background:var(--accent)}
+.onb-counter{font-size:12px;color:var(--text3);margin-bottom:6px}
+.onb-question{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-0.01em;color:var(--text);margin-bottom:18px;line-height:1.25}
+.onb-options{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.onb-opt{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--border2);background:var(--bg2);border-radius:var(--r-md);font-size:14px;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.onb-opt:hover{background:var(--bg3)}
+.onb-opt.active{border-color:var(--accent);background:var(--bg3);color:var(--accent);font-weight:600}
+.onb-opt i{font-size:16px;flex-shrink:0}
+.onb-opt-check{margin-left:auto}
+.onb-nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.onb-nav-back{background:transparent;border:none;color:var(--text3);font-size:14px;cursor:pointer;font-family:inherit;padding:8px}
+.onb-nav-next{background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--r-md);padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.onb-nav-next:hover{filter:brightness(0.95)}
 
 /* ──────────────────────────────────────────────────────────
    GREETING
@@ -1254,7 +1300,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <img class="welcome-logo" src="Tallyup-Icon-192.png" alt="Tally Up">
   <div class="welcome-title">Welcome to Tally Up!</div>
   <div class="welcome-sub">Your one-stop shop for workout routine organization, progress tracking, and habit building.</div>
-  <div class="welcome-form">
+  <div class="welcome-form" id="welcome-form">
     <div>
       <label class="welcome-field-label" for="welcome-name">Your name</label>
       <input class="welcome-input" id="welcome-name" type="text" placeholder="Enter your name" autocomplete="given-name">
@@ -1279,6 +1325,17 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </div>
     <button class="welcome-cta" onclick="finishWelcome()">Get started</button>
   </div>
+
+  <div class="onboarding-step" id="onboarding-step" style="display:none">
+    <div class="onb-progress" id="onboarding-progress"></div>
+    <div class="onb-counter" id="onboarding-counter"></div>
+    <div class="onb-question" id="onboarding-question"></div>
+    <div class="onb-options" id="onboarding-options"></div>
+    <div class="onb-nav">
+      <button class="onb-nav-back" id="onboarding-back" onclick="onboardingBack()">Back</button>
+      <button class="onb-nav-next" id="onboarding-next" onclick="onboardingNext()">Next</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Greeting ── -->
@@ -1301,6 +1358,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </div>
 
     <div class="section-label">Profile</div>
+    <button class="settings-card profile-summary-card" id="profile-summary-card" onclick="openProfileEdit()">
+      <div class="profile-summary-avatar" id="profile-summary-avatar"></div>
+      <div class="profile-summary-text">
+        <div class="profile-summary-name" id="profile-summary-name"></div>
+        <div class="profile-summary-sub" id="profile-summary-sub"></div>
+      </div>
+      <i class="ti ti-chevron-right profile-summary-chevron" aria-hidden="true"></i>
+    </button>
     <div class="settings-card">
       <div class="settings-row">
         <span class="settings-row-label">Name</span>
@@ -1430,6 +1495,23 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="right-group">
         <button class="btn-base" onclick="closeRestoreSheet()">Cancel</button>
         <button class="btn-base primary" onclick="applyRestore()">Restore</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Profile edit sheet ── -->
+<div class="edit-session-wrap" id="profile-edit-wrap" onclick="if(event.target===this) closeProfileEdit()">
+  <div class="edit-session profile-edit">
+    <div class="edit-session-header">
+      <div class="edit-session-title">Profile</div>
+    </div>
+    <div class="profile-edit-scroll" id="profile-edit-scroll"></div>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base" onclick="closeProfileEdit()">Cancel</button>
+        <button class="btn-base primary" onclick="saveProfileEdit()">Save changes</button>
       </div>
     </div>
   </div>

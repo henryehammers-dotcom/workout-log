@@ -25,6 +25,7 @@ import * as sidebarMod from './sidebar.js';
 import * as clockMod from './clock.js';
 import * as musicMod from './music.js';
 import * as greetingMod from './greeting.js';
+import * as onboardingMod from './onboarding.js';
 
 /* ─── WINDOW BRIDGE ───
    Every function an inline HTML handler calls by bare name must live here.
@@ -45,6 +46,18 @@ Object.assign(window, {
   openSettings: themeMod.openSettings,
   closeSettings: themeMod.closeSettings,
   finishWelcome: themeMod.finishWelcome,
+  openProfileEdit: themeMod.openProfileEdit,
+  closeProfileEdit: themeMod.closeProfileEdit,
+  saveProfileEdit: themeMod.saveProfileEdit,
+  profileEditDraftSet: themeMod.profileEditDraftSet,
+  profileEditSetHeight: themeMod.profileEditSetHeight,
+  profileEditSetWeight: themeMod.profileEditSetWeight,
+  toggleProfileEditMuscle: themeMod.toggleProfileEditMuscle,
+
+  // onboarding.js
+  onboardingSelectOption: onboardingMod.onboardingSelectOption,
+  onboardingBack: onboardingMod.onboardingBack,
+  onboardingNext: onboardingMod.onboardingNext,
 
   // bodyweight.js
   saveBodyweight: bodyweightMod.saveBodyweight,
@@ -170,6 +183,7 @@ Object.assign(window, {
 
   // greeting.js
   dismissGreeting: greetingMod.dismissGreeting,
+  maybeShowGreeting: greetingMod.maybeShowGreeting,
 });
 
 /* ─── AUTO-UPDATE ON OPEN ───
@@ -314,6 +328,7 @@ function migrateIds() {
 
         themeMod.updateAppTitle();
         bodyweightMod.updateBwDisplay();
+        themeMod.renderProfileSummaryCard();
         scheduleDayMod.renderDayContent();
 
         // Hamburger button sits in normal flow at the top of the page (so it

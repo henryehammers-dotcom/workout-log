@@ -1,4 +1,4 @@
-const CACHE = 'tallyup-v177';
+const CACHE = 'tallyup-v178';
 const FILES = [
   './index.html',
   './manifest.json',
@@ -10,6 +10,7 @@ const FILES = [
   './src/exercises-data.js',
   './src/muscle-group-icons.js',
   './src/theme.js',
+  './src/onboarding.js',
   './src/bodyweight.js',
   './src/backup.js',
   './src/modal.js',

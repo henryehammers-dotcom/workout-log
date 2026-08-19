@@ -29,6 +29,8 @@ export const KEYS = {
   monthViewMode: 'wl_month_view_mode',
   lastBackupAt: 'wl_last_backup_at',
   hideBw:    'wl_hide_bw',
+  profile:   'wl_profile',
+  tallyLayout: 'wl_tally_layout',
 };
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 export const FULL_DAYS = {Sun:'Sunday',Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday'};
@@ -231,6 +233,151 @@ export function genLibV2Id() {
   let id;
   do { id = genId(); } while (DEFAULT_LIBRARY_V2.some(e => e.id === id));
   return id;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROFILE + GOALS — powers onboarding, Settings > Profile, and
+   the Tally page (highlight bar mode, box priority/ordering,
+   "needs attention" threshold, calorie estimate inputs).
+   ═══════════════════════════════════════════════════════════ */
+// The 6-question onboarding set. `key` is the field name saved onto the
+// profile object; `flavor:true` means the answer is stored but doesn't
+// drive any Tally logic yet (kept for future use / possible feedback tie-in).
+export const GOAL_QUESTIONS = [
+  {
+    key: 'goal',
+    question: "What's your main goal right now?",
+    options: [
+      { value: 'strength',     label: 'Get stronger',    icon: 'bolt' },
+      { value: 'muscle',       label: 'Build muscle',    icon: 'flame' },
+      { value: 'consistency',  label: 'Stay consistent', icon: 'calendar-check' },
+      { value: 'fitness',      label: 'General fitness', icon: 'heart' },
+      { value: 'weight_loss',  label: 'Lose weight',     icon: 'scale' },
+    ],
+  },
+  {
+    key: 'targetFrequency',
+    question: 'How many days a week are you aiming to train?',
+    options: [
+      { value: '1-2', label: '1-2 days a week' },
+      { value: '3-4', label: '3-4 days a week' },
+      { value: '5-6', label: '5-6 days a week' },
+      { value: '7',   label: 'Every day' },
+    ],
+  },
+  {
+    key: 'priorityMuscles',
+    question: 'Any muscle groups you especially want to focus on?',
+    multi: true,
+    // populated at render time from MUSCLE_GROUPS_V2 so this list can't drift
+    // from the real taxonomy; see buildPriorityMuscleOptions() below.
+    optionsFromMuscleGroups: true,
+  },
+  {
+    key: 'experience',
+    question: 'How experienced are you with lifting?',
+    flavor: true,
+    options: [
+      { value: 'new',        label: 'New to this' },
+      { value: 'some',       label: "Been at it a while" },
+      { value: 'experienced',label: 'Very experienced' },
+    ],
+  },
+  {
+    key: 'blocker',
+    question: 'What usually gets in the way of consistency for you?',
+    flavor: true,
+    options: [
+      { value: 'motivation', label: 'Motivation' },
+      { value: 'time',       label: 'Time' },
+      { value: 'injury',     label: 'Injury or soreness' },
+      { value: 'none',       label: "Nothing really, I'm consistent" },
+    ],
+  },
+  {
+    key: 'usefulFor',
+    question: 'What would make this app feel most useful to you?',
+    flavor: true,
+    options: [
+      { value: 'progress',    label: 'Seeing progress over time' },
+      { value: 'motivation',  label: 'Staying motivated day to day' },
+      { value: 'logging',     label: 'Just a place to log workouts' },
+      { value: 'structure',   label: 'Structure and planning' },
+    ],
+  },
+];
+export function buildPriorityMuscleOptions() {
+  return MUSCLE_GROUPS_V2
+    .filter(g => g.key !== 'cardio') // cardio has no "last trained" concept the same way
+    .map(g => ({ value: g.key, label: g.label }));
+}
+// Upper bound of the user's chosen weekly frequency, in days — used both as
+// the weekly quota target (day bar) and as the "needs attention" staleness
+// threshold for a priority muscle group (state.js/history.js Tally logic).
+export const FREQUENCY_UPPER_BOUND = { '1-2': 2, '3-4': 4, '5-6': 6, '7': 1 };
+
+// Cumulative-weight-lifted milestone ladder for the Tally "Total weight
+// lifted" box. Stored in lbs; converted at display time for kg users via
+// the same conversion the rest of the app uses (see theme.js setUnits).
+export const WEIGHT_MILESTONES = [
+  { label: 'African elephant',           lbs: 10000 },
+  { label: 'School bus',                 lbs: 15000 },
+  { label: 'T-rex',                      lbs: 25000 },
+  { label: 'Semi truck',                 lbs: 40000 },
+  { label: 'Humpback whale',             lbs: 55000 },
+  { label: 'Empty Boeing 737',           lbs: 70000 },
+  { label: 'M1 Abrams tank',             lbs: 90000 },
+  { label: 'MGM bronze lion',            lbs: 100000 },
+  { label: 'Full Boeing 737',            lbs: 150000 },
+  { label: 'Empty space shuttle',        lbs: 200000 },
+  { label: 'Blue whale',                 lbs: 250000 },
+  { label: 'Full Boeing 747',            lbs: 400000 },
+  { label: 'Statue of Liberty',          lbs: 500000 },
+  { label: 'International Space Station',lbs: 650000 },
+  { label: 'Cumulus cloud',              lbs: 1000000 },
+  { label: 'Saturn V rocket',            lbs: 1300000 },
+  { label: '80 school buses',            lbs: 2000000 },
+];
+
+// Default shape for a brand-new profile. height/weight are optional (weight
+// is normally sourced from KEYS.bw via getCleanBw(), but the profile keeps
+// its own snapshot + timestamp so the Tally's "last updated" note and the
+// weight-loss week-over-week delta don't depend on bodyweight.js internals).
+function defaultProfile() {
+  return {
+    name: '',
+    heightIn: null,
+    goal: '',
+    targetFrequency: '',
+    priorityMuscles: [],
+    experience: '',
+    blocker: '',
+    usefulFor: '',
+    createdAt: null,
+  };
+}
+let profileCache = null;
+export function getProfile() {
+  if (profileCache) return profileCache;
+  try {
+    const saved = localStorage.getItem(KEYS.profile);
+    profileCache = saved ? Object.assign(defaultProfile(), JSON.parse(saved)) : defaultProfile();
+  } catch { profileCache = defaultProfile(); }
+  return profileCache;
+}
+// Shallow-merges `patch` onto the saved profile and persists it. Used by both
+// the onboarding questionnaire (one field at a time) and the Settings profile
+// edit screen (several fields at once).
+export function saveProfile(patch) {
+  const current = getProfile();
+  profileCache = Object.assign({}, current, patch);
+  if (!profileCache.createdAt) profileCache.createdAt = formatISODate(new Date());
+  try { localStorage.setItem(KEYS.profile, JSON.stringify(profileCache)); } catch {}
+  return profileCache;
+}
+export function hasCompletedProfile() {
+  const p = getProfile();
+  return !!(p.goal && p.targetFrequency);
 }
 
 /* ─── CORE APP STATE ───
