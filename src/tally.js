@@ -430,13 +430,13 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" style="margin-top:8px">Tap a bar to see that session</div>`;
   },
   bestStreak(stats) {
-    return `<div class="tally-box-label">Best streak</div><div class="tally-box-value">${stats.streaks.best}</div><div class="tally-box-sub">days</div>`;
+    return `<div class="tally-box-label">Best streak</div><div class="tally-box-value">${stats.streaks.best} days</div>`;
   },
   daysLogged(stats) {
-    return `<div class="tally-box-label">Days logged</div><div class="tally-box-value">${stats.loggedDayCount}</div><div class="tally-box-sub">since you started</div>`;
+    return `<div class="tally-box-label">Days logged</div><div class="tally-box-value">${stats.loggedDayCount}</div>`;
   },
   setsCompleted(stats) {
-    return `<div class="tally-box-label">Sets completed</div><div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div><div class="tally-box-sub">all time</div>`;
+    return `<div class="tally-box-label">Sets completed</div><div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div>`;
   },
   avgSession(stats) {
     const avg = stats.avgSession.avgMinutes;
