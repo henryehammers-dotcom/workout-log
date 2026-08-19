@@ -426,39 +426,32 @@ const BOX_RENDERERS = {
     const milestonesAsc = _weightLadderExpanded
       ? WEIGHT_MILESTONES.map(m => ({ ...m, reached: stats.totalLbs >= m.lbs }))
       : getMilestoneWindow(stats.totalLbs, 1);
-    // Heaviest at top, lightest at bottom — reverse of WEIGHT_MILESTONES'
-    // stored (lightest-first) order, so the fill can rise up from the
-    // bottom toward the heavier ones as total weight increases.
-    const milestones = milestonesAsc.slice().reverse();
+    const milestones = milestonesAsc.slice().reverse(); // heaviest at top, lightest at bottom
     const rowH = 32;
-    const totalRows = milestones.length;
-    const containerH = totalRows * rowH;
-    // ONE continuous fill for the whole ladder — a single liquid line, not
-    // separate fills per row. The scale runs from 0 at the very bottom of
-    // the list to the heaviest visible milestone at the very top; the fill
-    // height is just how far up that one scale the user's total lands,
-    // exactly like the outside markings on a measuring cup.
-    const heaviestLbs = milestones.length ? milestones[0].lbs : 0;
-    const fillPx = heaviestLbs > 0
-      ? Math.min(containerH, Math.round((stats.totalLbs / heaviestLbs) * containerH))
-      : 0;
+    // Each row represents the real numeric range between the milestone
+    // below it (its floor) and its own value (its ceiling). A row is
+    // fully filled once totalLbs passes its ceiling, proportionally
+    // filled if totalLbs currently falls inside its range, and empty if
+    // totalLbs hasn't reached its floor yet — so the fill honestly
+    // reflects rough real progress (half filled = genuinely about halfway
+    // to that milestone) without needing every marker positioned at an
+    // exact pixel on one shared scale, which is what caused labels to
+    // overlap in an earlier version of this.
     const rows = milestones.map((m, i) => {
-      // milestones[0] is the heaviest/top row; row i's vertical span,
-      // measured from the container's bottom edge, is:
-      //   bottom edge = (totalRows - i - 1) * rowH
-      //   top edge    = (totalRows - i) * rowH
-      const rowBottomFromContainerBottom = (totalRows - i - 1) * rowH;
-      const rowTopFromContainerBottom = (totalRows - i) * rowH;
-      const rowMidFromContainerBottom = (rowBottomFromContainerBottom + rowTopFromContainerBottom) / 2;
-      // Text switches to light once the single shared fill line has risen
-      // past this row's vertical midpoint — same one fillPx value checked
-      // against every row's own position, not independent per-row fills.
-      const covered = fillPx >= rowMidFromContainerBottom;
+      const floorLbs = i === milestones.length - 1 ? 0 : milestones[i + 1].lbs;
+      const ceilLbs = m.lbs;
+      let fillFrac;
+      if (stats.totalLbs >= ceilLbs) fillFrac = 1;
+      else if (stats.totalLbs <= floorLbs) fillFrac = 0;
+      else fillFrac = (stats.totalLbs - floorLbs) / (ceilLbs - floorLbs);
+      const fillPct = Math.round(fillFrac * 100);
+      const covered = fillFrac >= 0.5;
       const textColor = covered ? '#fff' : '#111';
       const labelColor = covered ? 'rgba(255,255,255,0.85)' : '#555';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.15);height:${rowH}px;box-sizing:border-box;position:relative;z-index:1">
-        <span style="font-size:10px;color:${labelColor}">${fmtWeight(m.lbs)}</span>
-        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:${textColor}">${escHtml(m.label)}</span>
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.15);height:${rowH}px;box-sizing:border-box;position:relative;overflow:hidden">
+        <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPct}%;background:#ff5757;transition:height .3s;z-index:0"></div>
+        <span style="position:relative;z-index:1;font-size:10px;color:${labelColor}">${fmtWeight(m.lbs)}</span>
+        <span style="position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;color:${textColor}">${escHtml(m.label)}</span>
       </div>`;
     }).join('');
     const caratPath = _weightLadderExpanded ? 'polyline points="18 15 12 9 6 15"' : 'polyline points="6 9 12 15 18 9"';
@@ -466,10 +459,7 @@ const BOX_RENDERERS = {
         <div class="tally-box-label" style="margin:0">Total weight lifted</div>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><${caratPath}/></svg>
       </div>
-      <div style="position:relative;height:${containerH}px">
-        <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;z-index:0"></div>
-        <div style="position:relative;z-index:1">${rows}</div>
-      </div>
+      <div>${rows}</div>
       <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
         <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
