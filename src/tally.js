@@ -217,14 +217,6 @@ function highlightModeForGoal(goal) {
   if (goal === 'weight_loss') return 'weightDeltaCombined'; // calorie row + weight delta combined, per spec
   return 'prCallout'; // no goal set yet (shouldn't happen post-onboarding) — safe default
 }
-// The real TALLY_BOX_DEFS id that a highlight mode duplicates — used to
-// exclude that box from the regular grid and the add-picker, so it can
-// never appear twice (once as the fixed highlight, once as a normal box).
-// weightDeltaCombined isn't a real box id itself; it renders calorieRow's
-// content with a delta appended, so calorieRow is what needs excluding.
-function highlightModeBoxId(mode) {
-  return mode === 'weightDeltaCombined' ? 'calorieRow' : mode;
-}
 function loggedDateKeySetThisWeek() {
   const hist = getHistory();
   const set = new Set();
@@ -262,8 +254,8 @@ function renderWeekCheckmarksInner() {
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
       <span style="font-size:11px;color:var(--text3)">${d.label}</span>
       <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;
-        background:${d.logged ? '#3fb87f' : 'transparent'};
-        border:1.5px solid ${d.logged ? '#3fb87f' : '#ccc'};
+        background:${d.logged ? '#3bca85' : 'transparent'};
+        border:1.5px solid ${d.logged ? '#3bca85' : '#ccc'};
         color:${d.logged ? '#fff' : '#999'}">${d.logged ? '✓' : ''}</span>
     </div>`).join('');
   return `<div class="tally-box-label">This week</div><div style="display:flex;gap:4px;margin-top:8px">${dotsHtml}</div>`;
@@ -330,7 +322,7 @@ function renderWeeklyQuotaPill(stats) {
   const text = goal == null ? `${daysLogged} days logged this week`
     : (met && overflow > 0) ? `+${overflow} day${overflow===1?'':'s'} over your goal`
     : `${daysLogged}/${goal} days logged this week`;
-  const color = met ? '#3fb87f' : '#e8695c';
+  const color = met ? '#3bca85' : '#ff5757';
   const pct = goal ? Math.min(100, Math.round((daysLogged / goal) * 100)) : 0;
   return `<div style="position:relative;height:26px;border-radius:999px;background:#eee;margin:8px 0 2px;overflow:hidden">
     <div style="position:absolute;top:0;left:0;bottom:0;width:${pct}%;background:${color};border-radius:999px;transition:width .3s"></div>
@@ -381,9 +373,10 @@ export function closeTallyFilter() {
 }
 
 /* ─── STANDARD BOXES (non-highlight registry — ids/widths in
-   TALLY_BOX_DEFS, state.js). Highlight-mode boxes (prCallout/
-   weekCheckmarks/calorieRow/weightDelta) are included here too, rendered
-   plainly, for whichever modes aren't the active highlight. ─── */
+   TALLY_BOX_DEFS, state.js). prCallout/weekCheckmarks/calorieRow are
+   defined here too but only ever render as the fixed highlight matching
+   the user's goal — see renderFullBody's HIGHLIGHT_MODE_BOX_IDS, which
+   excludes them from the regular grid unconditionally. ─── */
 // Visual variant per box, matching the mockup: the trend chart and total
 // weight lifted render as neutral gray sections; everything else uses the
 // standard solid-periwinkle stat block.
@@ -399,7 +392,7 @@ const BOX_RENDERERS = {
     const bars = stats.recentTrends;
     const filterIcon = filterIconSvg('openTallyTrendFilter()', 'Filter trend');
     if (!bars.length) return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div><div class="tally-box-sub">Log a few sessions to see your trend.</div>`;
-    const colorFor = t => t === 'up' ? '#3fb87f' : t === 'down' ? '#e8695c' : '#ccc';
+    const colorFor = t => t === 'up' ? '#3bca85' : t === 'down' ? '#ff5757' : '#ccc';
     const maxH = 44;
     const barsHtml = bars.map(b => `
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer" data-date="${escAttr(b.dateKey)}" class="tally-trend-bar">
@@ -409,7 +402,7 @@ const BOX_RENDERERS = {
       </div>`).join('');
     return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div>
       <div style="display:flex;gap:6px;margin-top:8px;align-items:flex-end">${barsHtml}</div>
-      <div class="tally-box-sub" style="margin-top:8px">Tap a bar to see that session</div>`;
+      <div class="tally-box-sub" id="tally-trend-detail" style="margin-top:8px">Tap a bar to see that session</div>`;
   },
   bestStreak(stats) {
     return `<div class="tally-box-label">Best streak</div><div class="tally-box-value">${stats.streaks.best} days</div>
@@ -440,7 +433,7 @@ const BOX_RENDERERS = {
     // so you can browse the milestone list without scrolling the page.
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
       <div class="tally-weight-ladder" style="max-height:170px;overflow-y:auto;overscroll-behavior:contain">${rows}</div>
-      <div style="margin:10px -12px -10px;background:#e05d52;padding:10px;text-align:center;border-radius:0 0 12px 12px">
+      <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
         <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
   },
@@ -463,11 +456,6 @@ const BOX_RENDERERS = {
   prCallout(stats) { return renderPRHighlightInner(stats); },
   weekCheckmarks() { return renderWeekCheckmarksInner(); },
   calorieRow(stats) { return renderCalorieRowInner(stats, false); },
-  weightDelta() {
-    const bw = getCleanBw();
-    return `<div class="tally-box-label">Weight</div>
-      <div class="tally-box-value">${bw != null ? bw + ' ' + currentUnits : '—'}</div>`;
-  },
 };
 
 /* ─── BOX GRID ASSEMBLY (groups visible boxes into rows respecting the
@@ -503,21 +491,19 @@ function buildBoxRows(visibleIds) {
 }
 
 export function openTallyTrendDay(dateKey) {
-  const title = document.getElementById('tally-filter-title');
-  if (title) title.textContent = dateKey.replace(/\w+,\s/, '');
-  const body = document.getElementById('tally-filter-body');
-  if (body) {
-    const breakdown = getDayTrendBreakdown(dateKey);
-    const labelFor = t => t === 'pr' ? 'New PR' : t === 'up' ? 'Up' : t === 'down' ? 'Down' : 'Same as last time';
-    const colorFor = t => t === 'pr' ? '#5170ff' : t === 'up' ? '#3fb87f' : t === 'down' ? '#e8695c' : '#999';
-    body.innerHTML = breakdown.length
-      ? breakdown.map(b => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:14px">${escHtml(b.name)}</span>
-          <span style="font-size:12px;font-weight:600;color:${colorFor(b.trend)}">${labelFor(b.trend)}</span>
-        </div>`).join('')
-      : '<p style="font-size:13px;color:var(--text3);padding:8px 0">No data for this session.</p>';
-  }
-  document.getElementById('tally-filter-wrap')?.classList.add('show');
+  const detailEl = document.getElementById('tally-trend-detail');
+  if (!detailEl) return;
+  const breakdown = getDayTrendBreakdown(dateKey);
+  const d = dateKey.replace(/\w+,\s/, '');
+  if (!breakdown.length) { detailEl.textContent = `${d} — no data`; return; }
+  const prCount = breakdown.filter(b => b.trend === 'pr').length;
+  const upCount = breakdown.filter(b => b.trend === 'up').length;
+  const downCount = breakdown.filter(b => b.trend === 'down').length;
+  const parts = [];
+  if (prCount) parts.push(`${prCount} PR${prCount===1?'':'s'}`);
+  if (upCount) parts.push(`${upCount} up`);
+  if (downCount) parts.push(`${downCount} down`);
+  detailEl.textContent = `${d} · ${breakdown.length} exercise${breakdown.length===1?'':'s'}${parts.length ? ' · ' + parts.join(', ') : ''}`;
 }
 function wireTrendBarClicks() {
   document.querySelectorAll('.tally-trend-bar[data-date]').forEach(el => {
@@ -542,10 +528,13 @@ let _lastStats = null;
 function renderFullBody(stats) {
   const container = document.getElementById('tally-boxes');
   if (!container) return;
-  const activeHighlightBoxId = highlightModeBoxId(highlightModeForGoal(stats.profile.goal));
+  // Highlight-mode boxes (prCallout/weekCheckmarks/calorieRow) only ever
+  // appear as the fixed highlight matching the user's goal — they no
+  // longer double as regular boxes for other goals, per explicit spec.
+  const HIGHLIGHT_MODE_BOX_IDS = ['prCallout', 'weekCheckmarks', 'calorieRow'];
   const layout = getTallyLayout();
   const hidden = new Set(getTallyHidden());
-  hidden.add(activeHighlightBoxId); // never show the highlight's box a second time in the regular grid
+  HIGHLIGHT_MODE_BOX_IDS.forEach(id => hidden.add(id));
   const visibleIds = layout.filter(id => !hidden.has(id));
   const rows = buildBoxRows(visibleIds);
 

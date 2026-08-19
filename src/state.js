@@ -404,7 +404,6 @@ export const TALLY_BOX_DEFS = [
   { id: 'prCallout',        label: 'Recent PR',          width: 'full' },
   { id: 'weekCheckmarks',   label: 'This week',          width: 'full' },
   { id: 'calorieRow',       label: 'Calories this week', width: 'full' },
-  { id: 'weightDelta',      label: 'Weight change',      width: 'half' },
 ];
 const DEFAULT_TALLY_LAYOUT = TALLY_BOX_DEFS.map(b => b.id);
 
