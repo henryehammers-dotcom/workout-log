@@ -198,6 +198,12 @@ Object.assign(window, {
   openTallySessionTimesPopup: tallyMod.openTallySessionTimesPopup,
   openTallyMuscleGapsPopup: tallyMod.openTallyMuscleGapsPopup,
   openTallyTrendDay: tallyMod.openTallyTrendDay,
+  openTallyTrendFilter: tallyMod.openTallyTrendFilter,
+  setTallyTrendMetric: tallyMod.setTallyTrendMetric,
+  toggleTallyTrendExercise: tallyMod.toggleTallyTrendExercise,
+  closeTallyFilter: tallyMod.closeTallyFilter,
+  openTallyMuscleFilter: tallyMod.openTallyMuscleFilter,
+  setTallyMuscleFilterMode: tallyMod.setTallyMuscleFilterMode,
 });
 
 /* ─── AUTO-UPDATE ON OPEN ───

@@ -14,7 +14,7 @@ import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
   getMuscleGroupsNeedingAttention, estimateCalorieRange, classifySessionType,
   getRecentDayTrends, getTotalWeightLiftedLbs, getMilestoneWindow,
-  getExerciseIndex, parseSessionDate,
+  getExerciseIndex, parseSessionDate, getHistoryDisplayNames,
 } from './history.js';
 
 /* ─── UNIT CONVERSION (display only — all storage stays lbs) ─── */
@@ -133,7 +133,7 @@ function computeTallyStats() {
   const attention = getMuscleGroupsNeedingAttention(profile.priorityMuscles, threshold, now);
   const totalLbs = getTotalWeightLiftedLbs();
   const milestoneWindow = getMilestoneWindow(totalLbs, 2);
-  const recentTrends = getRecentDayTrends(7, now);
+  const recentTrends = getRecentDayTrends(7, now, _trendExerciseFilter.length ? _trendExerciseFilter : null);
   const hist = getHistory();
   const loggedDayCount = Object.keys(hist).filter(k => hist[k] && hist[k].length).length;
   const setsCompleted = Object.values(hist).reduce((sum, entries) =>
@@ -294,11 +294,76 @@ function renderWeeklyQuotaPill(stats) {
   const text = goal == null ? `${daysLogged} days logged this week`
     : (met && overflow > 0) ? `+${overflow} day${overflow===1?'':'s'} over your goal`
     : `${daysLogged}/${goal} days logged this week`;
-  const color = met ? '#2a8a5c' : '#e05d52';
-  return `<div style="display:flex;align-items:center;gap:10px;margin:8px 0 2px">
-    <div style="flex:1;height:26px;border-radius:999px;background:${color};border:1.5px solid #111"></div>
-    <span style="font-size:11px;color:var(--text3);white-space:nowrap">${escHtml(text)}</span>
+  const color = met ? '#3fb87f' : '#e8695c';
+  const pct = goal ? Math.min(100, Math.round((daysLogged / goal) * 100)) : 0;
+  return `<div style="position:relative;height:26px;border-radius:999px;background:#eee;border:1.5px solid #111;margin:8px 0 2px;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;bottom:0;width:${pct}%;background:${color};border-radius:999px;transition:width .3s"></div>
+    <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:flex-end;padding:0 12px">
+      <span style="font-size:10px;color:#555;white-space:nowrap;font-weight:600">${escHtml(text)}</span>
+    </div>
   </div>`;
+}
+
+/* ─── FILTERS (Overall trend: which exercise(s)/metric; Last trained: which
+   muscle groups to show) — real popup sheets, not alert(). ─── */
+let _trendExerciseFilter = []; // empty = all exercises included
+let _trendMetricFilter = 'all'; // 'all' | 'reps' | 'weight' | 'sets' — display-only for now, doesn't change which exercises count (see history.js note on the trend box)
+let _muscleFilterShowAll = false; // false = only priority/needs-attention groups; true = every group
+
+export function openTallyTrendFilter() {
+  const hist = getHistory();
+  const index = getExerciseIndex(hist);
+  const options = getHistoryDisplayNames(index);
+  const body = document.getElementById('tally-filter-body');
+  const title = document.getElementById('tally-filter-title');
+  if (title) title.textContent = 'Filter trend';
+  if (body) {
+    const metricRow = `<div style="display:flex;gap:6px;margin-bottom:14px">
+      ${['all','reps','weight','sets'].map(m => `<button class="tally-filter-chip${_trendMetricFilter===m?' active':''}" onclick="setTallyTrendMetric('${m}')">${m === 'all' ? 'All' : m[0].toUpperCase()+m.slice(1)}</button>`).join('')}
+    </div>`;
+    const exRows = options.length
+      ? options.map(o => `<button class="tally-filter-row${_trendExerciseFilter.includes(o.key)?' active':''}" onclick="toggleTallyTrendExercise('${escAttr(o.key)}')">
+          <span>${escHtml(o.name)}</span>${_trendExerciseFilter.includes(o.key) ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}
+        </button>`).join('')
+      : '<p style="font-size:13px;color:var(--text3);padding:8px 0">No exercises logged yet.</p>';
+    body.innerHTML = metricRow + `<p style="font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700;margin:0 0 8px">Exercises (none selected = all)</p>` + exRows;
+  }
+  document.getElementById('tally-filter-wrap')?.classList.add('show');
+}
+export function setTallyTrendMetric(metric) {
+  _trendMetricFilter = metric;
+  openTallyTrendFilter(); // re-render the sheet with the new active state
+}
+export function toggleTallyTrendExercise(key) {
+  const at = _trendExerciseFilter.indexOf(key);
+  if (at === -1) _trendExerciseFilter.push(key); else _trendExerciseFilter.splice(at, 1);
+  openTallyTrendFilter();
+}
+export function closeTallyFilter() {
+  document.getElementById('tally-filter-wrap')?.classList.remove('show');
+  if (_lastStats) renderFullBody(_lastStats); // apply whatever filter state changed while the sheet was open
+}
+
+export function openTallyMuscleFilter() {
+  const title = document.getElementById('tally-filter-title');
+  if (title) title.textContent = 'Last trained';
+  const body = document.getElementById('tally-filter-body');
+  if (body && _lastStats) {
+    const rows = _lastStats.attention.all.map(g => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px">${escHtml(g.label)}</span>
+        <span style="font-size:12px;color:var(--text3)">${g.daysSince == null ? 'never trained' : g.daysSince + ' days ago'}</span>
+      </div>`).join('');
+    body.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:14px">
+        <button class="tally-filter-chip${!_muscleFilterShowAll?' active':''}" onclick="setTallyMuscleFilterMode(false)">Needs attention</button>
+        <button class="tally-filter-chip${_muscleFilterShowAll?' active':''}" onclick="setTallyMuscleFilterMode(true)">All groups</button>
+      </div>` + rows;
+  }
+  document.getElementById('tally-filter-wrap')?.classList.add('show');
+}
+export function setTallyMuscleFilterMode(showAll) {
+  _muscleFilterShowAll = showAll;
+  openTallyMuscleFilter();
 }
 
 /* ─── STANDARD BOXES (non-highlight registry — ids/widths in
@@ -315,8 +380,9 @@ const BOX_VARIANTS = {
 const BOX_RENDERERS = {
   overallTrend(stats) {
     const bars = stats.recentTrends;
-    if (!bars.length) return `<div class="tally-box-label">Overall trend</div><div class="tally-box-sub">Log a few sessions to see your trend.</div>`;
-    const colorFor = t => t === 'up' ? 'var(--green,#2a8a5c)' : t === 'down' ? 'var(--red,#c03232)' : 'var(--border2)';
+    const filterIcon = `<i class="ti ti-filter" onclick="event.stopPropagation();openTallyTrendFilter()" style="font-size:14px;cursor:pointer" aria-label="Filter trend"></i>`;
+    if (!bars.length) return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div><div class="tally-box-sub">Log a few sessions to see your trend.</div>`;
+    const colorFor = t => t === 'up' ? '#3fb87f' : t === 'down' ? '#e8695c' : '#ccc';
     const maxH = 44;
     const barsHtml = bars.map(b => `
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer" data-date="${escAttr(b.dateKey)}" class="tally-trend-bar">
@@ -324,7 +390,7 @@ const BOX_RENDERERS = {
           <div style="width:100%;height:${b.hasPR ? maxH : Math.round(maxH*0.6)}px;border-radius:4px;background:${b.hasPR ? 'var(--accent)' : colorFor(b.trend)}"></div>
         </div>
       </div>`).join('');
-    return `<div class="tally-box-label">Overall trend</div>
+    return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div>
       <div style="display:flex;gap:6px;margin-top:8px;align-items:flex-end">${barsHtml}</div>
       <div class="tally-box-sub" style="margin-top:8px">Tap a bar to see that session</div>`;
   },
@@ -349,25 +415,27 @@ const BOX_RENDERERS = {
         <span style="font-size:10px;color:#555">${fmtWeight(m.lbs)}</span>
         <span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(m.label)}</span>
       </div>`).join('');
+    // The ladder scrolls independently of the whole Tally sheet — its own
+    // max-height + overflow-y, separate from .tally-scroll's outer scroll —
+    // so you can browse the milestone list without scrolling the page.
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
-      <div style="max-height:170px;overflow-y:auto">${rows}</div>
+      <div style="max-height:170px;overflow-y:auto;overscroll-behavior:contain" onwheel="event.stopPropagation()">${rows}</div>
       <div style="margin-top:10px;background:#e05d52;border:1.5px solid #111;border-radius:6px;padding:10px;text-align:center">
         <div style="font-size:15px;font-weight:800;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
   },
   lastTrained(stats) {
-    const shown = stats.attention.needingAttention.slice(0, 2);
+    const source = _muscleFilterShowAll ? stats.attention.all : stats.attention.needingAttention;
+    const shown = source.slice(0, 2);
     const rows = shown.map((g, i) => {
       const text = g.daysSince == null ? 'never trained' : g.daysSince + ' days ago';
-      // First (most urgent, already priority-sorted) gets the yellow pill;
-      // the second gets a plain pill — matches the mockup's two-tier look.
       const pillBg = i === 0 ? '#f2d94e' : '#e8e8e5';
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
         <span style="font-size:12px;font-weight:600">${escHtml(g.label)}</span>
         <span style="font-size:10px;font-weight:700;background:${pillBg};border:1px solid #111;border-radius:999px;padding:2px 8px">${escHtml(text)}</span>
       </div>`;
     }).join('');
-    return `<div class="tally-box-label">Last trained</div>
+    return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Last trained</div><i class="ti ti-filter" onclick="event.stopPropagation();openTallyMuscleFilter()" style="font-size:14px;cursor:pointer" aria-label="Filter muscle groups"></i></div>
       ${shown.length ? rows : '<div class="tally-box-sub">Nothing overdue right now.</div>'}
       <div class="tally-box-sub" onclick="openTallyMuscleGapsPopup()" style="cursor:pointer;text-decoration:underline;margin-top:6px;font-size:10px">See all</div>`;
   },
@@ -556,17 +624,36 @@ export function renderTallySheet() {
   renderFullBody(_lastStats);
 }
 
-/* ─── DETAIL POPUPS (session times, muscle gaps) — simple modal-style
-   alerts for now; can be upgraded to proper sheets in a later pass. ─── */
+/* ─── DETAIL POPUPS (session times, muscle gaps) — real sheets, reusing
+   the same filter-sheet markup/overlay as openTallyTrendFilter/
+   openTallyMuscleFilter above. ─── */
 export function openTallySessionTimesPopup() {
   if (!_lastStats) return;
+  const title = document.getElementById('tally-filter-title');
+  if (title) title.textContent = "This week's session times";
+  const body = document.getElementById('tally-filter-body');
   const days = _lastStats.avgSession.days;
-  if (!days.length) { alert('No session-length data yet for this week.'); return; }
-  const lines = days.map(d => `${d.dateKey.replace(/\w+,\s/, '')}: ${d.minutes} min`).join('\n');
-  alert('This week\'s session times:\n\n' + lines);
+  if (body) {
+    body.innerHTML = days.length
+      ? days.map(d => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:14px">${escHtml(d.dateKey.replace(/\w+,\s/, ''))}</span>
+          <span style="font-size:13px;color:var(--text3)">${d.minutes} min</span>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text3);padding:8px 0">No session-length data yet for this week — this fills in as you log more sessions.</p>';
+  }
+  document.getElementById('tally-filter-wrap')?.classList.add('show');
 }
 export function openTallyMuscleGapsPopup() {
   if (!_lastStats) return;
-  const lines = _lastStats.attention.all.map(g => `${g.label}: ${g.daysSince == null ? 'never trained' : g.daysSince + ' days ago'}`).join('\n');
-  alert('Muscle groups — last trained:\n\n' + lines);
+  const title = document.getElementById('tally-filter-title');
+  if (title) title.textContent = 'Last trained — all groups';
+  const body = document.getElementById('tally-filter-body');
+  if (body) {
+    body.innerHTML = _lastStats.attention.all.map(g => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px">${escHtml(g.label)}</span>
+        <span style="font-size:12px;color:var(--text3)">${g.daysSince == null ? 'never trained' : g.daysSince + ' days ago'}</span>
+      </div>`).join('');
+  }
+  document.getElementById('tally-filter-wrap')?.classList.add('show');
 }

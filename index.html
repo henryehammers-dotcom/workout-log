@@ -803,6 +803,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .pf-weight-row .field-input{width:90px;flex:none}
 .pf-chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .pf-chip{padding:7px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s,color .15s}
+.tally-filter-chip{padding:7px 14px;border-radius:999px;font-size:13px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit}
+.tally-filter-chip.active{border-color:var(--accent);background:var(--bg3);color:var(--accent);font-weight:600}
+.tally-filter-row{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left}
+.tally-filter-row.active{color:var(--accent);font-weight:600}
+.tally-filter-row i{font-size:16px}
 .pf-chip:hover{background:var(--bg3)}
 .pf-chip.active{border-color:var(--accent);background:var(--bg3);color:var(--accent);font-weight:600}
 
@@ -904,8 +909,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .tally-box-row.triple{grid-template-columns:1fr 1fr 1fr}
 
 /* Default (accent) block style — the solid periwinkle stat cards */
-.tally-box{background:#8b93e8;border:1.5px solid #111;border-radius:8px;padding:10px 12px;position:relative;color:#111}
-[data-theme="dark"] .tally-box{background:#6b6fc9;border-color:#000;color:#0d0d0d}
+.tally-box{background:var(--accent-h);border:1.5px solid #111;border-radius:8px;padding:10px 12px;position:relative;color:var(--accent-h-text)}
 .tally-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;opacity:0.75}
 .tally-box-value{font-size:15px;font-weight:800;line-height:1.15}
 .tally-box-sub{font-size:11px;margin-top:2px;opacity:0.85}
@@ -919,8 +923,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* Highlight/PR block — periwinkle like the standard block but sized for
    the top headline row */
-.tally-box.highlight{background:#8b93e8;border:1.5px solid #111;color:#111;padding:12px 14px}
-[data-theme="dark"] .tally-box.highlight{background:#6b6fc9;border-color:#000;color:#0d0d0d}
+.tally-box.highlight{background:var(--accent-h);border:1.5px solid #111;color:var(--accent-h-text);padding:12px 14px}
 
 .tally-box.editing{animation:tally-wiggle .22s ease-in-out infinite alternate}
 .tally-box-remove{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;background:#c03232;color:#fff;border:1.5px solid #111;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;line-height:1;z-index:2}
@@ -1587,6 +1590,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="right-group">
         <button class="btn-base" onclick="closeProfileEdit()">Cancel</button>
         <button class="btn-base primary" onclick="saveProfileEdit()">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Tally filter / detail sheet ── -->
+<div class="edit-session-wrap" id="tally-filter-wrap" onclick="if(event.target===this) closeTallyFilter()">
+  <div class="edit-session profile-edit">
+    <div class="edit-session-header">
+      <div class="edit-session-title" id="tally-filter-title">Filter</div>
+    </div>
+    <div class="profile-edit-scroll" id="tally-filter-body"></div>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base primary" onclick="closeTallyFilter()">Done</button>
       </div>
     </div>
   </div>
