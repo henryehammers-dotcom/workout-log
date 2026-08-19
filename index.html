@@ -243,10 +243,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    BW chip (used inside sidebar header)
    ────────────────────────────────────────────────────────── */
-.bw-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1.5px solid var(--border2);border-radius:var(--r-pill);background:transparent}
-.bw-chip-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.04em}
-.bw-chip-value{font-size:14px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
-.bw-chip-unit{font-size:11px;color:var(--text3)}
 
 /* ──────────────────────────────────────────────────────────
    DAY HEADER — small day name + dropdown caret, big display title
@@ -915,11 +911,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-title" id="sidebar-title">Tally Up</div>
-    <div class="bw-chip" id="bw-chip">
-      <span class="bw-chip-label">BW</span>
-      <span class="bw-chip-value" id="bw-display">—</span>
-      <span class="bw-chip-unit" id="bw-unit-label">lbs</span>
-    </div>
   </div>
   <div class="sidebar-nav">
     <button class="sidebar-nav-item active" id="snav-log" onclick="switchTab('log')"><span class="sidebar-nav-dot"></span>Log</button>
@@ -1299,7 +1290,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <div class="welcome-wrap" id="welcome-wrap">
   <img class="welcome-logo" src="Tallyup-Icon-192.png" alt="Tally Up">
   <div class="welcome-title">Welcome to Tally Up!</div>
-  <div class="welcome-sub">Your one-stop shop for workout routine organization, progress tracking, and habit building.</div>
+  <div class="welcome-sub" id="welcome-sub">Your one-stop shop for workout routine organization, progress tracking, and habit building.</div>
   <div class="welcome-form" id="welcome-form">
     <div>
       <label class="welcome-field-label" for="welcome-name">Your name</label>
@@ -1366,46 +1357,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       </div>
       <i class="ti ti-chevron-right profile-summary-chevron" aria-hidden="true"></i>
     </button>
-    <div class="settings-card">
-      <div class="settings-row">
-        <span class="settings-row-label">Name</span>
-        <input class="settings-input wide" id="settings-name" type="text" oninput="applySettingsName(this.value)">
-      </div>
-      <div class="settings-row">
-        <span class="settings-row-label">Bodyweight</span>
-        <div class="settings-row-value">
-          <input class="settings-input narrow" id="settings-bw" type="number" min="0" step="0.1" placeholder="0" oninput="saveBodyweight(this.value)">
-          <span class="settings-row-unit" id="settings-bw-unit">lbs</span>
-        </div>
-      </div>
-      <div class="settings-row">
-        <span class="settings-row-label">Hide from sidebar</span>
-        <div class="tm-switch" id="hide-bw-toggle" onclick="toggleHideBodyweight(!this.classList.contains('on'))">
-          <div class="tm-switch-track"></div>
-          <div class="tm-switch-thumb"></div>
-        </div>
-      </div>
-    </div>
 
     <div class="section-label">Preferences</div>
     <div class="settings-block">
-      <div class="settings-block-row">
-        <span class="settings-block-title">Theme <span class="theme-base-label" id="settings-base-label"></span></span>
-        <div class="segmented" id="theme-toggle">
-          <button class="seg-opt" data-val="light" onclick="setTheme('light')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-            Light
-          </button>
-          <button class="seg-opt" data-val="dark" onclick="setTheme('dark')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            Dark
-          </button>
-        </div>
-      </div>
-      <div class="settings-block-row">
-        <span class="settings-block-title">Accent color</span>
-        <div class="accent-swatch-row" id="settings-accent"></div>
-      </div>
       <div class="settings-block-row">
         <span class="settings-block-title">Units</span>
         <div class="segmented" id="units-toggle">
@@ -1422,28 +1376,50 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       </div>
     </div>
 
-    <div class="section-label">Share</div>
-    <button class="data-card" onclick="shareApp()">
-      <div class="data-card-title">Share Tally Up</div>
-      <div class="data-card-sub">Send the app link to someone</div>
-    </button>
-
     <div class="section-label">Data</div>
-    <button class="data-card" onclick="saveFile()">
-      <div class="data-card-title">Save backup file</div>
-      <div class="data-card-sub">Downloads a JSON file with your routine, history, and settings</div>
+    <button class="data-card" id="data-controls-entry" onclick="openDataControls()">
+      <div class="data-card-title">Data controls</div>
+      <div class="data-card-sub">Backup, restore, share, and export</div>
     </button>
-    <button class="data-card" onclick="openRestoreSheet()">
-      <div class="data-card-title">Restore from backup</div>
-      <div class="data-card-sub">Restore from a previously saved backup</div>
-    </button>
-    <button class="data-card" onclick="exportForAI()">
-      <div class="data-card-title">Copy training summary</div>
-      <div class="data-card-sub">Plain text — paste into ChatGPT, Claude, etc.</div>
-    </button>
-    <div class="data-card-sub" id="settings-last-backup" style="padding:0 4px;margin-top:-2px;margin-bottom:12px"></div>
 
     <div class="version-line">Tally Up <span id="settings-version"></span></div>
+  </div>
+</div>
+
+<!-- ── Data controls sheet ── -->
+<div class="edit-session-wrap" id="data-controls-wrap" onclick="if(event.target===this) closeDataControls()">
+  <div class="edit-session">
+    <div class="edit-session-header">
+      <div class="edit-session-title">Data controls</div>
+    </div>
+    <div class="profile-edit-scroll">
+      <div class="section-label" style="margin-top:0">Share</div>
+      <button class="data-card" onclick="shareApp()">
+        <div class="data-card-title">Share Tally Up</div>
+        <div class="data-card-sub">Send the app link to someone</div>
+      </button>
+
+      <div class="section-label">Data</div>
+      <button class="data-card" onclick="saveFile()">
+        <div class="data-card-title">Save backup file</div>
+        <div class="data-card-sub">Downloads a JSON file with your routine, history, and settings</div>
+      </button>
+      <button class="data-card" onclick="openRestoreSheet()">
+        <div class="data-card-title">Restore from backup</div>
+        <div class="data-card-sub">Restore from a previously saved backup</div>
+      </button>
+      <button class="data-card" onclick="exportForAI()">
+        <div class="data-card-title">Copy training summary</div>
+        <div class="data-card-sub">Plain text — paste into ChatGPT, Claude, etc.</div>
+      </button>
+      <div class="data-card-sub" id="settings-last-backup" style="padding:0 4px;margin-top:-2px;margin-bottom:12px"></div>
+    </div>
+    <div class="edit-session-actions">
+      <div></div>
+      <div class="right-group">
+        <button class="btn-base" onclick="closeDataControls()">Done</button>
+      </div>
+    </div>
   </div>
 </div>
 

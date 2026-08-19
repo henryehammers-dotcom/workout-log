@@ -2,11 +2,10 @@
    Tally Up — Theme, Units, Settings Sheet
    ════════════════════════════════════════════ */
 import { KEYS, currentUnits, setCurrentUnits, showInstructionsIcons, setShowInstructionsIcons,
-         hideBodyweight, getCleanBw, APP_VERSION, setAppVersion,
+         getCleanBw, APP_VERSION, setAppVersion,
          GOAL_QUESTIONS, buildPriorityMuscleOptions, getProfile, saveProfile,
          escAttr, escHtml } from './state.js';
 import { renderDayContent } from './schedule-day.js';
-import { updateBwDisplay } from './bodyweight.js';
 import { renderLastBackupLine } from './backup.js';
 import { startOnboardingQuestionnaire } from './onboarding.js';
 
@@ -39,7 +38,6 @@ export function setUnits(u) {
   setCurrentUnits(u);
   localStorage.setItem(KEYS.units, u);
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === u));
-  updateBwDisplay();
   renderDayContent();
 }
 
@@ -158,20 +156,8 @@ export function openSettings(isFirstLaunch) {
   modal.style.right = '0';
   modal.style.bottom = '0';
   modal.style.left = '0';
-  const nameEl = document.getElementById('settings-name');
-  if (nameEl) nameEl.value = localStorage.getItem(KEYS.name) || '';
-  const bw = getCleanBw();
-  const bwEl = document.getElementById('settings-bw');
-  if (bwEl) bwEl.value = bw != null ? bw : '';
   document.querySelectorAll('#units-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === currentUnits));
-  const theme = document.documentElement.getAttribute('data-theme') || 'light';
-  const base = document.documentElement.getAttribute('data-base') || THEME_BASE_DEFAULT[theme];
-  document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === theme));
-  syncThemeBaseLabel(base);
-  renderAccentSwatches();
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
-  document.getElementById('hide-bw-toggle')?.classList.toggle('on', hideBodyweight);
-  renderLastBackupLine();
   renderProfileSummaryCard();
 }
 export function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
@@ -216,6 +202,13 @@ export function openProfileEdit() {
 export function closeProfileEdit() {
   document.getElementById('profile-edit-wrap')?.classList.remove('show');
   profileEditDraft = null;
+}
+export function openDataControls() {
+  document.getElementById('data-controls-wrap')?.classList.add('show');
+  renderLastBackupLine();
+}
+export function closeDataControls() {
+  document.getElementById('data-controls-wrap')?.classList.remove('show');
 }
 function renderProfileEditForm() {
   const container = document.getElementById('profile-edit-scroll');
@@ -271,7 +264,34 @@ function renderProfileEditForm() {
       <label class="pf-field-label">Priority muscle groups</label>
       <div class="pf-chip-row">${muscleChipsHtml}</div>
     </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Theme <span class="theme-base-label" id="settings-base-label"></span></label>
+      <div class="segmented" id="theme-toggle">
+        <button class="seg-opt" data-val="light" onclick="setTheme('light')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          Light
+        </button>
+        <button class="seg-opt" data-val="dark" onclick="setTheme('dark')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark
+        </button>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label class="pf-field-label">Accent color</label>
+      <div class="accent-swatch-row" id="settings-accent"></div>
+    </div>
   `;
+  // Theme/accent controls render generic markup that renderAccentSwatches()/
+  // openSettings() normally populate with active-state — sync them here too
+  // since this sheet has its own copies of #theme-toggle / #settings-accent
+  // ids (only one is ever in the DOM/visible at a time, so reusing the ids
+  // is safe, matching the existing welcome-theme/settings-theme dual-id pattern).
+  const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const curBase = document.documentElement.getAttribute('data-base') || THEME_BASE_DEFAULT[curTheme];
+  document.querySelectorAll('#theme-toggle .seg-opt').forEach(el => el.classList.toggle('active', el.dataset.val === curTheme));
+  syncThemeBaseLabel(curBase);
+  renderAccentSwatches();
 }
 // Generic setter for straightforward text/select fields onto the in-sheet
 // draft. name_display is handled separately (see saveProfileEdit) since the
@@ -304,10 +324,10 @@ export function saveProfileEdit() {
     applySettingsName(profileEditDraft._nameDisplay.trim());
   }
   if (profileEditDraft._weightInput !== undefined && profileEditDraft._weightInput !== '') {
-    // Reuses the same storage path as the Settings bodyweight field and the
-    // Tally's own quick-update button, so all three stay in sync on one key.
+    // Reuses the same storage path the old Settings bodyweight field used and
+    // whatever else reads KEYS.bw directly (e.g. bodyweight-exercise volume
+    // math), so it stays a single source of truth.
     localStorage.setItem(KEYS.bw, parseFloat(profileEditDraft._weightInput));
-    updateBwDisplay();
   }
   saveProfile({
     heightIn: profileEditDraft.heightIn,
