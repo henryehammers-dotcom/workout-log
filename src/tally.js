@@ -426,21 +426,41 @@ const BOX_RENDERERS = {
     // design exactly: one pill-shaped fill track, evenly-spaced tick marks
     // along the side, no labels shown by default. Tapping a tick reveals
     // that milestone's name + weight in a small readout above the gauge.
-    // The fill itself is computed on the true 1-to-2,000,000 lb linear
-    // scale (one pound = one unit of the scale), so the percentage is
-    // always mathematically exact regardless of which ticks exist —
-    // 50 lbs is genuinely (50/2000000)*100 = 0.0025% full, correctly
-    // invisible, not an artifact of row count or milestone spacing.
-    const scaleMax = 2000000;
     const pillH = 280;
-    const fillPct = Math.min(100, (stats.totalLbs / scaleMax) * 100);
-    const fillPx = Math.round((fillPct / 100) * pillH);
-    // Ticks evenly spaced by rank (like a ruler), not by true value
-    // position — avoids the label-overlap problem entirely, since low
-    // milestones (10k-100k) are visually indistinguishable at this scale
-    // if positioned by true value. Reversed so index 0 (top) is heaviest.
-    const ticks = WEIGHT_MILESTONES.slice().reverse();
+    // Ticks are spaced evenly by RANK (like a ruler), not by true value —
+    // real milestone values span 10,000 to 2,000,000, so positioning them
+    // at their true proportional value would crush the lower dozen ticks
+    // into an unreadable few pixels. Given ticks are rank-based, the fill
+    // MUST also be computed against that same rank scale, not the true
+    // linear value — otherwise the fill and the ticks disagree about where
+    // "50,000 lbs" is, which is exactly the bug this replaces: interpolate
+    // the fill's position between whichever two ticks totalLbs falls
+    // between, proportional to progress within that specific gap, so the
+    // fill and the tick marks are always mutually consistent.
+    const ticks = WEIGHT_MILESTONES.slice().reverse(); // heaviest at top (index 0)
     const tickGap = pillH / (ticks.length - 1);
+    // ticksAsc: lightest first, for finding which real range totalLbs falls in
+    const ticksAsc = WEIGHT_MILESTONES; // already lightest-first
+    let fillPx;
+    const passedCount = ticksAsc.filter(m => stats.totalLbs >= m.lbs).length;
+    if (passedCount >= ticksAsc.length) {
+      fillPx = pillH; // past every milestone
+    } else if (passedCount === 0) {
+      // Below the first (lightest) milestone — partial fill toward it,
+      // scaled against that first tick's own gap rather than 0, so small
+      // real amounts still show as correctly tiny, not artificially large.
+      const frac = stats.totalLbs / ticksAsc[0].lbs;
+      fillPx = frac * tickGap;
+    } else {
+      const floorLbs = ticksAsc[passedCount - 1].lbs;
+      const ceilLbs = ticksAsc[passedCount].lbs;
+      const frac = (stats.totalLbs - floorLbs) / (ceilLbs - floorLbs);
+      // passedCount milestones passed means the current position is at
+      // rank (passedCount-1) — the last tick actually reached — plus
+      // partial progress through the gap to the next one.
+      fillPx = ((passedCount - 1) * tickGap) + (frac * tickGap);
+    }
+    fillPx = Math.round(Math.min(pillH, fillPx));
     const tickMarks = ticks.map((m, i) => {
       const yFromTop = Math.round(i * tickGap);
       return `<div class="tally-weight-tick" data-lbs="${m.lbs}" data-label="${escAttr(m.label)}"
