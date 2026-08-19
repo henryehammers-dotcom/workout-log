@@ -2,7 +2,8 @@
    Tally Up — History (list, momentum chart, edit session)
    ════════════════════════════════════════════ */
 import { activeCharts, currentUnits, getHistory, saveHistory,
-         escAttr, escHtml, FREQUENCY_UPPER_BOUND } from './state.js';
+         escAttr, escHtml, FREQUENCY_UPPER_BOUND, DEFAULT_LIBRARY_V2,
+         MUSCLE_GROUPS_V2, WEIGHT_MILESTONES } from './state.js';
 import { formatHistoryDate } from './calendar.js';
 import { showModal, closeModal } from './modal.js';
 
@@ -172,6 +173,141 @@ export function getWeeklyAvgSessionMinutes(refDate) {
   if (!perDay.length) return { avgMinutes: null, days: [] };
   const avg = Math.round(perDay.reduce((sum, d) => sum + d.minutes, 0) / perDay.length);
   return { avgMinutes: avg, days: perDay };
+}
+
+// Resolves a logged history entry back to its Library exercise, mirroring
+// schedule-day.js's resolveScheduledExercise fallback chain (exId match ->
+// exact name match -> case/trailing-s-insensitive name match) so a session
+// logged against a since-renamed or since-deleted exercise still resolves
+// wherever the Library still has a matching entry.
+function normalizeExName(n) { return (n || '').trim().toLowerCase().replace(/s$/, ''); }
+export function resolveHistoryEntryToLibrary(entry) {
+  let libEx = null;
+  if (entry.exId) libEx = DEFAULT_LIBRARY_V2.find(e => e.id === entry.exId);
+  if (!libEx && entry.name) libEx = DEFAULT_LIBRARY_V2.find(e => e.name === entry.name);
+  if (!libEx && entry.name) {
+    const norm = normalizeExName(entry.name);
+    libEx = DEFAULT_LIBRARY_V2.find(e => normalizeExName(e.name) === norm);
+  }
+  return libEx || null; // null if the exercise was deleted and nothing matches by name either
+}
+
+// Days since a muscle group was last trained, for every group in
+// MUSCLE_GROUPS_V2 except cardio (cardio doesn't have a meaningful "last
+// trained" concept the same way a muscle group does). A group with zero
+// history returns null for daysSince (never trained), not Infinity/-1, so
+// callers can distinguish "never" from "a very long time ago" if they want to.
+export function getMuscleGroupGaps(refDate) {
+  const hist = getHistory();
+  const today = new Date(refDate || new Date());
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const lastTrained = {}; // group key -> most recent Date trained
+  Object.keys(hist).forEach(dateKey => {
+    const entries = hist[dateKey];
+    if (!entries || !entries.length) return;
+    const d = parseSessionDate(dateKey);
+    entries.forEach(entry => {
+      const libEx = resolveHistoryEntryToLibrary(entry);
+      if (!libEx || !libEx.group || libEx.group === 'cardio') return;
+      if (!lastTrained[libEx.group] || d > lastTrained[libEx.group]) lastTrained[libEx.group] = d;
+    });
+  });
+  return MUSCLE_GROUPS_V2
+    .filter(g => g.key !== 'cardio')
+    .map(g => {
+      const last = lastTrained[g.key] || null;
+      const daysSince = last
+        ? Math.round((todayMid - new Date(last.getFullYear(), last.getMonth(), last.getDate())) / 86400000)
+        : null;
+      return { key: g.key, label: g.label, daysSince };
+    });
+}
+
+// "Needs attention" list for the Tally box: groups at/over the staleness
+// threshold, sorted so the profile's priority groups (Q3) surface first
+// regardless of how stale non-priority groups are, then by staleness
+// descending within each bucket. `threshold` is normally
+// FREQUENCY_UPPER_BOUND[profile.targetFrequency] (see state.js) — e.g.
+// someone training 1-2 days/week flags a group after 2 days untouched.
+export function getMuscleGroupsNeedingAttention(priorityMuscles, threshold, refDate) {
+  const gaps = getMuscleGroupGaps(refDate);
+  const priority = new Set(priorityMuscles || []);
+  const stale = gaps.filter(g => g.daysSince == null || g.daysSince >= threshold);
+  stale.sort((a, b) => {
+    const aPri = priority.has(a.key) ? 1 : 0, bPri = priority.has(b.key) ? 1 : 0;
+    if (aPri !== bPri) return bPri - aPri;
+    const aDays = a.daysSince == null ? Infinity : a.daysSince;
+    const bDays = b.daysSince == null ? Infinity : b.daysSince;
+    return bDays - aDays;
+  });
+  return { all: gaps, needingAttention: stale };
+}
+
+/* ─── CALORIE ESTIMATE (rough, range-based — see note below) ───
+   Standard MET (Metabolic Equivalent of Task) approach: calories = MET ×
+   weight(kg) × duration(hours). This is a well-established estimation
+   method, but MET tables are themselves broad bands from population
+   averages — there's no way to make this precise without real
+   physiological data (heart rate, etc.), which this app doesn't collect.
+   Returning a range rather than a point estimate is a deliberate way of
+   being honest about that uncertainty, not just a UI choice. */
+const MET_RANGE = {
+  lifting: [3.5, 6],   // general resistance training, light-to-vigorous effort
+  cardio:  [5, 10],    // walking/light cardio through vigorous running/cycling
+};
+export function estimateCalorieRange(weightLbs, minutes, sessionType) {
+  if (weightLbs == null || !minutes) return null;
+  const kg = weightLbs / 2.20462;
+  const hours = minutes / 60;
+  const [metLow, metHigh] = MET_RANGE[sessionType] || MET_RANGE.lifting;
+  const low = Math.round(metLow * kg * hours);
+  const high = Math.round(metHigh * kg * hours);
+  return { low, high };
+}
+// Classifies a logged day as lifting or cardio based on majority exercise
+// type, for picking which MET band to use. Falls back to 'lifting' if
+// nothing resolves (safer default — cardio's MET range runs higher, so
+// defaulting to lifting avoids overestimating an unclassifiable session).
+export function classifySessionType(dateKey) {
+  const hist = getHistory();
+  const entries = hist[dateKey];
+  if (!entries || !entries.length) return 'lifting';
+  let cardioCount = 0, otherCount = 0;
+  entries.forEach(entry => {
+    const libEx = resolveHistoryEntryToLibrary(entry);
+    if (libEx && libEx.group === 'cardio') cardioCount++; else otherCount++;
+  });
+  return cardioCount > otherCount ? 'cardio' : 'lifting';
+}
+
+/* ─── TOTAL WEIGHT LIFTED (milestone ladder) ─── */
+// Cumulative weight across every set in every logged session, all-time. Sums
+// raw weight×reps per set (same math as sessionVolume, applied across all
+// history rather than one session) — always in lbs regardless of the user's
+// current unit setting, since WEIGHT_MILESTONES (state.js) is lbs-based and
+// conversion for display happens at render time, not here.
+export function getTotalWeightLiftedLbs() {
+  const hist = getHistory();
+  let total = 0;
+  Object.values(hist).forEach(entries => {
+    entries.forEach(entry => { total += sessionVolume(entry.sets); });
+  });
+  return total;
+}
+// Returns the milestone ladder windowed around the user's current total: the
+// most recently passed milestone, the next unreached one, plus `context`
+// milestones on either side for scroll continuity (per spec: box shows a
+// window, full list is scrollable independent of the page).
+export function getMilestoneWindow(totalLbs, context) {
+  const ctx = context == null ? 2 : context;
+  let nextIdx = WEIGHT_MILESTONES.findIndex(m => m.lbs > totalLbs);
+  if (nextIdx === -1) nextIdx = WEIGHT_MILESTONES.length; // past every milestone
+  const lo = Math.max(0, nextIdx - 1 - ctx);
+  const hi = Math.min(WEIGHT_MILESTONES.length, nextIdx + ctx);
+  return WEIGHT_MILESTONES.slice(lo, hi).map((m, i) => ({
+    ...m,
+    reached: (lo + i) < nextIdx,
+  }));
 }
 
 let histSearchQuery = '';
