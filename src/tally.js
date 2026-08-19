@@ -51,9 +51,11 @@ function trendUpIconSvg() {
 export function openTallySheet() {
   renderTallySheet();
   document.getElementById('tally-overlay')?.classList.add('show');
+  document.body.style.overflow = 'hidden'; // lock background scroll while the sheet is open
 }
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
+  document.body.style.overflow = '';
   _restBoxesRevealed = false; // rest-day reveal is per-viewing, not sticky across opens
 }
 // Called at the end of app init (see main.js) — opens on every launch per
@@ -91,18 +93,53 @@ export function tallySheetDragEnd() {
 function wireSheetSwipe() {
   const grabber = document.getElementById('tally-grabber');
   const sheet = document.getElementById('tally-sheet');
-  if (!grabber || !sheet || grabber.dataset.wired) return;
-  grabber.dataset.wired = '1';
-  grabber.addEventListener('touchstart', e => tallySheetDragStart(e.touches[0].clientY), { passive: true });
-  grabber.addEventListener('touchmove', e => { e.preventDefault(); tallySheetDragMove(e.touches[0].clientY); }, { passive: false });
-  grabber.addEventListener('touchend', tallySheetDragEnd);
-  grabber.addEventListener('mousedown', e => {
-    tallySheetDragStart(e.clientY);
-    const onMove = ev => tallySheetDragMove(ev.clientY);
-    const onUp = () => { tallySheetDragEnd(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
+  const scroll = document.getElementById('tally-scroll');
+  if (!grabber || !sheet || !scroll) return;
+
+  // Grabber: always drag-to-dismiss from anywhere on the handle itself,
+  // regardless of scroll position — this part already worked correctly.
+  if (!grabber.dataset.wired) {
+    grabber.dataset.wired = '1';
+    grabber.addEventListener('touchstart', e => tallySheetDragStart(e.touches[0].clientY), { passive: true });
+    grabber.addEventListener('touchmove', e => { e.preventDefault(); tallySheetDragMove(e.touches[0].clientY); }, { passive: false });
+    grabber.addEventListener('touchend', tallySheetDragEnd);
+    grabber.addEventListener('mousedown', e => {
+      tallySheetDragStart(e.clientY);
+      const onMove = ev => tallySheetDragMove(ev.clientY);
+      const onUp = () => { tallySheetDragEnd(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
+  // Scroll area: this is the actual bug fix — swiping the sheet body
+  // (not just the tiny grabber) now dismisses it too, but ONLY once the
+  // content is already scrolled to the very top. Below the top, a
+  // downward touch is a normal scroll gesture and must not be hijacked;
+  // once scrollTop is 0 and the user pulls down further, that pull
+  // engages the same dismiss-drag as the grabber. This is the standard
+  // native bottom-sheet pattern (iOS Maps, Apple Music "now playing", etc).
+  if (!scroll.dataset.wired) {
+    scroll.dataset.wired = '1';
+    let scrollDragActive = false;
+    scroll.addEventListener('touchstart', e => {
+      scrollDragActive = scroll.scrollTop <= 0;
+      if (scrollDragActive) tallySheetDragStart(e.touches[0].clientY);
+    }, { passive: true });
+    scroll.addEventListener('touchmove', e => {
+      if (!scrollDragActive) return;
+      // If the user is still at the top AND pulling down, this is a
+      // dismiss-drag — prevent the page from scrolling underneath.
+      // If they've since scrolled down (e.g. bounced back), release the
+      // gesture back to normal scrolling rather than fighting it.
+      if (scroll.scrollTop > 0) { scrollDragActive = false; tallySheetDragEnd(); return; }
+      e.preventDefault();
+      tallySheetDragMove(e.touches[0].clientY);
+    }, { passive: false });
+    scroll.addEventListener('touchend', () => {
+      if (scrollDragActive) { tallySheetDragEnd(); scrollDragActive = false; }
+    });
+  }
 }
 
 /* ─── STAT COMPUTATION (pulls together every history.js/state.js helper

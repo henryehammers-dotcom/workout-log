@@ -887,7 +887,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 [data-theme="dark"] .tally-sheet{background:#1c1c1a}
 .tally-sheet.dragging{transition:none}
 .tally-grabber{width:36px;height:4px;border-radius:2px;background:#999;margin:10px auto 4px;flex-shrink:0}
-.tally-scroll{overflow-y:auto;padding:4px 16px 18px}
+.tally-scroll{overflow-y:auto;padding:4px 16px calc(28px + env(safe-area-inset-bottom))}
 .tally-header{margin-bottom:28px}
 .tally-section-title{font-size:14px;font-weight:800;color:var(--text);margin:0 0 10px}
 .tally-section-title.hide{display:none}
