@@ -910,10 +910,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* Default block style — solid coral, matching the original mockup exactly
    (no theme-accent color used anywhere in the Tally, by design) */
 .tally-box{background:#e8695c;border:none;border-radius:12px;padding:10px 12px;position:relative;color:#fff}
-.tally-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;opacity:0.75}
+.tally-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;color:#fff}
 .tally-box-value{font-size:15px;font-weight:800;line-height:1.15}
-.tally-box.value-first .tally-box-label{margin-bottom:0;margin-top:4px}
-.tally-box-sub{font-size:11px;margin-top:2px;opacity:0.85}
+.tally-box.stat-box{text-align:center}
+.tally-icon-badge{margin-left:auto;margin-right:auto}
+.tally-box-sub{font-size:11px;margin-top:2px;color:#fff;opacity:0.92}
+.tally-icon-badge{width:22px;height:22px;border-radius:50%;background:#111;color:#e8695c;display:flex;align-items:center;justify-content:center;margin-top:6px}
 
 /* Neutral/light block variant — used for the trend chart and the total
    weight ladder, matching the mockup's gray (not coral) sections */
@@ -921,6 +923,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 [data-theme="dark"] .tally-box.neutral{background:#26261f;color:#f0f0ec}
 .tally-box.neutral .tally-box-label{opacity:0.6;color:#333}
 [data-theme="dark"] .tally-box.neutral .tally-box-label{color:#bbb}
+.tally-box.neutral .tally-box-sub{color:#555;opacity:1}
+[data-theme="dark"] .tally-box.neutral .tally-box-sub{color:#bbb}
 
 /* Highlight/PR block — same coral as the standard block, sized for the
    top headline row */

@@ -34,6 +34,18 @@ function filterIconSvg(onclickAttr, label) {
 function checkIconSvg() {
   return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
 }
+function medalIconSvg() {
+  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>`;
+}
+function flameIconSvg() {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`;
+}
+function calendarIconSvg() {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+}
+function trendUpIconSvg() {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+}
 
 /* ─── SHEET OPEN / CLOSE / SWIPE ─── */
 export function openTallySheet() {
@@ -233,11 +245,16 @@ function weekCheckmarkDots(loggedDateKeys) {
 function renderPRHighlightInner(stats) {
   const pr = stats.mostRecentPR;
   if (!pr) {
-    return `<div class="tally-box-label">Recent PR</div><div class="tally-box-sub">Log a session to start tracking PRs.</div>`;
+    return `<div style="display:flex;align-items:center;gap:12px">${medalIconSvg()}<div><div class="tally-box-label" style="margin:0">Recent PR</div><div class="tally-box-sub">Log a session to start tracking PRs.</div></div></div>`;
   }
-  return `<div class="tally-box-label">Heaviest ever</div>
-    <div class="tally-box-value">${escHtml(pr.name)}</div>
-    <div class="tally-box-sub">${fmtWeight(Number(pr.weight)||0)} × ${pr.reps}, on ${escHtml(pr.date.replace(/\w+,\s/,''))}</div>`;
+  return `<div style="display:flex;align-items:center;gap:12px">
+    ${medalIconSvg()}
+    <div>
+      <div class="tally-box-label" style="margin:0">Heaviest ever</div>
+      <div class="tally-box-value">${escHtml(pr.name)}</div>
+      <div class="tally-box-sub">${fmtWeight(Number(pr.weight)||0)} × ${pr.reps}, on ${escHtml(pr.date.replace(/\w+,\s/,''))}</div>
+    </div>
+  </div>`;
 }
 function renderWeekCheckmarksInner() {
   const days = weekCheckmarkDots(loggedDateKeySetThisWeek());
@@ -373,9 +390,9 @@ export function closeTallyFilter() {
 const BOX_VARIANTS = {
   overallTrend: 'neutral',
   totalWeight: 'neutral',
-  bestStreak: 'value-first',
-  daysLogged: 'value-first',
-  setsCompleted: 'value-first',
+  bestStreak: 'stat-box',
+  daysLogged: 'stat-box',
+  setsCompleted: 'stat-box',
 };
 const BOX_RENDERERS = {
   overallTrend(stats) {
@@ -395,13 +412,16 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" style="margin-top:8px">Tap a bar to see that session</div>`;
   },
   bestStreak(stats) {
-    return `<div class="tally-box-value">${stats.streaks.best} days</div><div class="tally-box-label">Best streak</div>`;
+    return `<div class="tally-box-label">Best streak</div><div class="tally-box-value">${stats.streaks.best} days</div>
+      <div class="tally-icon-badge">${flameIconSvg()}</div>`;
   },
   daysLogged(stats) {
-    return `<div class="tally-box-value">${stats.loggedDayCount}</div><div class="tally-box-label">Days logged</div>`;
+    return `<div class="tally-box-label">Days logged</div><div class="tally-box-value">${stats.loggedDayCount}</div>
+      <div class="tally-icon-badge">${calendarIconSvg()}</div>`;
   },
   setsCompleted(stats) {
-    return `<div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div><div class="tally-box-label">Sets completed</div>`;
+    return `<div class="tally-box-label">Sets completed</div><div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div>
+      <div class="tally-icon-badge">${trendUpIconSvg()}</div>`;
   },
   avgSession(stats) {
     const avg = stats.avgSession.avgMinutes;
@@ -419,8 +439,8 @@ const BOX_RENDERERS = {
     // max-height + overflow-y, separate from .tally-scroll's outer scroll —
     // so you can browse the milestone list without scrolling the page.
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
-      <div style="max-height:170px;overflow-y:auto;overscroll-behavior:contain" onwheel="event.stopPropagation()">${rows}</div>
-      <div style="margin:10px -12px -10px;background:#e05d52;padding:10px;text-align:center">
+      <div class="tally-weight-ladder" style="max-height:170px;overflow-y:auto;overscroll-behavior:contain">${rows}</div>
+      <div style="margin:10px -12px -10px;background:#e05d52;padding:10px;text-align:center;border-radius:0 0 12px 12px">
         <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
   },
@@ -506,6 +526,16 @@ function wireTrendBarClicks() {
     el.addEventListener('click', () => openTallyTrendDay(el.dataset.date));
   });
 }
+// Prevents a touch-drag inside the milestone ladder from also dragging the
+// whole Tally sheet's outer scroll — stopPropagation on touchmove is what
+// actually matters for touch devices; an onwheel handler (the previous
+// attempt) only affects desktop mouse-wheel scrolling and does nothing here.
+function wireWeightLadderScroll() {
+  const el = document.querySelector('.tally-weight-ladder');
+  if (!el || el.dataset.wired) return;
+  el.dataset.wired = '1';
+  el.addEventListener('touchmove', e => e.stopPropagation(), { passive: true });
+}
 
 /* ─── FULL RENDER PASS ─── */
 let _lastStats = null;
@@ -530,6 +560,7 @@ function renderFullBody(stats) {
 
   container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml;
   wireTrendBarClicks();
+  wireWeightLadderScroll();
 }
 export function renderTallySheet() {
   wireSheetSwipe();
