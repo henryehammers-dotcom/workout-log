@@ -4,7 +4,7 @@
 import { KEYS, currentUnits, setCurrentUnits, showInstructionsIcons, setShowInstructionsIcons,
          getCleanBw, APP_VERSION, setAppVersion,
          GOAL_QUESTIONS, buildPriorityMuscleOptions, getProfile, saveProfile,
-         escAttr, escHtml } from './state.js';
+         escAttr, escHtml, lockBodyScroll, unlockBodyScroll } from './state.js';
 import { renderDayContent } from './schedule-day.js';
 import { renderLastBackupLine } from './backup.js';
 import { startOnboardingQuestionnaire } from './onboarding.js';
@@ -166,6 +166,7 @@ export function openSettings(isFirstLaunch) {
   const modal = document.getElementById('settings-modal');
   if (!modal) { console.error('openSettings: #settings-modal not found in DOM'); return; }
   modal.classList.add('show');
+  lockBodyScroll();
   // Belt-and-suspenders: force the overlay's geometry inline so it can never
   // render collapsed even if a browser mishandles the CSS `inset` shorthand.
   modal.style.position = 'fixed';
@@ -177,7 +178,10 @@ export function openSettings(isFirstLaunch) {
   document.getElementById('instr-icons-toggle')?.classList.toggle('on', showInstructionsIcons);
   renderProfileSummaryCard();
 }
-export function closeSettings() { document.getElementById('settings-modal')?.classList.remove('show'); }
+export function closeSettings() {
+  document.getElementById('settings-modal')?.classList.remove('show');
+  unlockBodyScroll();
+}
 
 /* ─── PROFILE (Settings summary card + edit sheet) ─── */
 function goalLabel(value) {

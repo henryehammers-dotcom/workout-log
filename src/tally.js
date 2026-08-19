@@ -8,7 +8,8 @@
 import { KEYS, schedule, DAY_NAMES, FULL_DAYS, getProfile, getCleanBw,
          currentUnits, TALLY_BOX_DEFS, getTallyLayout, saveTallyLayout,
          getTallyHidden, saveTallyHidden, FREQUENCY_UPPER_BOUND,
-         escHtml, escAttr, getHistory, WEIGHT_MILESTONES } from './state.js';
+         escHtml, escAttr, getHistory, WEIGHT_MILESTONES,
+         lockBodyScroll, unlockBodyScroll } from './state.js';
 import { formatHistoryDate } from './calendar.js';
 import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
@@ -51,11 +52,11 @@ function trendUpIconSvg() {
 export function openTallySheet() {
   renderTallySheet();
   document.getElementById('tally-overlay')?.classList.add('show');
-  document.body.style.overflow = 'hidden'; // lock background scroll while the sheet is open
+  lockBodyScroll();
 }
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
   _restBoxesRevealed = false; // rest-day reveal is per-viewing, not sticky across opens
 }
 // Called at the end of app init (see main.js) — opens on every launch per
@@ -498,16 +499,19 @@ const BOX_RENDERERS = {
       fillPx = ((passedCount - 1) * tickGap) + (frac * tickGap);
     }
     fillPx = Math.round(Math.min(pillH, fillPx));
+    // Labels sit directly beside their tick, always visible (not
+    // tap-to-reveal — with 17 ticks only ~16.5px apart, tapping the right
+    // one reliably wasn't practical on a real touch target).
     const tickMarks = ticks.map((m, i) => {
       const yFromTop = Math.round(i * tickGap);
-      return `<div class="tally-weight-tick" data-lbs="${m.lbs}" data-label="${escAttr(m.label)}"
-        style="position:absolute;right:-14px;top:${yFromTop}px;width:10px;height:2px;background:#333;cursor:pointer"
-        onclick="showTallyWeightTickLabel(this)"></div>`;
+      return `<div style="position:absolute;left:100%;top:${yFromTop}px;transform:translateY(-50%);display:flex;align-items:center;gap:4px;white-space:nowrap;padding-left:14px">
+        <span style="width:10px;height:2px;background:#333;flex-shrink:0"></span>
+        <span style="font-size:9px;color:#333;line-height:1">${escHtml(m.label)} <span style="color:#777">(${fmtWeight(m.lbs)})</span></span>
+      </div>`;
     }).join('');
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:10px">Total weight lifted</div>
-      <div id="tally-weight-readout" style="text-align:center;font-size:12px;color:#333;min-height:16px;margin-bottom:8px">Tap a mark to see that milestone</div>
-      <div style="display:flex;justify-content:center">
-        <div style="position:relative;width:64px;height:${pillH}px;background:#ccc;border-radius:32px;padding:4px">
+      <div style="display:flex;justify-content:center;padding-left:8px">
+        <div style="position:relative;width:64px;height:${pillH}px;background:#ccc;border-radius:32px;padding:4px;flex-shrink:0">
           <div style="position:relative;width:100%;height:100%;background:#e5e5e5;border-radius:28px;overflow:hidden">
             <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:28px"></div>
           </div>
@@ -569,13 +573,6 @@ function buildBoxRows(visibleIds) {
   return rows;
 }
 
-export function showTallyWeightTickLabel(el) {
-  const readout = document.getElementById('tally-weight-readout');
-  if (!readout) return;
-  const lbs = Number(el.dataset.lbs) || 0;
-  const label = el.dataset.label || '';
-  readout.textContent = `${fmtWeight(lbs)} — ${label}`;
-}
 export function openTallyTrendDay(dateKey) {
   const detailEl = document.getElementById('tally-trend-detail');
   if (!detailEl) return;

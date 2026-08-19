@@ -192,7 +192,6 @@ Object.assign(window, {
   openTallySheet: tallyMod.openTallySheet,
   closeTallySheet: tallyMod.closeTallySheet,
   toggleTallyRestReveal: tallyMod.toggleTallyRestReveal,
-  showTallyWeightTickLabel: tallyMod.showTallyWeightTickLabel,
   openTallySessionTimesPopup: tallyMod.openTallySessionTimesPopup,
   openTallyMuscleGapsPopup: tallyMod.openTallyMuscleGapsPopup,
   openTallyTrendDay: tallyMod.openTallyTrendDay,

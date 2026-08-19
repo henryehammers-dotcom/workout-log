@@ -29,6 +29,7 @@ export const KEYS = {
   monthViewMode: 'wl_month_view_mode',
   lastBackupAt: 'wl_last_backup_at',
   hideBw:    'wl_hide_bw',
+  sidebarMode: 'wl_sidebar_mode',
   profile:   'wl_profile',
   tallyLayout: 'wl_tally_layout',
   tallyHidden: 'wl_tally_hidden',
@@ -499,3 +500,36 @@ export function getCleanBw() {
 /* ─── SHARED UTILITIES ─── */
 export function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 export function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─── BODY SCROLL LOCK (shared by any full-screen overlay: Tally sheet,
+   Settings, etc.) — freezes the page underneath completely while an
+   overlay is open, without touching the overlay's own inner scrolling.
+   overflow:hidden alone is not reliable for this on mobile touch browsers;
+   position:fixed on the body is the standard correct technique, since it
+   fully removes the page from the touch-scroll chain. Scroll position is
+   saved/restored so the page doesn't jump when the lock is applied or
+   released. Reference-counted via _lockCount so nested opens (e.g.
+   Settings opened from within another overlay) don't unlock prematurely
+   when the inner one closes first. */
+let _scrollLockY = 0;
+let _lockCount = 0;
+export function lockBodyScroll() {
+  _lockCount++;
+  if (_lockCount > 1) return; // already locked by another overlay
+  _scrollLockY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${_scrollLockY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+export function unlockBodyScroll() {
+  _lockCount = Math.max(0, _lockCount - 1);
+  if (_lockCount > 0) return; // still locked by another overlay
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _scrollLockY);
+}
