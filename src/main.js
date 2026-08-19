@@ -190,7 +190,7 @@ Object.assign(window, {
   // tally.js
   openTallySheet: tallyMod.openTallySheet,
   closeTallySheet: tallyMod.closeTallySheet,
-  revealTallyBoxes: tallyMod.revealTallyBoxes,
+  toggleTallyRestReveal: tallyMod.toggleTallyRestReveal,
   toggleTallyEditMode: tallyMod.toggleTallyEditMode,
   removeTallyBox: tallyMod.removeTallyBox,
   addTallyBox: tallyMod.addTallyBox,

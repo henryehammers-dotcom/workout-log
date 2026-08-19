@@ -25,6 +25,15 @@ function lbsToDisplay(lbs) {
 function fmtWeight(lbs) {
   return lbsToDisplay(lbs).toLocaleString() + ' ' + currentUnits;
 }
+// This app has no icon font loaded (only raw inline SVG icons throughout
+// index.html) — this was the bug behind "no icons anywhere": every ti-*
+// class reference rendered as an empty element. Real inline SVGs from here on.
+function filterIconSvg(onclickAttr, label) {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();${onclickAttr}" role="button" aria-label="${label}"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`;
+}
+function checkIconSvg() {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+}
 
 /* ─── SHEET OPEN / CLOSE / SWIPE ─── */
 export function openTallySheet() {
@@ -144,10 +153,26 @@ function computeTallyStats() {
 
 /* ─── HEADER (day label, workout name, rest-day banner) ─── */
 let _restBoxesRevealed = false;
-export function revealTallyBoxes() {
-  _restBoxesRevealed = true;
-  document.getElementById('tally-boxes')?.classList.remove('hide');
-  document.getElementById('tally-edit-row')?.classList.remove('hide');
+export function toggleTallyRestReveal() {
+  _restBoxesRevealed = !_restBoxesRevealed;
+  applyRestRevealState();
+}
+function applyRestRevealState() {
+  const boxesEl = document.getElementById('tally-boxes');
+  const editRow = document.getElementById('tally-edit-row');
+  const titleEl = document.getElementById('tally-section-title');
+  const btn = document.getElementById('tally-show-anyway-btn');
+  if (_restBoxesRevealed) {
+    boxesEl?.classList.remove('hide');
+    editRow?.classList.remove('hide');
+    titleEl?.classList.remove('hide');
+    if (btn) btn.textContent = 'Hide Tally';
+  } else {
+    boxesEl?.classList.add('hide');
+    editRow?.classList.add('hide');
+    titleEl?.classList.add('hide');
+    if (btn) btn.textContent = 'Show Tally';
+  }
 }
 function renderHeader() {
   const name = localStorage.getItem(KEYS.name) || '';
@@ -160,17 +185,19 @@ function renderHeader() {
   const restBanner = document.getElementById('tally-rest-banner');
   const boxesEl = document.getElementById('tally-boxes');
   const editRow = document.getElementById('tally-edit-row');
+  const titleEl = document.getElementById('tally-section-title');
 
   if (sched.restDay) {
     if (workoutLabelEl) workoutLabelEl.innerHTML = 'Today is a <strong>Rest Day</strong>';
     if (restBanner) restBanner.style.display = '';
-    if (!_restBoxesRevealed) { boxesEl?.classList.add('hide'); editRow?.classList.add('hide'); }
+    applyRestRevealState();
   } else {
     const suffix = sched.label.includes('—') ? sched.label.replace(/^.+?—\s*/, '').trim() : '';
     if (workoutLabelEl) workoutLabelEl.textContent = suffix ? `Today's workout is ${suffix}` : "Today's workout";
     if (restBanner) restBanner.style.display = 'none';
     boxesEl?.classList.remove('hide');
     editRow?.classList.remove('hide');
+    titleEl?.classList.remove('hide');
   }
 }
 
@@ -183,6 +210,14 @@ function highlightModeForGoal(goal) {
   if (goal === 'fitness') return 'calorieRow';
   if (goal === 'weight_loss') return 'weightDeltaCombined'; // calorie row + weight delta combined, per spec
   return 'prCallout'; // no goal set yet (shouldn't happen post-onboarding) — safe default
+}
+// The real TALLY_BOX_DEFS id that a highlight mode duplicates — used to
+// exclude that box from the regular grid and the add-picker, so it can
+// never appear twice (once as the fixed highlight, once as a normal box).
+// weightDeltaCombined isn't a real box id itself; it renders calorieRow's
+// content with a delta appended, so calorieRow is what needs excluding.
+function highlightModeBoxId(mode) {
+  return mode === 'weightDeltaCombined' ? 'calorieRow' : mode;
 }
 function loggedDateKeySetThisWeek() {
   const hist = getHistory();
@@ -323,7 +358,7 @@ export function openTallyTrendFilter() {
     </div>`;
     const exRows = options.length
       ? options.map(o => `<button class="tally-filter-row${_trendExerciseFilter.includes(o.key)?' active':''}" onclick="toggleTallyTrendExercise('${escAttr(o.key)}')">
-          <span>${escHtml(o.name)}</span>${_trendExerciseFilter.includes(o.key) ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}
+          <span>${escHtml(o.name)}</span>${_trendExerciseFilter.includes(o.key) ? checkIconSvg() : ''}
         </button>`).join('')
       : '<p style="font-size:13px;color:var(--text3);padding:8px 0">No exercises logged yet.</p>';
     body.innerHTML = metricRow + `<p style="font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700;margin:0 0 8px">Exercises (none selected = all)</p>` + exRows;
@@ -380,7 +415,7 @@ const BOX_VARIANTS = {
 const BOX_RENDERERS = {
   overallTrend(stats) {
     const bars = stats.recentTrends;
-    const filterIcon = `<i class="ti ti-filter" onclick="event.stopPropagation();openTallyTrendFilter()" style="font-size:14px;cursor:pointer" aria-label="Filter trend"></i>`;
+    const filterIcon = filterIconSvg('openTallyTrendFilter()', 'Filter trend');
     if (!bars.length) return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div><div class="tally-box-sub">Log a few sessions to see your trend.</div>`;
     const colorFor = t => t === 'up' ? '#3fb87f' : t === 'down' ? '#e8695c' : '#ccc';
     const maxH = 44;
@@ -429,13 +464,14 @@ const BOX_RENDERERS = {
     const shown = source.slice(0, 2);
     const rows = shown.map((g, i) => {
       const text = g.daysSince == null ? 'never trained' : g.daysSince + ' days ago';
-      const pillBg = i === 0 ? '#f2d94e' : '#e8e8e5';
+      const pillBg = i === 0 ? '#fff' : 'rgba(255,255,255,0.55)';
+      const pillText = i === 0 ? '#111' : '#333';
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
         <span style="font-size:12px;font-weight:600">${escHtml(g.label)}</span>
-        <span style="font-size:10px;font-weight:700;background:${pillBg};border:1px solid #111;border-radius:999px;padding:2px 8px">${escHtml(text)}</span>
+        <span style="font-size:10px;font-weight:700;background:${pillBg};color:${pillText};border-radius:999px;padding:2px 8px">${escHtml(text)}</span>
       </div>`;
     }).join('');
-    return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Last trained</div><i class="ti ti-filter" onclick="event.stopPropagation();openTallyMuscleFilter()" style="font-size:14px;cursor:pointer" aria-label="Filter muscle groups"></i></div>
+    return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Last trained</div>${filterIconSvg('openTallyMuscleFilter()', 'Filter muscle groups')}</div>
       ${shown.length ? rows : '<div class="tally-box-sub">Nothing overdue right now.</div>'}
       <div class="tally-box-sub" onclick="openTallyMuscleGapsPopup()" style="cursor:pointer;text-decoration:underline;margin-top:6px;font-size:10px">See all</div>`;
   },
@@ -468,8 +504,8 @@ export function addTallyBox(boxId) {
   saveTallyHidden(getTallyHidden().filter(id => id !== boxId));
   if (_lastStats) renderFullBody(_lastStats);
 }
-function renderAddPicker() {
-  const hidden = getTallyHidden();
+function renderAddPicker(excludeId) {
+  const hidden = getTallyHidden().filter(id => id !== excludeId);
   if (!hidden.length) return '';
   const chips = hidden.map(id => {
     const def = TALLY_BOX_DEFS.find(b => b.id === id);
@@ -595,8 +631,10 @@ let _lastStats = null;
 function renderFullBody(stats) {
   const container = document.getElementById('tally-boxes');
   if (!container) return;
+  const activeHighlightBoxId = highlightModeBoxId(highlightModeForGoal(stats.profile.goal));
   const layout = getTallyLayout();
   const hidden = new Set(getTallyHidden());
+  hidden.add(activeHighlightBoxId); // never show the highlight's box a second time in the regular grid
   const visibleIds = layout.filter(id => !hidden.has(id));
   const rows = buildBoxRows(visibleIds);
 
@@ -610,7 +648,7 @@ function renderFullBody(stats) {
     return `<div class="tally-box-row ${row.type === 'third' ? 'triple' : row.type}">${cellsHtml}</div>`;
   }).join('');
 
-  container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml + (_editMode ? renderAddPicker() : '');
+  container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml + (_editMode ? renderAddPicker(activeHighlightBoxId) : '');
   wireTrendBarClicks();
 
   if (_editMode) {
