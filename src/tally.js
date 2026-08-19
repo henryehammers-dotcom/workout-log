@@ -13,7 +13,7 @@ import { formatHistoryDate } from './calendar.js';
 import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
   getMuscleGroupsNeedingAttention, estimateCalorieRange, classifySessionType,
-  getRecentDayTrends, getTotalWeightLiftedLbs, getMilestoneWindow,
+  getRecentDayTrends, getTotalWeightLiftedLbs,
   getExerciseIndex, getHistoryDisplayNames, getDayTrendBreakdown,
 } from './history.js';
 
@@ -55,7 +55,6 @@ export function openTallySheet() {
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
   _restBoxesRevealed = false; // rest-day reveal is per-viewing, not sticky across opens
-  _weightLadderExpanded = false; // same — starts collapsed each time the sheet opens
 }
 // Called at the end of app init (see main.js) — opens on every launch per
 // spec (no once-per-day gating, unlike the old greeting).
@@ -423,46 +422,42 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" onclick="openTallySessionTimesPopup()" style="cursor:pointer;text-decoration:underline">See full week</div>`;
   },
   totalWeight(stats) {
-    const milestonesAsc = _weightLadderExpanded
-      ? WEIGHT_MILESTONES.map(m => ({ ...m, reached: stats.totalLbs >= m.lbs }))
-      : getMilestoneWindow(stats.totalLbs, 1);
-    const milestones = milestonesAsc.slice().reverse(); // heaviest at top, lightest at bottom
-    const rowH = 32;
-    // Each row represents the real numeric range between the milestone
-    // below it (its floor) and its own value (its ceiling). A row is
-    // fully filled once totalLbs passes its ceiling, proportionally
-    // filled if totalLbs currently falls inside its range, and empty if
-    // totalLbs hasn't reached its floor yet — so the fill honestly
-    // reflects rough real progress (half filled = genuinely about halfway
-    // to that milestone) without needing every marker positioned at an
-    // exact pixel on one shared scale, which is what caused labels to
-    // overlap in an earlier version of this.
-    const rows = milestones.map((m, i) => {
-      const floorLbs = i === milestones.length - 1 ? 0 : milestones[i + 1].lbs;
-      const ceilLbs = m.lbs;
-      let fillFrac;
-      if (stats.totalLbs >= ceilLbs) fillFrac = 1;
-      else if (stats.totalLbs <= floorLbs) fillFrac = 0;
-      else fillFrac = (stats.totalLbs - floorLbs) / (ceilLbs - floorLbs);
-      const fillPct = Math.round(fillFrac * 100);
-      const covered = fillFrac >= 0.5;
-      const textColor = covered ? '#fff' : '#111';
-      const labelColor = covered ? 'rgba(255,255,255,0.85)' : '#555';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.15);height:${rowH}px;box-sizing:border-box;position:relative;overflow:hidden">
-        <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPct}%;background:#ff5757;transition:height .3s;z-index:0"></div>
-        <span style="position:relative;z-index:1;font-size:10px;color:${labelColor}">${fmtWeight(m.lbs)}</span>
-        <span style="position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;color:${textColor}">${escHtml(m.label)}</span>
-      </div>`;
+    // Single gauge/thermometer, not a row list — matches the reference
+    // design exactly: one pill-shaped fill track, evenly-spaced tick marks
+    // along the side, no labels shown by default. Tapping a tick reveals
+    // that milestone's name + weight in a small readout above the gauge.
+    // The fill itself is computed on the true 1-to-2,000,000 lb linear
+    // scale (one pound = one unit of the scale), so the percentage is
+    // always mathematically exact regardless of which ticks exist —
+    // 50 lbs is genuinely (50/2000000)*100 = 0.0025% full, correctly
+    // invisible, not an artifact of row count or milestone spacing.
+    const scaleMax = 2000000;
+    const pillH = 280;
+    const fillPct = Math.min(100, (stats.totalLbs / scaleMax) * 100);
+    const fillPx = Math.round((fillPct / 100) * pillH);
+    // Ticks evenly spaced by rank (like a ruler), not by true value
+    // position — avoids the label-overlap problem entirely, since low
+    // milestones (10k-100k) are visually indistinguishable at this scale
+    // if positioned by true value. Reversed so index 0 (top) is heaviest.
+    const ticks = WEIGHT_MILESTONES.slice().reverse();
+    const tickGap = pillH / (ticks.length - 1);
+    const tickMarks = ticks.map((m, i) => {
+      const yFromTop = Math.round(i * tickGap);
+      return `<div class="tally-weight-tick" data-lbs="${m.lbs}" data-label="${escAttr(m.label)}"
+        style="position:absolute;right:-14px;top:${yFromTop}px;width:10px;height:2px;background:#333;cursor:pointer"
+        onclick="showTallyWeightTickLabel(this)"></div>`;
     }).join('');
-    const caratPath = _weightLadderExpanded ? 'polyline points="18 15 12 9 6 15"' : 'polyline points="6 9 12 15 18 9"';
-    return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;cursor:pointer" onclick="toggleTallyWeightLadder()">
-        <div class="tally-box-label" style="margin:0">Total weight lifted</div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><${caratPath}/></svg>
+    return `<div class="tally-box-label" style="text-align:center;margin-bottom:10px">Total weight lifted</div>
+      <div id="tally-weight-readout" style="text-align:center;font-size:12px;color:#333;min-height:16px;margin-bottom:8px">Tap a mark to see that milestone</div>
+      <div style="display:flex;justify-content:center">
+        <div style="position:relative;width:64px;height:${pillH}px;background:#ccc;border-radius:32px;padding:4px">
+          <div style="position:relative;width:100%;height:100%;background:#e5e5e5;border-radius:28px;overflow:hidden">
+            <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:28px"></div>
+          </div>
+          ${tickMarks}
+        </div>
       </div>
-      <div>${rows}</div>
-      <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
-        <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
-      </div>`;
+      <div style="text-align:center;margin-top:10px;font-size:13px;font-weight:600;color:#111">${fmtWeight(stats.totalLbs)}</div>`;
   },
   lastTrained(stats) {
     const source = _muscleFilterShowAll ? stats.attention.all : stats.attention.needingAttention;
@@ -517,6 +512,13 @@ function buildBoxRows(visibleIds) {
   return rows;
 }
 
+export function showTallyWeightTickLabel(el) {
+  const readout = document.getElementById('tally-weight-readout');
+  if (!readout) return;
+  const lbs = Number(el.dataset.lbs) || 0;
+  const label = el.dataset.label || '';
+  readout.textContent = `${fmtWeight(lbs)} — ${label}`;
+}
 export function openTallyTrendDay(dateKey) {
   const detailEl = document.getElementById('tally-trend-detail');
   if (!detailEl) return;
@@ -542,11 +544,6 @@ function wireTrendBarClicks() {
 
 /* ─── FULL RENDER PASS ─── */
 let _lastStats = null;
-let _weightLadderExpanded = false;
-export function toggleTallyWeightLadder() {
-  _weightLadderExpanded = !_weightLadderExpanded;
-  if (_lastStats) renderFullBody(_lastStats); // re-render the whole grid so boxes below shift up/down naturally
-}
 function renderFullBody(stats) {
   const container = document.getElementById('tally-boxes');
   if (!container) return;
