@@ -283,26 +283,36 @@ function renderHighlightBarHtml(stats) {
   else if (mode === 'weekCheckmarks') inner = renderWeekCheckmarksInner();
   else if (mode === 'calorieRow') inner = renderCalorieRowInner(stats, false);
   else inner = renderCalorieRowInner(stats, true); // weightDeltaCombined
-  return `<div class="tally-box-row full"><div class="tally-box">${inner}</div></div>`;
+  const highlightHtml = `<div class="tally-box-row full"><div class="tally-box highlight">${inner}</div></div>`;
+  return highlightHtml + renderWeeklyQuotaPill(stats);
+}
+// Standalone solid-color pill showing weekly quota progress, rendered right
+// below the highlight box — matches the mockup, which shows this as its own
+// element rather than nested inside the PR/highlight card.
+function renderWeeklyQuotaPill(stats) {
+  const { daysLogged, goal, met, overflow } = stats.quota;
+  const text = goal == null ? `${daysLogged} days logged this week`
+    : (met && overflow > 0) ? `+${overflow} day${overflow===1?'':'s'} over your goal`
+    : `${daysLogged}/${goal} days logged this week`;
+  const color = met ? '#2a8a5c' : '#e05d52';
+  return `<div style="display:flex;align-items:center;gap:10px;margin:8px 0 2px">
+    <div style="flex:1;height:26px;border-radius:999px;background:${color};border:1.5px solid #111"></div>
+    <span style="font-size:11px;color:var(--text3);white-space:nowrap">${escHtml(text)}</span>
+  </div>`;
 }
 
 /* ─── STANDARD BOXES (non-highlight registry — ids/widths in
    TALLY_BOX_DEFS, state.js). Highlight-mode boxes (prCallout/
    weekCheckmarks/calorieRow/weightDelta) are included here too, rendered
    plainly, for whichever modes aren't the active highlight. ─── */
+// Visual variant per box, matching the mockup: the trend chart and total
+// weight lifted render as neutral gray sections; everything else uses the
+// standard solid-periwinkle stat block.
+const BOX_VARIANTS = {
+  overallTrend: 'neutral',
+  totalWeight: 'neutral',
+};
 const BOX_RENDERERS = {
-  weeklyQuota(stats) {
-    const { daysLogged, goal, met, overflow } = stats.quota;
-    const pct = goal ? Math.min(100, Math.round((daysLogged / goal) * 100)) : 0;
-    const text = goal == null ? `${daysLogged} days logged this week`
-      : (met && overflow > 0) ? `+${overflow} day${overflow===1?'':'s'} over your goal`
-      : `${daysLogged}/${goal} days logged this week`;
-    return `<div class="tally-box-label">Weekly goal</div>
-      <div style="height:10px;border-radius:5px;background:var(--border);overflow:hidden;margin:8px 0 6px">
-        <div style="height:100%;border-radius:5px;background:${met ? 'var(--green,#2a8a5c)' : 'var(--red,#c03232)'};width:${pct}%;transition:width .3s"></div>
-      </div>
-      <div class="tally-box-sub">${escHtml(text)}</div>`;
-  },
   overallTrend(stats) {
     const bars = stats.recentTrends;
     if (!bars.length) return `<div class="tally-box-label">Overall trend</div><div class="tally-box-sub">Log a few sessions to see your trend.</div>`;
@@ -335,24 +345,31 @@ const BOX_RENDERERS = {
   },
   totalWeight(stats) {
     const rows = stats.milestoneWindow.map(m => `
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);${m.reached?'':'opacity:0.45'}">
-        <span style="font-size:13px">${escHtml(m.label)}</span>
-        <span style="font-size:12px;color:var(--text3)">${fmtWeight(m.lbs)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #ccc;${m.reached?'':'opacity:0.4'}">
+        <span style="font-size:10px;color:#555">${fmtWeight(m.lbs)}</span>
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(m.label)}</span>
       </div>`).join('');
-    return `<div class="tally-box-label">Total weight lifted</div>
-      <div class="tally-box-value">${fmtWeight(stats.totalLbs)}</div>
-      <div style="max-height:150px;overflow-y:auto;margin-top:8px">${rows}</div>`;
+    return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
+      <div style="max-height:170px;overflow-y:auto">${rows}</div>
+      <div style="margin-top:10px;background:#e05d52;border:1.5px solid #111;border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:15px;font-weight:800;color:#111">${fmtWeight(stats.totalLbs)}</div>
+      </div>`;
   },
   lastTrained(stats) {
     const shown = stats.attention.needingAttention.slice(0, 2);
-    const rows = shown.map(g => `
-      <div style="display:flex;justify-content:space-between;padding:4px 0">
-        <span style="font-size:14px">${escHtml(g.label)}</span>
-        <span style="font-size:12px;color:var(--amber,#a8710a);font-weight:600">${g.daysSince == null ? 'never trained' : g.daysSince + ' days ago'}</span>
-      </div>`).join('');
-    return `<div class="tally-box-label">Needs attention</div>
+    const rows = shown.map((g, i) => {
+      const text = g.daysSince == null ? 'never trained' : g.daysSince + ' days ago';
+      // First (most urgent, already priority-sorted) gets the yellow pill;
+      // the second gets a plain pill — matches the mockup's two-tier look.
+      const pillBg = i === 0 ? '#f2d94e' : '#e8e8e5';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
+        <span style="font-size:12px;font-weight:600">${escHtml(g.label)}</span>
+        <span style="font-size:10px;font-weight:700;background:${pillBg};border:1px solid #111;border-radius:999px;padding:2px 8px">${escHtml(text)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="tally-box-label">Last trained</div>
       ${shown.length ? rows : '<div class="tally-box-sub">Nothing overdue right now.</div>'}
-      <div class="tally-box-sub" onclick="openTallyMuscleGapsPopup()" style="cursor:pointer;text-decoration:underline;margin-top:6px">See all</div>`;
+      <div class="tally-box-sub" onclick="openTallyMuscleGapsPopup()" style="cursor:pointer;text-decoration:underline;margin-top:6px;font-size:10px">See all</div>`;
   },
   prCallout(stats) { return renderPRHighlightInner(stats); },
   weekCheckmarks() { return renderWeekCheckmarksInner(); },
@@ -465,19 +482,30 @@ function wireBoxDrag(el, boxId) {
    half-width boxes pair two per row) ─── */
 function buildBoxRows(visibleIds) {
   const rows = [];
-  let pendingHalf = null;
+  let pending = []; // boxes of the current same-width run, not yet flushed to a row
+  let pendingWidth = null;
+  const capacity = { half: 2, third: 3 };
+  const flush = () => {
+    if (!pending.length) return;
+    rows.push({ type: pendingWidth, ids: pending });
+    pending = []; pendingWidth = null;
+  };
   visibleIds.forEach(id => {
     const def = TALLY_BOX_DEFS.find(b => b.id === id);
     if (!def || !BOX_RENDERERS[id]) return;
     if (def.width === 'full') {
-      if (pendingHalf) { rows.push({ type: 'half', ids: [pendingHalf] }); pendingHalf = null; }
+      flush();
       rows.push({ type: 'full', ids: [id] });
-    } else {
-      if (pendingHalf) { rows.push({ type: 'half', ids: [pendingHalf, id] }); pendingHalf = null; }
-      else pendingHalf = id;
+      return;
     }
+    // A width change (half -> third or vice versa) starts a fresh row
+    // rather than mixing widths in one row.
+    if (pendingWidth && pendingWidth !== def.width) flush();
+    pendingWidth = def.width;
+    pending.push(id);
+    if (pending.length >= capacity[def.width]) flush();
   });
-  if (pendingHalf) rows.push({ type: 'half', ids: [pendingHalf] });
+  flush();
   return rows;
 }
 
@@ -508,9 +536,10 @@ function renderFullBody(stats) {
     const cellsHtml = row.ids.map(id => {
       let inner = BOX_RENDERERS[id](stats);
       const removeBtn = _editMode ? `<button class="tally-box-remove" onclick="event.stopPropagation();removeTallyBox('${id}')" aria-label="Remove">✕</button>` : '';
-      return `<div class="tally-box${_editMode ? ' editing' : ''}" data-box-id="${id}">${removeBtn}${inner}</div>`;
+      const variant = BOX_VARIANTS[id] || '';
+      return `<div class="tally-box${variant ? ' '+variant : ''}${_editMode ? ' editing' : ''}" data-box-id="${id}">${removeBtn}${inner}</div>`;
     }).join('');
-    return `<div class="tally-box-row ${row.type === 'full' ? 'full' : ''}">${cellsHtml}</div>`;
+    return `<div class="tally-box-row ${row.type === 'third' ? 'triple' : row.type}">${cellsHtml}</div>`;
   }).join('');
 
   container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml + (_editMode ? renderAddPicker() : '');

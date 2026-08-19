@@ -869,35 +869,61 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 /* ──────────────────────────────────────────────────────────
    TALLY SHEET (bottom sheet, opens on every app launch and via
    the tally icon in the Log tab header; see tally.js)
+   Visual language matches the original mockup: flat solid-color
+   blocks, black borders, high contrast — not the app's usual
+   soft rounded-card style, deliberately distinct as its own
+   "report card" feel.
    ────────────────────────────────────────────────────────── */
 .tally-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,20,15,0.55);z-index:960;display:none;align-items:flex-end;justify-content:center}
 .tally-overlay.show{display:flex}
-.tally-sheet{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(0);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+.tally-sheet{background:#f5f5f4;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(0);transition:transform .28s cubic-bezier(.32,.72,0,1);border-top:2px solid #111}
+[data-theme="dark"] .tally-sheet{background:#1c1c1a;border-top-color:#000}
 .tally-sheet.dragging{transition:none}
-.tally-grabber{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 4px;flex-shrink:0}
-.tally-scroll{overflow-y:auto;padding:4px 18px 18px}
+.tally-grabber{width:36px;height:4px;border-radius:2px;background:#999;margin:10px auto 4px;flex-shrink:0}
+.tally-scroll{overflow-y:auto;padding:4px 16px 18px}
 .tally-header{margin-bottom:14px}
-.tally-day-label{font-size:13px;color:var(--text2);margin-bottom:2px}
-.tally-workout-label{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-0.01em;color:var(--text);line-height:1.2}
+.tally-day-label{font-family:var(--display);font-weight:800;font-size:19px;color:#111;line-height:1.2}
+[data-theme="dark"] .tally-day-label{color:#f0f0ec}
+.tally-workout-label{font-size:12px;color:#333;margin-top:2px}
+.tally-workout-label strong{font-weight:700}
+[data-theme="dark"] .tally-workout-label{color:#ccc}
 .tally-rest-banner{text-align:center;padding:12px 8px 24px;position:relative}
 .tally-rest-banner p{font-size:14px;color:var(--text2);margin:8px 0 16px;line-height:1.4}
-.tally-show-anyway-btn{background:transparent;border:1px solid var(--border2);border-radius:999px;padding:8px 18px;color:var(--text);font-size:13px;font-family:inherit;cursor:pointer}
+.tally-show-anyway-btn{background:transparent;border:1.5px solid #111;border-radius:999px;padding:8px 18px;color:#111;font-size:13px;font-family:inherit;cursor:pointer}
 .tally-boxes{display:flex;flex-direction:column;gap:10px}
 .tally-boxes.hide{display:none}
-.tally-edit-row{margin-top:16px;text-align:center}
-.tally-edit-btn{background:transparent;border:none;color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;padding:8px}
+.tally-edit-row{margin-top:14px;text-align:center}
+.tally-edit-btn{background:#e8e8e5;border:1.5px solid #111;border-radius:8px;color:#111;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;padding:8px 16px;width:100%;text-transform:uppercase;letter-spacing:0.03em}
+[data-theme="dark"] .tally-edit-btn{background:#2a2a27;color:#f0f0ec;border-color:#000}
 
-/* Box grid: full-width boxes get their own row; half-width boxes pair up two
-   to a row (matches the width-collision rule from the layout spec — a
-   full-width box can never share a row with anything else). */
-.tally-box-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Box grid: full-width boxes get their own row; half/third-width boxes
+   pair/triple up per row (width-collision rule: full-width never shares
+   a row with anything else). */
+.tally-box-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tally-box-row.full{grid-template-columns:1fr}
-.tally-box{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative}
-.tally-box-label{font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.02em}
-.tally-box-value{font-size:22px;font-weight:600;color:var(--text)}
-.tally-box-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.tally-box-row.triple{grid-template-columns:1fr 1fr 1fr}
+
+/* Default (accent) block style — the solid periwinkle stat cards */
+.tally-box{background:#8b93e8;border:1.5px solid #111;border-radius:8px;padding:10px 12px;position:relative;color:#111}
+[data-theme="dark"] .tally-box{background:#6b6fc9;border-color:#000;color:#0d0d0d}
+.tally-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;opacity:0.75}
+.tally-box-value{font-size:15px;font-weight:800;line-height:1.15}
+.tally-box-sub{font-size:11px;margin-top:2px;opacity:0.85}
+
+/* Neutral/light block variant — used for the trend chart and the total
+   weight ladder, matching the mockup's gray (not periwinkle) sections */
+.tally-box.neutral{background:#eeeeec;color:#111}
+[data-theme="dark"] .tally-box.neutral{background:#26261f;color:#f0f0ec}
+.tally-box.neutral .tally-box-label{opacity:0.6;color:#333}
+[data-theme="dark"] .tally-box.neutral .tally-box-label{color:#bbb}
+
+/* Highlight/PR block — periwinkle like the standard block but sized for
+   the top headline row */
+.tally-box.highlight{background:#8b93e8;border:1.5px solid #111;color:#111;padding:12px 14px}
+[data-theme="dark"] .tally-box.highlight{background:#6b6fc9;border-color:#000;color:#0d0d0d}
+
 .tally-box.editing{animation:tally-wiggle .22s ease-in-out infinite alternate}
-.tally-box-remove{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;background:var(--red,#c03232);color:#fff;border:2px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;line-height:1}
+.tally-box-remove{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;background:#c03232;color:#fff;border:1.5px solid #111;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;line-height:1;z-index:2}
 @keyframes tally-wiggle{from{transform:rotate(-0.6deg)}to{transform:rotate(0.6deg)}}
 .tally-add-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .tally-add-chip{padding:7px 14px;border-radius:999px;font-size:13px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit}

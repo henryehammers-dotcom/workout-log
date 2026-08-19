@@ -391,14 +391,13 @@ export function hasCompletedProfile() {
    other reference data in this file (GOAL_QUESTIONS, etc.).
    ═══════════════════════════════════════════════════════════ */
 export const TALLY_BOX_DEFS = [
-  { id: 'weeklyQuota',   label: 'Weekly goal',       width: 'full' },
   { id: 'overallTrend',  label: 'Overall trend',     width: 'full' },
-  { id: 'bestStreak',    label: 'Best streak',       width: 'half' },
-  { id: 'daysLogged',    label: 'Days logged',       width: 'half' },
-  { id: 'setsCompleted', label: 'Sets completed',    width: 'half' },
-  { id: 'avgSession',    label: 'Avg session length',width: 'half' },
+  { id: 'bestStreak',    label: 'Best streak',       width: 'third' },
+  { id: 'daysLogged',    label: 'Days logged',       width: 'third' },
+  { id: 'setsCompleted', label: 'Sets completed',    width: 'third' },
   { id: 'totalWeight',   label: 'Total weight lifted',width: 'full' },
-  { id: 'lastTrained',   label: 'Last trained',      width: 'full' },
+  { id: 'avgSession',    label: 'Avg session length',width: 'half' },
+  { id: 'lastTrained',   label: 'Last trained',      width: 'half' },
   // The highlight-mode boxes double as regular boxes when they're NOT the
   // active highlight for the user's goal (per spec — whichever mode isn't
   // headlining still needs to be visible somewhere on the page).
