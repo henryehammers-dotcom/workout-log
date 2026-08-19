@@ -9,6 +9,23 @@ import { renderDayContent } from './schedule-day.js';
 import { renderLastBackupLine } from './backup.js';
 import { startOnboardingQuestionnaire } from './onboarding.js';
 
+/* ─── SIDEBAR MODE (Home nav vs. Music composer pills) ─── */
+export function setSidebarMode(mode) {
+  const homeNav = document.getElementById('sidebar-nav-home');
+  const musicPills = document.getElementById('composer-pills');
+  if (homeNav) homeNav.style.display = mode === 'home' ? '' : 'none';
+  if (musicPills) musicPills.style.display = mode === 'music' ? '' : 'none';
+  document.querySelectorAll('#sidebar-mode-toggle .seg-opt').forEach(el =>
+    el.classList.toggle('active', el.dataset.mode === mode));
+  localStorage.setItem(KEYS.sidebarMode, mode);
+}
+// Restores the last-used mode on load — called once from main.js's init,
+// same pattern as the theme/units restoration already done there.
+export function restoreSidebarMode() {
+  const saved = localStorage.getItem(KEYS.sidebarMode);
+  setSidebarMode(saved === 'music' ? 'music' : 'home');
+}
+
 /* ─── APP VERSION (from version.json) ─── */
 // APP_VERSION is read from version.json at runtime. To ship a new version,
 // bump both version.json AND the CACHE name in service-worker.js (the cache

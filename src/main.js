@@ -45,6 +45,7 @@ Object.assign(window, {
   syncWelcomeTheme: themeMod.syncWelcomeTheme,
   applySettingsName: themeMod.applySettingsName,
   openSettings: themeMod.openSettings,
+  setSidebarMode: themeMod.setSidebarMode,
   closeSettings: themeMod.closeSettings,
   finishWelcome: themeMod.finishWelcome,
   openProfileEdit: themeMod.openProfileEdit,
@@ -342,6 +343,7 @@ function migrateIds() {
 
         themeMod.updateAppTitle();
         themeMod.renderProfileSummaryCard();
+        themeMod.restoreSidebarMode();
         scheduleDayMod.renderDayContent();
 
         // Hamburger button sits in normal flow at the top of the page (so it
