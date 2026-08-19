@@ -8,12 +8,12 @@
 import { KEYS, schedule, DAY_NAMES, FULL_DAYS, getProfile, getCleanBw,
          currentUnits, TALLY_BOX_DEFS, getTallyLayout, saveTallyLayout,
          getTallyHidden, saveTallyHidden, FREQUENCY_UPPER_BOUND,
-         escHtml, escAttr, getHistory } from './state.js';
+         escHtml, escAttr, getHistory, WEIGHT_MILESTONES } from './state.js';
 import { formatHistoryDate } from './calendar.js';
 import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
   getMuscleGroupsNeedingAttention, estimateCalorieRange, classifySessionType,
-  getRecentDayTrends, getTotalWeightLiftedLbs, getMilestoneWindow,
+  getRecentDayTrends, getTotalWeightLiftedLbs,
   getExerciseIndex, getHistoryDisplayNames, getDayTrendBreakdown,
 } from './history.js';
 
@@ -152,14 +152,13 @@ function computeTallyStats() {
   const threshold = FREQUENCY_UPPER_BOUND[profile.targetFrequency] || 3;
   const attention = getMuscleGroupsNeedingAttention(profile.priorityMuscles, threshold, now);
   const totalLbs = getTotalWeightLiftedLbs();
-  const milestoneWindow = getMilestoneWindow(totalLbs, 2);
   const recentTrends = getRecentDayTrends(7, now, _trendExerciseFilter.length ? _trendExerciseFilter : null);
   const hist = getHistory();
   const loggedDayCount = Object.keys(hist).filter(k => hist[k] && hist[k].length).length;
   const setsCompleted = Object.values(hist).reduce((sum, entries) =>
     sum + entries.reduce((s2, e) => s2 + e.sets.length, 0), 0);
   const mostRecentPR = findMostRecentPR(hist);
-  return { profile, quota, streaks, avgSession, attention, totalLbs, milestoneWindow, recentTrends, loggedDayCount, setsCompleted, mostRecentPR };
+  return { profile, quota, streaks, avgSession, attention, totalLbs, recentTrends, loggedDayCount, setsCompleted, mostRecentPR };
 }
 
 /* ─── HEADER (day label, workout name, rest-day banner) ─── */
@@ -252,7 +251,7 @@ function renderWeekCheckmarksInner() {
   const days = weekCheckmarkDots(loggedDateKeySetThisWeek());
   const dotsHtml = days.map(d => `
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
-      <span style="font-size:11px;color:var(--text3)">${d.label}</span>
+      <span style="font-size:11px;color:#111">${d.label}</span>
       <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;
         background:${d.logged ? '#3bca85' : 'transparent'};
         border:1.5px solid ${d.logged ? '#3bca85' : '#ccc'};
@@ -289,8 +288,8 @@ function renderCalorieRowInner(stats, includeWeightDelta) {
   }
   const cellsHtml = cells.map(c => `
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-      <span style="font-size:11px;color:var(--text3)">${c.label}</span>
-      <span style="font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums">${c.rangeStr}</span>
+      <span style="font-size:11px;color:#111">${c.label}</span>
+      <span style="font-size:11px;color:#111;font-variant-numeric:tabular-nums">${c.rangeStr}</span>
     </div>`).join('');
   let deltaHtml = '';
   if (includeWeightDelta) {
@@ -423,16 +422,15 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" onclick="openTallySessionTimesPopup()" style="cursor:pointer;text-decoration:underline">See full week</div>`;
   },
   totalWeight(stats) {
-    const rows = stats.milestoneWindow.map(m => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #ccc;${m.reached?'':'opacity:0.4'}">
+    const rows = WEIGHT_MILESTONES.map(m => {
+      const reached = stats.totalLbs >= m.lbs;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #ccc;${reached?'':'opacity:0.4'}">
         <span style="font-size:10px;color:#555">${fmtWeight(m.lbs)}</span>
         <span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(m.label)}</span>
-      </div>`).join('');
-    // The ladder scrolls independently of the whole Tally sheet — its own
-    // max-height + overflow-y, separate from .tally-scroll's outer scroll —
-    // so you can browse the milestone list without scrolling the page.
+      </div>`;
+    }).join('');
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
-      <div class="tally-weight-ladder" style="max-height:170px;overflow-y:auto;overscroll-behavior:contain">${rows}</div>
+      <div>${rows}</div>
       <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
         <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
@@ -512,16 +510,6 @@ function wireTrendBarClicks() {
     el.addEventListener('click', () => openTallyTrendDay(el.dataset.date));
   });
 }
-// Prevents a touch-drag inside the milestone ladder from also dragging the
-// whole Tally sheet's outer scroll — stopPropagation on touchmove is what
-// actually matters for touch devices; an onwheel handler (the previous
-// attempt) only affects desktop mouse-wheel scrolling and does nothing here.
-function wireWeightLadderScroll() {
-  const el = document.querySelector('.tally-weight-ladder');
-  if (!el || el.dataset.wired) return;
-  el.dataset.wired = '1';
-  el.addEventListener('touchmove', e => e.stopPropagation(), { passive: true });
-}
 
 /* ─── FULL RENDER PASS ─── */
 let _lastStats = null;
@@ -549,7 +537,6 @@ function renderFullBody(stats) {
 
   container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml;
   wireTrendBarClicks();
-  wireWeightLadderScroll();
 }
 export function renderTallySheet() {
   wireSheetSwipe();

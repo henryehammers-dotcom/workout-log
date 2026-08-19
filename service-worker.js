@@ -1,4 +1,4 @@
-const CACHE = 'tallyup-v193';
+const CACHE = 'tallyup-v194';
 const FILES = [
   './index.html',
   './manifest.json',
