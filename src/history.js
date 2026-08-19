@@ -2,7 +2,7 @@
    Tally Up — History (list, momentum chart, edit session)
    ════════════════════════════════════════════ */
 import { activeCharts, currentUnits, getHistory, saveHistory,
-         escAttr, escHtml } from './state.js';
+         escAttr, escHtml, FREQUENCY_UPPER_BOUND } from './state.js';
 import { formatHistoryDate } from './calendar.js';
 import { showModal, closeModal } from './modal.js';
 
@@ -48,6 +48,131 @@ export function sessionVolume(sets) { return sets.reduce((sum, s) => sum + (Numb
 export function setE1RM(s) { const w = Number(s.weight)||0, r = Number(s.reps)||0; return r > 0 ? w * (1 + r/30) : 0; }
 // A session's strength score = its best single-set e1RM (not summed across sets)
 export function sessionBestE1RM(sets) { return Math.max(0, ...sets.map(setE1RM)); }
+
+/* ═══════════════════════════════════════════════════════════
+   TALLY PAGE — derived stats read-only from existing history.
+   None of this writes to history; it only reads getHistory() and
+   computes. Kept alongside the other derived-stat helpers above
+   (sessionVolume, setE1RM, etc.) rather than in a separate module,
+   since it's the same category of function: pure derivation.
+   ═══════════════════════════════════════════════════════════ */
+
+// Sunday-Saturday week boundaries for a given date, matching the rest of the
+// app's Sunday-start convention (see calendar.js's week view). Returns the
+// Date for that week's Sunday at local midnight and the following Sunday
+// (exclusive upper bound), so callers can test `date >= start && date < end`.
+export function getWeekBounds(refDate) {
+  const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+  d.setDate(d.getDate() - d.getDay()); // back up to this week's Sunday
+  const start = d;
+  const end = new Date(start); end.setDate(end.getDate() + 7);
+  return { start, end };
+}
+
+// Distinct calendar days with at least one logged set, within [start, end).
+// A "day" counts once no matter how many exercises/sets were logged on it —
+// the weekly quota is about showing up, not volume.
+function distinctLoggedDaysInRange(hist, start, end) {
+  const days = new Set();
+  Object.keys(hist).forEach(dateKey => {
+    const d = parseSessionDate(dateKey);
+    if (d >= start && d < end && hist[dateKey].length) days.add(dateKey);
+  });
+  return days.size;
+}
+
+// Weekly quota progress for the Tally day-bar box. `targetFrequency` is the
+// profile's Q2 answer key ('1-2'|'3-4'|'5-6'|'7') — the upper bound of that
+// range is the goal (see FREQUENCY_UPPER_BOUND in state.js). Returns enough
+// for the UI to render "2/4 days logged this week" pre-goal, or "+1 day over
+// your goal" post-goal, plus a flag for the red->green bar-fill switch.
+export function getWeeklyQuotaProgress(targetFrequency, refDate) {
+  const goal = FREQUENCY_UPPER_BOUND[targetFrequency] || null;
+  const { start, end } = getWeekBounds(refDate || new Date());
+  const hist = getHistory();
+  const daysLogged = distinctLoggedDaysInRange(hist, start, end);
+  if (!goal) return { daysLogged, goal: null, met: false, overflow: 0 };
+  const met = daysLogged >= goal;
+  return { daysLogged, goal, met, overflow: met ? daysLogged - goal : 0 };
+}
+
+// Longest run of *consecutive calendar days* with a logged set, and the
+// current run ending today (or yesterday, if nothing's logged yet today —
+// a streak shouldn't zero out at midnight before the user's had a chance to
+// train). Streaks are NOT bounded by week — a 12-day run stays a 12-day
+// streak regardless of Sunday resets (per spec).
+export function getStreaks(refDate) {
+  const hist = getHistory();
+  const loggedDayKeys = Object.keys(hist).filter(k => hist[k] && hist[k].length);
+  if (!loggedDayKeys.length) return { current: 0, best: 0 };
+  // De-dupe by real calendar day (parseSessionDate could theoretically
+  // collide across legacy vs current date-string formats for the same real
+  // day) and index by day for O(1) consecutive-day lookups below.
+  const daySet = new Set(loggedDayKeys.map(k => {
+    const d = parseSessionDate(k);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }));
+  const sortedUnique = Array.from(daySet).sort((a, b) => a - b);
+
+  let best = 1, run = 1;
+  for (let i = 1; i < sortedUnique.length; i++) {
+    const diffDays = Math.round((sortedUnique[i] - sortedUnique[i-1]) / 86400000);
+    if (diffDays === 1) { run++; } else { run = 1; }
+    if (run > best) best = run;
+  }
+
+  const today = new Date(refDate || new Date());
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const yesterdayMid = todayMid - 86400000;
+  // Current streak anchors at today if already logged, else at yesterday
+  // (so the streak display doesn't drop to 0 first thing in the morning
+  // before today's session happens) — otherwise there's no active streak.
+  let anchor = null;
+  if (daySet.has(todayMid)) anchor = todayMid;
+  else if (daySet.has(yesterdayMid)) anchor = yesterdayMid;
+  let current = 0;
+  if (anchor != null) {
+    current = 1;
+    let cursor = anchor - 86400000;
+    while (daySet.has(cursor)) { current++; cursor -= 86400000; }
+  }
+  return { current, best };
+}
+
+// Rough session length: last set's loggedAt minus first set's loggedAt, for
+// a given history date-key. Sets logged before this feature shipped have no
+// loggedAt at all, so any day mixing old and new data (or entirely old data)
+// simply can't produce a duration — returns null rather than a misleading
+// number built from partial timestamps.
+export function sessionDurationMinutes(dateKey) {
+  const hist = getHistory();
+  const entries = hist[dateKey];
+  if (!entries || !entries.length) return null;
+  const timestamps = [];
+  entries.forEach(e => e.sets.forEach(s => { if (s.loggedAt != null) timestamps.push(s.loggedAt); }));
+  if (timestamps.length < 2) return null; // need at least a first and last point
+  const span = Math.max(...timestamps) - Math.min(...timestamps);
+  return Math.round(span / 60000);
+}
+
+// Average session length across logged days in [start, end) that actually
+// have duration data (see sessionDurationMinutes) — days without loggedAt
+// data are excluded rather than counted as 0, so they don't drag the
+// average down artificially. Returns null if no day in range has data yet.
+export function getWeeklyAvgSessionMinutes(refDate) {
+  const { start, end } = getWeekBounds(refDate || new Date());
+  const hist = getHistory();
+  const perDay = [];
+  Object.keys(hist).forEach(dateKey => {
+    const d = parseSessionDate(dateKey);
+    if (d < start || d >= end) return;
+    const mins = sessionDurationMinutes(dateKey);
+    if (mins != null) perDay.push({ dateKey, minutes: mins });
+  });
+  if (!perDay.length) return { avgMinutes: null, days: [] };
+  const avg = Math.round(perDay.reduce((sum, d) => sum + d.minutes, 0) / perDay.length);
+  return { avgMinutes: avg, days: perDay };
+}
 
 let histSearchQuery = '';
 export function openHistSearch() {
@@ -236,7 +361,7 @@ export function openEditSession(exKey, date) {
     dateChanged: false,
     name: entry.name,
     exId: entry.exId || '',
-    sets: entry.sets.map(s => ({ reps: String(s.reps ?? ''), weight: String(s.weight ?? '') })),
+    sets: entry.sets.map(s => ({ reps: String(s.reps ?? ''), weight: String(s.weight ?? ''), loggedAt: s.loggedAt })),
   };
   renderEditSession();
   document.getElementById('edit-session-wrap').classList.add('show');
@@ -302,7 +427,9 @@ export function saveEditSession() {
   });
   const cleanSets = _editSession.sets
     .filter(s => s.reps !== '' || s.weight !== '')
-    .map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
+    .map(s => s.loggedAt != null
+      ? { reps: Number(s.reps)||0, weight: Number(s.weight)||0, loggedAt: s.loggedAt }
+      : { reps: Number(s.reps)||0, weight: Number(s.weight)||0 });
   const exKey = _editSession.exKey;
   const hist = getHistory();
   // The entry always still lives under the date it was originally opened from —

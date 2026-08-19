@@ -149,10 +149,17 @@ export function saveCustomLog() {
   const dateKey = formatHistoryDate(_customLog.date);
   const hist = getHistory();
   if (!hist[dateKey]) hist[dateKey] = [];
+  // Only stamp loggedAt when the entry is actually being logged for today —
+  // custom log entries can be backdated to any date, and a Date.now()
+  // timestamp on a backdated entry would misrepresent when it was really
+  // logged, throwing off session-length derivation for that day.
+  const isToday = formatHistoryDate(new Date()) === dateKey;
+  const now = Date.now();
   _customLog.entries.forEach(e => {
     const cleanSets = e.sets
       .filter(s => s.reps !== '' || s.weight !== '')
-      .map(s => ({ reps: Number(s.reps)||0, weight: Number(s.weight)||0 }));
+      .map(s => isToday ? { reps: Number(s.reps)||0, weight: Number(s.weight)||0, loggedAt: now }
+                         : { reps: Number(s.reps)||0, weight: Number(s.weight)||0 });
     if (!cleanSets.length) return;
     const existing = hist[dateKey].findIndex(x => (x.exId && e.exId) ? x.exId === e.exId : x.name === e.name);
     if (existing >= 0) hist[dateKey][existing].sets = hist[dateKey][existing].sets.concat(cleanSets);

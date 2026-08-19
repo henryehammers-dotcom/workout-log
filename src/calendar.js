@@ -415,9 +415,14 @@ export function commitPendingSet(d, idx, isoDate) {
   const ex = schedule[d] && schedule[d].exercises[idx];
   if (!ex) return;
   const bw = ex.type === 'bodyweight' ? getCleanBw() : null;
+  // loggedAt is new as of this change — purely additive, used only for
+  // deriving rough session-length stats going forward. Existing history
+  // entries predate this and simply won't have it; any code reading it must
+  // treat a missing loggedAt as "no timing data available," not as 0/invalid.
+  const now = Date.now();
   const newSets = pending.map(s => {
     const weight = s.weight !== '' ? Number(s.weight)||0 : (bw != null ? bw : 0);
-    return { reps: Number(s.reps)||0, weight };
+    return { reps: Number(s.reps)||0, weight, loggedAt: now };
   });
   const existing = hist[dateKey].findIndex(e => (e.exId && ex.exId) ? e.exId === ex.exId : e.name === ex.name);
   if (existing >= 0) {
