@@ -280,6 +280,102 @@ export function classifySessionType(dateKey) {
   return cardioCount > otherCount ? 'cardio' : 'lifting';
 }
 
+/* ─── OVERALL TREND (Tally box) ───
+   Reuses the exact same per-session classification the History momentum
+   chart already uses (compare this session's e1RM to the exercise's own
+   immediately-prior session; PR if it's that exercise's all-time best e1RM)
+   — see the isPR/isUp logic around the momentum-bars render above — but
+   applied per calendar day and averaged across whichever exercises were
+   logged that day, per the Tally spec. */
+
+// Classifies one exercise's session at `sessionIdx` within its own sorted
+// session list: 'pr' | 'up' | 'down' | 'equal'. Mirrors the momentum chart's
+// isPR/isUp exactly, except "equal" is now its own state (the momentum bars
+// fold equal into "up" for a simpler 2-color chart; the Tally spec calls for
+// a real 4th state, so it's split out here rather than reused as-is).
+function classifySessionTrend(sessions, sessionIdx) {
+  const e1rms = sessions.map(s => sessionBestE1RM(s.sets));
+  const v = e1rms[sessionIdx];
+  if (sessionIdx === 0) return v > 0 ? 'pr' : 'up'; // first-ever session with real weight is trivially a new best
+  const priorBest = Math.max(...e1rms.slice(0, sessionIdx));
+  const prev = e1rms[sessionIdx - 1];
+  // PR requires strictly beating every prior session, not just tying it —
+  // an exact repeat of a previous best is a real, common case (same weight/
+  // reps as last time) and should read as 'equal', not a false PR badge.
+  if (v > priorBest) return 'pr';
+  if (v > prev) return 'up';
+  if (v < prev) return 'down';
+  return 'equal';
+}
+
+// Every exercise's classification for a given history date-key, keyed by
+// exercise key (exId||name) so a caller can filter down to specific
+// exercises without recomputing. Exercises with 0 valid e1RM (e.g. a set
+// logged with 0 reps) are skipped rather than forced into a state.
+export function getDayTrendBreakdown(dateKey) {
+  const hist = getHistory();
+  const entries = hist[dateKey];
+  if (!entries || !entries.length) return [];
+  const index = getExerciseIndex(hist);
+  const results = [];
+  entries.forEach(entry => {
+    const key = entry.exId || entry.name;
+    const exSessions = index[key];
+    if (!exSessions) return;
+    const sessionIdx = exSessions.sessions.findIndex(s => s.date === dateKey);
+    if (sessionIdx === -1) return;
+    const trend = classifySessionTrend(exSessions.sessions, sessionIdx);
+    results.push({ key, name: entry.name, trend });
+  });
+  return results;
+}
+
+// Averages a day's per-exercise trends into one overall verdict for the
+// Tally "Overall trend" box, optionally filtered to specific exercise keys
+// (the box's filter picker — reps/weight/sets metric filtering happens at
+// the display layer using each exercise's own sets, not here, since metric
+// choice doesn't change *which* exercises count, only what's shown per bar).
+// Averaging rule: PR counts as up for the purpose of the average (a PR is
+// definitionally an improvement), then majority vote decides the day's
+// color; a tie between up and down falls back to 'equal'.
+export function getDayOverallTrend(dateKey, exerciseKeys) {
+  let breakdown = getDayTrendBreakdown(dateKey);
+  if (exerciseKeys && exerciseKeys.length) {
+    const wanted = new Set(exerciseKeys);
+    breakdown = breakdown.filter(b => wanted.has(b.key));
+  }
+  if (!breakdown.length) return { trend: null, hasPR: false, breakdown };
+  const hasPR = breakdown.some(b => b.trend === 'pr');
+  let upCount = 0, downCount = 0, equalCount = 0;
+  breakdown.forEach(b => {
+    if (b.trend === 'pr' || b.trend === 'up') upCount++;
+    else if (b.trend === 'down') downCount++;
+    else equalCount++;
+  });
+  let trend;
+  if (upCount > downCount) trend = 'up';
+  else if (downCount > upCount) trend = 'down';
+  else trend = equalCount >= Math.max(upCount, downCount) ? 'equal' : 'up';
+  return { trend, hasPR, breakdown };
+}
+
+// Recent days' overall trend, most recent first, for the Tally trend bar
+// chart — `days` distinct logged dates going backward from refDate (not a
+// fixed calendar window, since the box should show N *sessions*, skipping
+// rest days rather than padding with empty bars for days nothing was logged).
+export function getRecentDayTrends(days, refDate, exerciseKeys) {
+  const hist = getHistory();
+  const today = new Date(refDate || new Date());
+  const loggedKeys = Object.keys(hist)
+    .filter(k => hist[k] && hist[k].length)
+    .filter(k => parseSessionDate(k) <= today)
+    .sort((a, b) => parseSessionDate(b) - parseSessionDate(a)); // most recent first
+  return loggedKeys.slice(0, days).reverse().map(dateKey => {
+    const { trend, hasPR } = getDayOverallTrend(dateKey, exerciseKeys);
+    return { dateKey, trend, hasPR };
+  });
+}
+
 /* ─── TOTAL WEIGHT LIFTED (milestone ladder) ─── */
 // Cumulative weight across every set in every logged session, all-time. Sums
 // raw weight×reps per set (same math as sessionVolume, applied across all
