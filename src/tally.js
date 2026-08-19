@@ -431,14 +431,28 @@ const BOX_RENDERERS = {
         <span style="font-size:10px;color:#555">${fmtWeight(m.lbs)}</span>
         <span style="font-size:11px;font-weight:700;text-transform:uppercase">${escHtml(m.label)}</span>
       </div>`).join('');
-    const toggleLabel = _weightLadderExpanded ? 'Show less' : 'Show all';
-    return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
-      <div>${rows}</div>
-      <div style="text-align:center;margin-top:6px">
-        <span onclick="toggleTallyWeightLadder()" style="font-size:10px;color:#333;text-decoration:underline;cursor:pointer">${toggleLabel}</span>
+    // Fill percentage: progress from the previous milestone to the next
+    // unreached one, so the bar visibly grows as total weight increases
+    // rather than always reading as a solid full block. Past every
+    // milestone -> reads as full.
+    const nextIdx = WEIGHT_MILESTONES.findIndex(m => m.lbs > stats.totalLbs);
+    let fillPct;
+    if (nextIdx === -1) {
+      fillPct = 100;
+    } else {
+      const prevLbs = nextIdx === 0 ? 0 : WEIGHT_MILESTONES[nextIdx - 1].lbs;
+      const nextLbs = WEIGHT_MILESTONES[nextIdx].lbs;
+      fillPct = Math.max(4, Math.min(100, Math.round(((stats.totalLbs - prevLbs) / (nextLbs - prevLbs)) * 100)));
+    }
+    const caratPath = _weightLadderExpanded ? 'polyline points="18 15 12 9 6 15"' : 'polyline points="6 9 12 15 18 9"';
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;cursor:pointer" onclick="toggleTallyWeightLadder()">
+        <div class="tally-box-label" style="margin:0">Total weight lifted</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><${caratPath}/></svg>
       </div>
-      <div style="margin:10px -12px -10px;background:#ff5757;padding:10px;text-align:center;border-radius:0 0 12px 12px">
-        <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
+      <div>${rows}</div>
+      <div style="margin:10px -12px -10px;background:#eee;padding:0;position:relative;overflow:hidden;border-radius:0 0 12px 12px">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:${fillPct}%;background:#ff5757;transition:width .3s"></div>
+        <div style="position:relative;padding:10px;text-align:center;font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
   },
   lastTrained(stats) {
