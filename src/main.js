@@ -191,10 +191,6 @@ Object.assign(window, {
   openTallySheet: tallyMod.openTallySheet,
   closeTallySheet: tallyMod.closeTallySheet,
   toggleTallyRestReveal: tallyMod.toggleTallyRestReveal,
-  toggleTallyEditMode: tallyMod.toggleTallyEditMode,
-  removeTallyBox: tallyMod.removeTallyBox,
-  addTallyBox: tallyMod.addTallyBox,
-  promptTallyWeightUpdate: tallyMod.promptTallyWeightUpdate,
   openTallySessionTimesPopup: tallyMod.openTallySessionTimesPopup,
   openTallyMuscleGapsPopup: tallyMod.openTallyMuscleGapsPopup,
   openTallyTrendDay: tallyMod.openTallyTrendDay,
@@ -202,8 +198,6 @@ Object.assign(window, {
   setTallyTrendMetric: tallyMod.setTallyTrendMetric,
   toggleTallyTrendExercise: tallyMod.toggleTallyTrendExercise,
   closeTallyFilter: tallyMod.closeTallyFilter,
-  openTallyMuscleFilter: tallyMod.openTallyMuscleFilter,
-  setTallyMuscleFilterMode: tallyMod.setTallyMuscleFilterMode,
 });
 
 /* ─── AUTO-UPDATE ON OPEN ───

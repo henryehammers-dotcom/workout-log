@@ -9,12 +9,12 @@ import { KEYS, schedule, DAY_NAMES, FULL_DAYS, getProfile, getCleanBw,
          currentUnits, TALLY_BOX_DEFS, getTallyLayout, saveTallyLayout,
          getTallyHidden, saveTallyHidden, FREQUENCY_UPPER_BOUND,
          escHtml, escAttr, getHistory } from './state.js';
-import { formatHistoryDate, jumpToDate } from './calendar.js';
+import { formatHistoryDate } from './calendar.js';
 import {
   getWeeklyQuotaProgress, getStreaks, getWeeklyAvgSessionMinutes,
   getMuscleGroupsNeedingAttention, estimateCalorieRange, classifySessionType,
   getRecentDayTrends, getTotalWeightLiftedLbs, getMilestoneWindow,
-  getExerciseIndex, parseSessionDate, getHistoryDisplayNames,
+  getExerciseIndex, getHistoryDisplayNames, getDayTrendBreakdown,
 } from './history.js';
 
 /* ─── UNIT CONVERSION (display only — all storage stays lbs) ─── */
@@ -42,7 +42,6 @@ export function openTallySheet() {
 }
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
-  if (_editMode) toggleTallyEditMode(); // don't leave edit mode armed for next open
   _restBoxesRevealed = false; // rest-day reveal is per-viewing, not sticky across opens
 }
 // Called at the end of app init (see main.js) — opens on every launch per
@@ -159,17 +158,14 @@ export function toggleTallyRestReveal() {
 }
 function applyRestRevealState() {
   const boxesEl = document.getElementById('tally-boxes');
-  const editRow = document.getElementById('tally-edit-row');
   const titleEl = document.getElementById('tally-section-title');
   const btn = document.getElementById('tally-show-anyway-btn');
   if (_restBoxesRevealed) {
     boxesEl?.classList.remove('hide');
-    editRow?.classList.remove('hide');
     titleEl?.classList.remove('hide');
     if (btn) btn.textContent = 'Hide Tally';
   } else {
     boxesEl?.classList.add('hide');
-    editRow?.classList.add('hide');
     titleEl?.classList.add('hide');
     if (btn) btn.textContent = 'Show Tally';
   }
@@ -184,7 +180,6 @@ function renderHeader() {
   const workoutLabelEl = document.getElementById('tally-workout-label');
   const restBanner = document.getElementById('tally-rest-banner');
   const boxesEl = document.getElementById('tally-boxes');
-  const editRow = document.getElementById('tally-edit-row');
   const titleEl = document.getElementById('tally-section-title');
 
   if (sched.restDay) {
@@ -196,7 +191,6 @@ function renderHeader() {
     if (workoutLabelEl) workoutLabelEl.textContent = suffix ? `Today's workout is ${suffix}` : "Today's workout";
     if (restBanner) restBanner.style.display = 'none';
     boxesEl?.classList.remove('hide');
-    editRow?.classList.remove('hide');
     titleEl?.classList.remove('hide');
   }
 }
@@ -251,9 +245,9 @@ function renderWeekCheckmarksInner() {
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
       <span style="font-size:11px;color:var(--text3)">${d.label}</span>
       <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;
-        background:${d.logged ? 'var(--accent)' : 'transparent'};
-        border:1.5px solid ${d.logged ? 'var(--accent)' : 'var(--border2)'};
-        color:${d.logged ? 'var(--on-accent, #fff)' : 'var(--text3)'}">${d.logged ? '✓' : ''}</span>
+        background:${d.logged ? '#3fb87f' : 'transparent'};
+        border:1.5px solid ${d.logged ? '#3fb87f' : '#ccc'};
+        color:${d.logged ? '#fff' : '#999'}">${d.logged ? '✓' : ''}</span>
     </div>`).join('');
   return `<div class="tally-box-label">This week</div><div style="display:flex;gap:4px;margin-top:8px">${dotsHtml}</div>`;
 }
@@ -294,22 +288,12 @@ function renderCalorieRowInner(stats, includeWeightDelta) {
     deltaHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div class="tally-box-label">Weight this week</div>
       <div class="tally-box-value">${bw != null ? bw + ' ' + currentUnits : '—'}</div>
-      <button onclick="promptTallyWeightUpdate()" style="margin-top:6px;background:transparent;border:1px solid var(--border2);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer">Update weight</button>
     </div>`;
   }
   return `<div class="tally-box-label">Estimated calories</div>
     <div style="display:flex;gap:4px;margin-top:8px">${cellsHtml}</div>
     ${bwLbs == null ? '<div class="tally-box-sub" style="margin-top:8px">Add your weight in Settings for calorie estimates.</div>' : ''}
     ${deltaHtml}`;
-}
-export function promptTallyWeightUpdate() {
-  const current = getCleanBw();
-  const val = prompt('Update your current weight (' + currentUnits + ')', current != null ? String(current) : '');
-  if (val == null || val === '') return;
-  const num = parseFloat(val);
-  if (isNaN(num)) return;
-  localStorage.setItem(KEYS.bw, num);
-  renderTallySheet(); // live recompute — matches spec: updating weight then reopening/refreshing Tally reflects it immediately
 }
 function renderHighlightBarHtml(stats) {
   const mode = highlightModeForGoal(stats.profile.goal);
@@ -331,7 +315,7 @@ function renderWeeklyQuotaPill(stats) {
     : `${daysLogged}/${goal} days logged this week`;
   const color = met ? '#3fb87f' : '#e8695c';
   const pct = goal ? Math.min(100, Math.round((daysLogged / goal) * 100)) : 0;
-  return `<div style="position:relative;height:26px;border-radius:999px;background:#eee;border:1.5px solid #111;margin:8px 0 2px;overflow:hidden">
+  return `<div style="position:relative;height:26px;border-radius:999px;background:#eee;margin:8px 0 2px;overflow:hidden">
     <div style="position:absolute;top:0;left:0;bottom:0;width:${pct}%;background:${color};border-radius:999px;transition:width .3s"></div>
     <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:flex-end;padding:0 12px">
       <span style="font-size:10px;color:#555;white-space:nowrap;font-weight:600">${escHtml(text)}</span>
@@ -379,28 +363,6 @@ export function closeTallyFilter() {
   if (_lastStats) renderFullBody(_lastStats); // apply whatever filter state changed while the sheet was open
 }
 
-export function openTallyMuscleFilter() {
-  const title = document.getElementById('tally-filter-title');
-  if (title) title.textContent = 'Last trained';
-  const body = document.getElementById('tally-filter-body');
-  if (body && _lastStats) {
-    const rows = _lastStats.attention.all.map(g => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:14px">${escHtml(g.label)}</span>
-        <span style="font-size:12px;color:var(--text3)">${g.daysSince == null ? 'never trained' : g.daysSince + ' days ago'}</span>
-      </div>`).join('');
-    body.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:14px">
-        <button class="tally-filter-chip${!_muscleFilterShowAll?' active':''}" onclick="setTallyMuscleFilterMode(false)">Needs attention</button>
-        <button class="tally-filter-chip${_muscleFilterShowAll?' active':''}" onclick="setTallyMuscleFilterMode(true)">All groups</button>
-      </div>` + rows;
-  }
-  document.getElementById('tally-filter-wrap')?.classList.add('show');
-}
-export function setTallyMuscleFilterMode(showAll) {
-  _muscleFilterShowAll = showAll;
-  openTallyMuscleFilter();
-}
-
 /* ─── STANDARD BOXES (non-highlight registry — ids/widths in
    TALLY_BOX_DEFS, state.js). Highlight-mode boxes (prCallout/
    weekCheckmarks/calorieRow/weightDelta) are included here too, rendered
@@ -411,6 +373,9 @@ export function setTallyMuscleFilterMode(showAll) {
 const BOX_VARIANTS = {
   overallTrend: 'neutral',
   totalWeight: 'neutral',
+  bestStreak: 'value-first',
+  daysLogged: 'value-first',
+  setsCompleted: 'value-first',
 };
 const BOX_RENDERERS = {
   overallTrend(stats) {
@@ -422,7 +387,7 @@ const BOX_RENDERERS = {
     const barsHtml = bars.map(b => `
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer" data-date="${escAttr(b.dateKey)}" class="tally-trend-bar">
         <div style="width:70%;height:${maxH}px;display:flex;align-items:flex-end">
-          <div style="width:100%;height:${b.hasPR ? maxH : Math.round(maxH*0.6)}px;border-radius:4px;background:${b.hasPR ? 'var(--accent)' : colorFor(b.trend)}"></div>
+          <div style="width:100%;height:${b.hasPR ? maxH : Math.round(maxH*0.6)}px;border-radius:4px;background:${b.hasPR ? '#5170ff' : colorFor(b.trend)}"></div>
         </div>
       </div>`).join('');
     return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Overall trend</div>${filterIcon}</div>
@@ -430,13 +395,13 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" style="margin-top:8px">Tap a bar to see that session</div>`;
   },
   bestStreak(stats) {
-    return `<div class="tally-box-label">Best streak</div><div class="tally-box-value">${stats.streaks.best} days</div>`;
+    return `<div class="tally-box-value">${stats.streaks.best} days</div><div class="tally-box-label">Best streak</div>`;
   },
   daysLogged(stats) {
-    return `<div class="tally-box-label">Days logged</div><div class="tally-box-value">${stats.loggedDayCount}</div>`;
+    return `<div class="tally-box-value">${stats.loggedDayCount}</div><div class="tally-box-label">Days logged</div>`;
   },
   setsCompleted(stats) {
-    return `<div class="tally-box-label">Sets completed</div><div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div>`;
+    return `<div class="tally-box-value">${stats.setsCompleted.toLocaleString()}</div><div class="tally-box-label">Sets completed</div>`;
   },
   avgSession(stats) {
     const avg = stats.avgSession.avgMinutes;
@@ -455,8 +420,8 @@ const BOX_RENDERERS = {
     // so you can browse the milestone list without scrolling the page.
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:8px">Total weight lifted</div>
       <div style="max-height:170px;overflow-y:auto;overscroll-behavior:contain" onwheel="event.stopPropagation()">${rows}</div>
-      <div style="margin-top:10px;background:#e05d52;border:1.5px solid #111;border-radius:6px;padding:10px;text-align:center">
-        <div style="font-size:15px;font-weight:800;color:#111">${fmtWeight(stats.totalLbs)}</div>
+      <div style="margin:10px -12px -10px;background:#e05d52;padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:400;color:#111">${fmtWeight(stats.totalLbs)}</div>
       </div>`;
   },
   lastTrained(stats) {
@@ -471,7 +436,7 @@ const BOX_RENDERERS = {
         <span style="font-size:10px;font-weight:700;background:${pillBg};color:${pillText};border-radius:999px;padding:2px 8px">${escHtml(text)}</span>
       </div>`;
     }).join('');
-    return `<div style="display:flex;justify-content:space-between;align-items:center"><div class="tally-box-label" style="margin:0">Last trained</div>${filterIconSvg('openTallyMuscleFilter()', 'Filter muscle groups')}</div>
+    return `<div class="tally-box-label">Last trained</div>
       ${shown.length ? rows : '<div class="tally-box-sub">Nothing overdue right now.</div>'}
       <div class="tally-box-sub" onclick="openTallyMuscleGapsPopup()" style="cursor:pointer;text-decoration:underline;margin-top:6px;font-size:10px">See all</div>`;
   },
@@ -481,105 +446,9 @@ const BOX_RENDERERS = {
   weightDelta() {
     const bw = getCleanBw();
     return `<div class="tally-box-label">Weight</div>
-      <div class="tally-box-value">${bw != null ? bw + ' ' + currentUnits : '—'}</div>
-      <button onclick="promptTallyWeightUpdate()" style="margin-top:6px;background:transparent;border:1px solid var(--border2);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text2);font-family:inherit;cursor:pointer">Update</button>`;
+      <div class="tally-box-value">${bw != null ? bw + ' ' + currentUnits : '—'}</div>`;
   },
 };
-
-/* ─── EDIT MODE (iPhone-homescreen-style: wiggle, tap-remove, add-picker) ─── */
-let _editMode = false;
-export function toggleTallyEditMode() {
-  _editMode = !_editMode;
-  const btn = document.getElementById('tally-edit-btn');
-  if (btn) btn.textContent = _editMode ? 'Done' : 'Edit Tally';
-  if (_lastStats) renderFullBody(_lastStats);
-}
-export function removeTallyBox(boxId) {
-  const hidden = getTallyHidden();
-  if (!hidden.includes(boxId)) hidden.push(boxId);
-  saveTallyHidden(hidden);
-  if (_lastStats) renderFullBody(_lastStats);
-}
-export function addTallyBox(boxId) {
-  saveTallyHidden(getTallyHidden().filter(id => id !== boxId));
-  if (_lastStats) renderFullBody(_lastStats);
-}
-function renderAddPicker(excludeId) {
-  const hidden = getTallyHidden().filter(id => id !== excludeId);
-  if (!hidden.length) return '';
-  const chips = hidden.map(id => {
-    const def = TALLY_BOX_DEFS.find(b => b.id === id);
-    return def ? `<button class="tally-add-chip" onclick="addTallyBox('${id}')">+ ${escHtml(def.label)}</button>` : '';
-  }).join('');
-  return `<div class="tally-add-picker-row">${chips}</div>`;
-}
-
-/* ─── DRAG REORDER ───
-   Long-press (350ms) then drag, mirroring drag.js's touch/mouse pattern.
-   On drop, finds which row/slot the pointer is currently over and moves the
-   dragged box to that position in the saved layout order, respecting the
-   width-collision rule implicitly (the row-building logic in
-   buildBoxRows() below re-flows full/half boxes into valid rows regardless
-   of the raw order, so an invalid placement can't actually occur — the
-   worst case is the box lands in a different position within the flow than
-   the user precisely intended, not a broken layout). */
-let _dragBoxId = null, _dragEl = null, _dragClone = null, _dragOffsetY = 0, _longPressTimer = null;
-function boxCenterY(el) { const r = el.getBoundingClientRect(); return r.top + r.height / 2; }
-function wireBoxDrag(el, boxId) {
-  if (el.dataset.dragWired) return;
-  el.dataset.dragWired = '1';
-  const cancel = () => clearTimeout(_longPressTimer);
-  const start = clientY => {
-    _dragBoxId = boxId; _dragEl = el;
-    const rect = el.getBoundingClientRect();
-    _dragOffsetY = clientY - rect.top;
-    _dragClone = el.cloneNode(true);
-    _dragClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:1200;opacity:0.9;pointer-events:none;box-shadow:0 12px 32px rgba(0,0,0,0.3);border-radius:14px`;
-    document.body.appendChild(_dragClone);
-    el.style.opacity = '0.2';
-  };
-  const move = clientY => { if (_dragClone) _dragClone.style.top = (clientY - _dragOffsetY) + 'px'; };
-  const end = () => {
-    if (_dragClone) {
-      const cloneY = boxCenterY(_dragClone);
-      let closestId = null, closestDist = Infinity;
-      document.querySelectorAll('#tally-boxes .tally-box[data-box-id]').forEach(other => {
-        // Scoped to #tally-boxes specifically (rather than the whole
-        // document) so this can never match _dragClone, which lives
-        // outside that container as a direct child of <body>.
-        if (other === _dragEl) return;
-        const dist = Math.abs(boxCenterY(other) - cloneY);
-        if (dist < closestDist) { closestDist = dist; closestId = other.dataset.boxId; }
-      });
-      if (closestId && closestId !== _dragBoxId) {
-        const layout = getTallyLayout();
-        const from = layout.indexOf(_dragBoxId), to = layout.indexOf(closestId);
-        if (from !== -1 && to !== -1) {
-          layout.splice(from, 1);
-          layout.splice(to, 0, _dragBoxId);
-          saveTallyLayout(layout);
-        }
-      }
-      _dragClone.remove(); _dragClone = null;
-    }
-    if (_dragEl) { _dragEl.style.opacity = ''; _dragEl = null; }
-    _dragBoxId = null;
-    if (_lastStats) renderFullBody(_lastStats);
-  };
-  el.addEventListener('touchstart', e => { _longPressTimer = setTimeout(() => start(e.touches[0].clientY), 350); }, { passive: true });
-  el.addEventListener('touchmove', e => { if (_dragClone) { e.preventDefault(); move(e.touches[0].clientY); } else cancel(); }, { passive: false });
-  el.addEventListener('touchend', () => { cancel(); end(); });
-  el.addEventListener('mousedown', e => {
-    _longPressTimer = setTimeout(() => {
-      start(e.clientY);
-      const onMove = ev => move(ev.clientY);
-      const onUp = () => { end(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    }, 350);
-  });
-  el.addEventListener('mouseup', cancel);
-}
 
 /* ─── BOX GRID ASSEMBLY (groups visible boxes into rows respecting the
    width-collision rule: full-width boxes always alone on their row;
@@ -614,9 +483,21 @@ function buildBoxRows(visibleIds) {
 }
 
 export function openTallyTrendDay(dateKey) {
-  const date = parseSessionDate(dateKey);
-  closeTallySheet();
-  jumpToDate(date);
+  const title = document.getElementById('tally-filter-title');
+  if (title) title.textContent = dateKey.replace(/\w+,\s/, '');
+  const body = document.getElementById('tally-filter-body');
+  if (body) {
+    const breakdown = getDayTrendBreakdown(dateKey);
+    const labelFor = t => t === 'pr' ? 'New PR' : t === 'up' ? 'Up' : t === 'down' ? 'Down' : 'Same as last time';
+    const colorFor = t => t === 'pr' ? '#5170ff' : t === 'up' ? '#3fb87f' : t === 'down' ? '#e8695c' : '#999';
+    body.innerHTML = breakdown.length
+      ? breakdown.map(b => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:14px">${escHtml(b.name)}</span>
+          <span style="font-size:12px;font-weight:600;color:${colorFor(b.trend)}">${labelFor(b.trend)}</span>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text3);padding:8px 0">No data for this session.</p>';
+  }
+  document.getElementById('tally-filter-wrap')?.classList.add('show');
 }
 function wireTrendBarClicks() {
   document.querySelectorAll('.tally-trend-bar[data-date]').forEach(el => {
@@ -640,20 +521,15 @@ function renderFullBody(stats) {
 
   const rowsHtml = rows.map(row => {
     const cellsHtml = row.ids.map(id => {
-      let inner = BOX_RENDERERS[id](stats);
-      const removeBtn = _editMode ? `<button class="tally-box-remove" onclick="event.stopPropagation();removeTallyBox('${id}')" aria-label="Remove">✕</button>` : '';
+      const inner = BOX_RENDERERS[id](stats);
       const variant = BOX_VARIANTS[id] || '';
-      return `<div class="tally-box${variant ? ' '+variant : ''}${_editMode ? ' editing' : ''}" data-box-id="${id}">${removeBtn}${inner}</div>`;
+      return `<div class="tally-box${variant ? ' '+variant : ''}" data-box-id="${id}">${inner}</div>`;
     }).join('');
     return `<div class="tally-box-row ${row.type === 'third' ? 'triple' : row.type}">${cellsHtml}</div>`;
   }).join('');
 
-  container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml + (_editMode ? renderAddPicker(activeHighlightBoxId) : '');
+  container.innerHTML = renderHighlightBarHtml(stats) + rowsHtml;
   wireTrendBarClicks();
-
-  if (_editMode) {
-    container.querySelectorAll('.tally-box[data-box-id]').forEach(el => wireBoxDrag(el, el.dataset.boxId));
-  }
 }
 export function renderTallySheet() {
   wireSheetSwipe();
@@ -664,7 +540,7 @@ export function renderTallySheet() {
 
 /* ─── DETAIL POPUPS (session times, muscle gaps) — real sheets, reusing
    the same filter-sheet markup/overlay as openTallyTrendFilter/
-   openTallyMuscleFilter above. ─── */
+   the same filter-sheet markup/overlay as openTallySessionTimesPopup above. ─── */
 export function openTallySessionTimesPopup() {
   if (!_lastStats) return;
   const title = document.getElementById('tally-filter-title');

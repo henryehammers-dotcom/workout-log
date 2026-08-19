@@ -899,9 +899,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .tally-show-anyway-btn{background:transparent;border:1.5px solid #111;border-radius:999px;padding:8px 18px;color:#111;font-size:13px;font-family:inherit;cursor:pointer}
 .tally-boxes{display:flex;flex-direction:column;gap:10px}
 .tally-boxes.hide{display:none}
-.tally-edit-row{margin-top:14px;text-align:center}
-.tally-edit-btn{background:#e8e8e5;border:1.5px solid #111;border-radius:8px;color:#111;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;padding:8px 16px;width:100%;text-transform:uppercase;letter-spacing:0.03em}
-[data-theme="dark"] .tally-edit-btn{background:#2a2a27;color:#f0f0ec;border-color:#000}
 
 /* Box grid: full-width boxes get their own row; half/third-width boxes
    pair/triple up per row (width-collision rule: full-width never shares
@@ -910,28 +907,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .tally-box-row.full{grid-template-columns:1fr}
 .tally-box-row.triple{grid-template-columns:1fr 1fr 1fr}
 
-/* Default (accent) block style — the solid periwinkle stat cards */
-.tally-box{background:var(--accent-h);border:none;border-radius:12px;padding:10px 12px;position:relative;color:var(--accent-h-text)}
+/* Default block style — solid coral, matching the original mockup exactly
+   (no theme-accent color used anywhere in the Tally, by design) */
+.tally-box{background:#e8695c;border:none;border-radius:12px;padding:10px 12px;position:relative;color:#fff}
 .tally-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;opacity:0.75}
 .tally-box-value{font-size:15px;font-weight:800;line-height:1.15}
+.tally-box.value-first .tally-box-label{margin-bottom:0;margin-top:4px}
 .tally-box-sub{font-size:11px;margin-top:2px;opacity:0.85}
 
 /* Neutral/light block variant — used for the trend chart and the total
-   weight ladder, matching the mockup's gray (not periwinkle) sections */
+   weight ladder, matching the mockup's gray (not coral) sections */
 .tally-box.neutral{background:#eeeeec;color:#111}
 [data-theme="dark"] .tally-box.neutral{background:#26261f;color:#f0f0ec}
 .tally-box.neutral .tally-box-label{opacity:0.6;color:#333}
 [data-theme="dark"] .tally-box.neutral .tally-box-label{color:#bbb}
 
-/* Highlight/PR block — periwinkle like the standard block but sized for
-   the top headline row */
-.tally-box.highlight{background:var(--accent-h);border:none;color:var(--accent-h-text);padding:12px 14px}
-
-.tally-box.editing{animation:tally-wiggle .22s ease-in-out infinite alternate}
-.tally-box-remove{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;background:#c03232;color:#fff;border:1.5px solid #111;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;line-height:1;z-index:2}
-@keyframes tally-wiggle{from{transform:rotate(-0.6deg)}to{transform:rotate(0.6deg)}}
-.tally-add-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.tally-add-chip{padding:7px 14px;border-radius:999px;font-size:13px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit}
+/* Highlight/PR block — same coral as the standard block, sized for the
+   top headline row */
+.tally-box.highlight{background:#e8695c;border:none;color:#fff;padding:12px 14px}
 
 /* ──────────────────────────────────────────────────────────
    LIBRARY SHEET (removed — replaced by the new Library tab)
@@ -1437,9 +1430,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       </div>
       <p class="tally-section-title" id="tally-section-title">Your Tally</p>
       <div class="tally-boxes" id="tally-boxes"></div>
-      <div class="tally-edit-row" id="tally-edit-row">
-        <button class="tally-edit-btn" id="tally-edit-btn" onclick="toggleTallyEditMode()">Edit Tally</button>
-      </div>
     </div>
   </div>
 </div>
