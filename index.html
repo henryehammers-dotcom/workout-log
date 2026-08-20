@@ -1433,7 +1433,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <div class="tally-overlay" id="tally-overlay" onclick="if(event.target===this) closeTallySheet()">
   <div class="tally-sheet" id="tally-sheet">
     <div class="tally-grabber" id="tally-grabber"></div>
-    <div class="tally-scroll" id="tally-scroll">
+    <div class="tally-scroll scroll-lock-exempt" id="tally-scroll">
       <div class="tally-header">
         <div>
           <div class="tally-day-label" id="tally-day-label"></div>
@@ -1453,7 +1453,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 <!-- ── Settings sheet ── -->
 <div class="modal-wrap" id="settings-modal">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal scroll-lock-exempt" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-head">
       <div class="sheet-title">Settings</div>

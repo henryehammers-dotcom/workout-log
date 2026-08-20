@@ -515,18 +515,23 @@ export function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/
 let _lockCount = 0;
 let _lockedOverlays = [];
 function blockScroll(e) {
-  // Only block if the touch target is the overlay backdrop itself, not
-  // something inside a genuinely scrollable child (e.g. #tally-scroll,
-  // #settings-modal's own content area) — those need touchmove to reach
-  // their own scroll handling untouched.
-  if (e.target.dataset.scrollLockBackdrop !== undefined) e.preventDefault();
+  // Walk up from the actual touched element (e.target) to see whether
+  // it's inside a genuinely scrollable area (the sheet's own content,
+  // settings' own content) — if so, let the touch through untouched so
+  // that element's native scrolling works. Only block when the touch
+  // truly isn't inside any scrollable region, meaning it landed on bare
+  // backdrop. Using closest() here instead of a direct e.target identity
+  // check, since relying on e.target matching the listener's own element
+  // turned out to behave inconsistently between installed-PWA and regular
+  // browser-tab touch handling — closest() walking the real DOM ancestry
+  // is the more robust check.
+  if (!e.target.closest('.scroll-lock-exempt')) e.preventDefault();
 }
 export function lockBodyScroll(overlayIds) {
   _lockCount++;
   (overlayIds || []).forEach(id => {
     const el = document.getElementById(id);
     if (el && !_lockedOverlays.includes(id)) {
-      el.dataset.scrollLockBackdrop = '1';
       el.addEventListener('touchmove', blockScroll, { passive: false });
       _lockedOverlays.push(id);
     }
