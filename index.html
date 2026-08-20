@@ -331,6 +331,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .cal-week-row-head{display:flex;align-items:baseline;gap:8px}
 .cal-week-row-day{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text)}
 .cal-week-row-date{font-size:13px;font-weight:600;color:var(--text2)}
+.cal-week-row-workout{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--bg3);color:var(--text2)}
+.cal-week-row-workout.cal-week-row-rest{color:var(--text3);background:transparent;border:1px solid var(--border)}
 .cal-week-row-exercises{margin-top:8px;display:flex;flex-direction:column;gap:4px}
 .cal-week-row-ex{font-size:12px;font-weight:600;line-height:1.3;padding:3px 10px;border-radius:999px;display:inline-block;color:var(--text2);background:var(--bg3)}
 
@@ -903,12 +905,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* Default block style — solid coral, matching the original mockup exactly
    (no theme-accent color used anywhere in the Tally, by design) */
-.tally-box{background:#99acff;border:none;border-radius:12px;padding:10px 12px;position:relative;color:#111}
+.tally-box{background:var(--accent-h);border:none;border-radius:12px;padding:10px 12px;position:relative;color:var(--accent-h-text)}
 .tally-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;color:#111}
 .tally-box-value{font-size:15px;font-weight:800;line-height:1.15}
 .tally-box.stat-box{text-align:center}
 .tally-box-sub{font-size:11px;margin-top:2px;color:#111}
-.tally-icon-badge{width:22px;height:22px;border-radius:50%;background:#111;color:#99acff;display:flex;align-items:center;justify-content:center;margin-top:6px;margin-left:auto;margin-right:auto}
+.tally-icon-badge{width:22px;height:22px;border-radius:50%;background:#111;color:var(--accent-h);display:flex;align-items:center;justify-content:center;margin-top:6px;margin-left:auto;margin-right:auto}
 
 /* Neutral/light block variant — used for the trend chart and the total
    weight ladder, matching the mockup's gray (not coral) sections */
@@ -921,7 +923,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* Highlight/PR block — same coral as the standard block, sized for the
    top headline row */
-.tally-box.highlight{background:#99acff;border:none;color:#111;padding:12px 14px}
+.tally-box.highlight{background:var(--accent-h);border:none;color:var(--accent-h-text);padding:12px 14px}
 
 /* ──────────────────────────────────────────────────────────
    LIBRARY SHEET (removed — replaced by the new Library tab)

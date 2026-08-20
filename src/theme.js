@@ -74,6 +74,7 @@ export const ACCENTS = [
   { id: 'red',     light: '#c03232', dark: '#e57373' },
   { id: 'pink',    light: '#d6478a', dark: '#ef8ec0' },
   { id: 'purple',  light: '#6b4fa0', dark: '#afa9ec' },
+  { id: 'periwinkle', light: '#545ed8', dark: '#99acff' },
   { id: 'indigo',  light: '#4c4fb0', dark: '#9497e0' },
   { id: 'blue',    light: '#1a5fa5', dark: '#5b9bd5' },
   { id: 'cyan',    light: '#0e8f9e', dark: '#5cd6e6' },
