@@ -308,6 +308,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal-dow{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.04em;text-align:left;padding-bottom:4px}
+.cal-week-dow-row{display:flex;justify-content:space-between;padding:0 2px 8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.cal-week-dow-row .cal-dow{padding-bottom:0;flex:1;text-align:center}
 .cal-cell{position:relative;background:transparent;border:none;padding:4px 2px;height:15vw;max-height:64px;min-height:44px;cursor:pointer;overflow:hidden}
 .cal-cell-dim{opacity:0.35}
 .cal-cell-top{display:flex;align-items:center;gap:4px;line-height:1}
@@ -330,7 +332,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .cal-week-row-day{font-family:var(--display);font-weight:700;font-size:16px;color:var(--text)}
 .cal-week-row-date{font-size:13px;font-weight:600;color:var(--text2)}
 .cal-week-row-exercises{margin-top:8px;display:flex;flex-direction:column;gap:4px}
-.cal-week-row-ex{font-size:12px;font-weight:600;line-height:1.3;padding:2px 6px;border-radius:4px;display:inline-block;color:var(--text2)}
+.cal-week-row-ex{font-size:12px;font-weight:600;line-height:1.3;padding:3px 10px;border-radius:999px;display:inline-block;color:var(--text2);background:var(--bg3)}
 
 .cal-year-list{display:flex;flex-direction:column;gap:0}
 .cal-year-item{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--text);background:transparent;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;font-family:inherit}

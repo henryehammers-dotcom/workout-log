@@ -445,6 +445,10 @@ function renderWeekView() {
 
   const days = [];
   for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
+  // Same SUN/MON/TUE... header row Month view already uses above its grid —
+  // Week view previously only had the full weekday name written inline
+  // inside each row, with no standalone label row like the other views.
+  const dowHeaders = ['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => `<div class="cal-dow">${d}</div>`).join('');
 
   return `
     <div class="cal-card-header">
@@ -452,6 +456,7 @@ function renderWeekView() {
         <div class="cal-title"><span class="cal-title-accent">${escHtml(label)}</span></div>
       </div>
     </div>
+    <div class="cal-week-dow-row">${dowHeaders}</div>
     <div class="cal-week-list">
       ${days.map(d => calWeekRowHtml(d)).join('')}
     </div>`;
