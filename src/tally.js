@@ -3,7 +3,7 @@
    Opens on every app launch (see main.js init) and via the tally icon in
    the Log tab header. Always live-recomputed from current history/profile
    state on open — no cached daily snapshot, no once-per-day gating.
-   Supersedes greeting.js, which is left in place unused for easy rollback.
+   Replaces greeting.js entirely — that file's import/exposure/markup have
    ════════════════════════════════════════════ */
 import { KEYS, schedule, DAY_NAMES, FULL_DAYS, getProfile, getCleanBw,
          currentUnits, TALLY_BOX_DEFS, getTallyLayout, saveTallyLayout,
@@ -123,22 +123,35 @@ function wireSheetSwipe() {
   if (!scroll.dataset.wired) {
     scroll.dataset.wired = '1';
     let scrollDragActive = false;
+    let touchStartY = null;
     scroll.addEventListener('touchstart', e => {
-      scrollDragActive = scroll.scrollTop <= 0;
-      if (scrollDragActive) tallySheetDragStart(e.touches[0].clientY);
+      touchStartY = e.touches[0].clientY;
+      scrollDragActive = false; // never armed on touchstart alone — see touchmove below
     }, { passive: true });
     scroll.addEventListener('touchmove', e => {
-      if (!scrollDragActive) return;
-      // If the user is still at the top AND pulling down, this is a
-      // dismiss-drag — prevent the page from scrolling underneath.
-      // If they've since scrolled down (e.g. bounced back), release the
-      // gesture back to normal scrolling rather than fighting it.
+      const currentY = e.touches[0].clientY;
+      const movedDown = touchStartY != null && currentY > touchStartY;
+      if (!scrollDragActive) {
+        // Only arm the dismiss-drag once there's real evidence: still at
+        // the very top AND the finger has genuinely moved downward. Being
+        // at scrollTop 0 at touchstart is the default state on every
+        // fresh render — arming on that alone (the previous bug) hijacked
+        // ordinary scroll-down gestures before any real scrolling had a
+        // chance to happen.
+        if (scroll.scrollTop <= 0 && movedDown) {
+          scrollDragActive = true;
+          tallySheetDragStart(touchStartY);
+        } else {
+          return; // let this be a normal scroll gesture, untouched
+        }
+      }
       if (scroll.scrollTop > 0) { scrollDragActive = false; tallySheetDragEnd(); return; }
       e.preventDefault();
-      tallySheetDragMove(e.touches[0].clientY);
+      tallySheetDragMove(currentY);
     }, { passive: false });
     scroll.addEventListener('touchend', () => {
       if (scrollDragActive) { tallySheetDragEnd(); scrollDragActive = false; }
+      touchStartY = null;
     });
   }
 }

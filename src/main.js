@@ -24,7 +24,6 @@ import * as tabsMod from './tabs.js';
 import * as sidebarMod from './sidebar.js';
 import * as clockMod from './clock.js';
 import * as musicMod from './music.js';
-import * as greetingMod from './greeting.js';
 import * as onboardingMod from './onboarding.js';
 import * as tallyMod from './tally.js';
 
@@ -183,10 +182,6 @@ Object.assign(window, {
 
   // music.js
   selectPlaylist: musicMod.selectPlaylist,
-
-  // greeting.js
-  dismissGreeting: greetingMod.dismissGreeting,
-  maybeShowGreeting: greetingMod.maybeShowGreeting,
 
   // tally.js
   openTallySheet: tallyMod.openTallySheet,

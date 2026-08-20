@@ -864,16 +864,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .onb-nav-next:hover{filter:brightness(0.95)}
 
 /* ──────────────────────────────────────────────────────────
-   GREETING
-   ────────────────────────────────────────────────────────── */
-.greeting-wrap{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,20,15,0.55);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);z-index:950;display:none;align-items:center;justify-content:center;padding:24px}
-.greeting-wrap.show{display:flex}
-.greeting{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;max-width:380px;width:100%}
-.greeting-day{font-size:13px;font-weight:600;color:var(--text2);letter-spacing:0.01em;margin-bottom:6px}
-.greeting-workout{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-0.01em;color:var(--text);margin-bottom:14px;line-height:1.15}
-.greeting-msg{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.4}
-
-/* ──────────────────────────────────────────────────────────
    TALLY SHEET (bottom sheet, opens on every app launch and via
    the tally icon in the Log tab header; see tally.js)
    Visual language matches the original mockup: flat solid-color
@@ -1416,16 +1406,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <button class="onb-nav-back" id="onboarding-back" onclick="onboardingBack()">Back</button>
       <button class="onb-nav-next" id="onboarding-next" onclick="onboardingNext()">Next</button>
     </div>
-  </div>
-</div>
-
-<!-- ── Greeting (superseded by Tally sheet below; kept, unused, for easy rollback) ── -->
-<div class="greeting-wrap" id="greeting-wrap">
-  <div class="greeting">
-    <div class="greeting-day" id="greeting-day"></div>
-    <div class="greeting-workout" id="greeting-workout"></div>
-    <div class="greeting-msg" id="greeting-msg"></div>
-    <button class="welcome-cta" id="greeting-cta" style="height:44px;font-size:14px" onclick="dismissGreeting()">Let's go!</button>
   </div>
 </div>
 

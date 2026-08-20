@@ -148,9 +148,8 @@ function finishOnboarding() {
   const sub = document.getElementById('welcome-sub');
   if (sub) sub.style.display = '';
   document.getElementById('welcome-wrap')?.classList.remove('show');
-  // TODO: once the Tally page ships, replace this with opening it directly
-  // (it will fully replace greeting.js). For now, fall back to the existing
-  // daily greeting so onboarding completion doesn't dead-end.
-  const showGreeting = window.maybeShowGreeting;
-  if (typeof showGreeting === 'function') setTimeout(showGreeting, 200);
+  // Onboarding is done — open the Tally sheet, which is what should show
+  // on a fresh app open from here on.
+  const openTally = window.openTallySheet;
+  if (typeof openTally === 'function') setTimeout(openTally, 200);
 }
