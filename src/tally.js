@@ -623,11 +623,27 @@ function wireTrendBarClicks() {
   });
 }
 
+// Shown in place of every box on a completely fresh account (zero logged
+// history anywhere) — explains what the Tally page will show once there's
+// real data, instead of a wall of empty/zeroed-out boxes on first launch.
+// Never shown again once the user logs a single set, since loggedDayCount
+// becomes >0 permanently at that point.
+function renderTallyEmptyState() {
+  return `<div class="tally-empty-state">
+    <p class="tally-empty-state-msg">This is where your progress will live — streaks, PRs, total weight lifted, muscle balance, and more, all building automatically as you log workouts.</p>
+    <button class="tally-empty-state-btn" onclick="closeTallySheet()">Let's get started</button>
+  </div>`;
+}
+
 /* ─── FULL RENDER PASS ─── */
 let _lastStats = null;
 function renderFullBody(stats) {
   const container = document.getElementById('tally-boxes');
   if (!container) return;
+  if (stats.loggedDayCount === 0) {
+    container.innerHTML = renderTallyEmptyState();
+    return;
+  }
   // Highlight-mode boxes (prCallout/weekCheckmarks/calorieRow) only ever
   // appear as the fixed highlight matching the user's goal — they no
   // longer double as regular boxes for other goals, per explicit spec.
