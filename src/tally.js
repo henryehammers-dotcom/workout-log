@@ -461,13 +461,13 @@ const BOX_RENDERERS = {
   },
   totalWeight(stats) {
     // Single gauge/thermometer — one pill-shaped fill track, tick marks
-    // along the side, tap a tick to reveal its label/weight in a readout
-    // above the gauge (not permanently visible — with 17 ticks, always-on
-    // labels got visually crowded). Sized up from the original so there's
-    // real gap between ticks and a genuinely tappable hit area per tick,
-    // same aspect ratio as before just scaled up (~1:4.4).
-    const pillH = 400;
-    const pillW = 90;
+    // in their own column to the right (not overlapping the pill — an
+    // earlier version positioned ticks with a negative offset relative to
+    // the pill itself, which clipped into it), tap a tick to reveal its
+    // label/weight in a readout above the gauge.
+    const pillH = 340;
+    const pillW = 64;
+    const tickColW = 36; // dedicated space for ticks, separate from the pill
     // Ticks are spaced evenly by RANK (like a ruler), not by true value —
     // real milestone values span 10,000 to 2,000,000, so positioning them
     // at their true proportional value would crush the lower dozen ticks
@@ -495,29 +495,36 @@ const BOX_RENDERERS = {
       fillPx = ((passedCount - 1) * tickGap) + (frac * tickGap);
     }
     fillPx = Math.round(Math.min(pillH, fillPx));
-    // Tick hit target is taller than the visible mark itself (a thin line
-    // is easy to see but hard to tap) — the clickable area spans half the
-    // gap to each neighboring tick, so adjacent targets meet edge-to-edge
-    // without overlapping.
+    // Tick hit target taller than the visible mark itself (a thin line is
+    // easy to see but hard to tap) — spans half the gap to each neighbor
+    // so adjacent targets meet edge-to-edge without overlapping. Sits
+    // centered within its own column, halfway between the pill's edge and
+    // the box's edge — not inside or overlapping the pill at all.
     const hitH = Math.max(18, Math.round(tickGap - 4));
     const tickMarks = ticks.map((m, i) => {
       const yFromTop = Math.round(i * tickGap);
       return `<div data-lbs="${m.lbs}" data-label="${escAttr(m.label)}" onclick="showTallyWeightTickLabel(this)"
-        style="position:absolute;right:-4px;top:${yFromTop - hitH/2}px;width:26px;height:${hitH}px;display:flex;align-items:center;justify-content:flex-end;cursor:pointer">
-        <span style="width:14px;height:3px;background:#333;border-radius:2px;pointer-events:none"></span>
+        style="position:absolute;left:0;top:${yFromTop - hitH/2}px;width:${tickColW}px;height:${hitH}px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <span style="width:12px;height:2px;background:#333;border-radius:2px;pointer-events:none"></span>
       </div>`;
     }).join('');
+    // Current weight reads inside the fill itself, anchored to its top
+    // edge (not vertically centered in the fill's own height, which would
+    // overflow the text outside a very short fill early on).
+    const weightInFill = fillPx >= 20
+      ? `<div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#7a1f1f">${fmtWeight(stats.totalLbs)}</div>`
+      : '';
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:6px">Total weight lifted</div>
       <div id="tally-weight-readout" style="text-align:center;font-size:12px;color:#333;min-height:16px;margin-bottom:8px">Tap a mark to see that milestone</div>
       <div style="display:flex;justify-content:center">
-        <div style="position:relative;width:${pillW}px;height:${pillH}px;background:#ccc;border-radius:${pillW/2}px;padding:5px">
+        <div style="position:relative;width:${pillW}px;height:${pillH}px;background:#ccc;border-radius:${pillW/2}px;padding:5px;flex-shrink:0">
           <div style="position:relative;width:100%;height:100%;background:#e5e5e5;border-radius:${pillW/2 - 5}px;overflow:hidden">
-            <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:${pillW/2 - 5}px"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:${pillW/2 - 5}px">${weightInFill}</div>
           </div>
-          ${tickMarks}
         </div>
+        <div style="position:relative;width:${tickColW}px;height:${pillH}px;flex-shrink:0">${tickMarks}</div>
       </div>
-      <div style="text-align:center;margin-top:10px;font-size:13px;font-weight:600;color:#111">${fmtWeight(stats.totalLbs)}</div>`;
+      ${fillPx < 20 ? `<div style="text-align:center;margin-top:8px;font-size:12px;font-weight:600;color:#111">${fmtWeight(stats.totalLbs)}</div>` : ''}`;
   },
   lastTrained(stats) {
     const source = _muscleFilterShowAll ? stats.attention.all : stats.attention.needingAttention;
