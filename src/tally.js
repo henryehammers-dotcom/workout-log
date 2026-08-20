@@ -508,11 +508,12 @@ const BOX_RENDERERS = {
         <span style="width:12px;height:2px;background:#333;border-radius:2px;pointer-events:none"></span>
       </div>`;
     }).join('');
-    // Current weight reads inside the fill itself, anchored to its top
-    // edge (not vertically centered in the fill's own height, which would
-    // overflow the text outside a very short fill early on).
+    // Current weight reads inside the fill itself, anchored to the bottom
+    // (which is also the pill's own bottom, so it's a fixed reference
+    // point regardless of how tall the fill currently is) with enough
+    // clearance to stay clear of the rounded corner there.
     const weightInFill = fillPx >= 20
-      ? `<div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#7a1f1f">${fmtWeight(stats.totalLbs)}</div>`
+      ? `<div style="position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#7a1f1f;line-height:1.3">${fmtWeight(stats.totalLbs)}</div>`
       : '';
     return `<div class="tally-box-label" style="text-align:center;margin-bottom:6px">Total weight lifted</div>
       <div id="tally-weight-readout" style="text-align:center;font-size:12px;color:#333;min-height:16px;margin-bottom:8px">Tap a mark to see that milestone</div>
