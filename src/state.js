@@ -502,34 +502,42 @@ export function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
 export function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ─── BODY SCROLL LOCK (shared by any full-screen overlay: Tally sheet,
-   Settings, etc.) — freezes the page underneath completely while an
-   overlay is open, without touching the overlay's own inner scrolling.
-   overflow:hidden alone is not reliable for this on mobile touch browsers;
-   position:fixed on the body is the standard correct technique, since it
-   fully removes the page from the touch-scroll chain. Scroll position is
-   saved/restored so the page doesn't jump when the lock is applied or
-   released. Reference-counted via _lockCount so nested opens (e.g.
-   Settings opened from within another overlay) don't unlock prematurely
-   when the inner one closes first. */
-let _scrollLockY = 0;
+   Settings, etc.) — freezes the page underneath while an overlay is open.
+   A prior version of this set document.body.style.position='fixed', which
+   is the textbook approach but turned out to interfere with the overlay's
+   OWN inner scrolling in this app (the sheet's #tally-scroll stopped
+   scrolling entirely once body's layout changed underneath it). Fixed by
+   only blocking touchmove on the specific overlay elements passed in —
+   body itself is never touched, so nothing about it can cascade into
+   breaking a fixed-position child's own scroll behavior. Reference-counted
+   via _lockCount so nested opens (Settings opened from within another
+   overlay) don't unlock prematurely when the inner one closes first. */
 let _lockCount = 0;
-export function lockBodyScroll() {
+let _lockedOverlays = [];
+function blockScroll(e) {
+  // Only block if the touch target is the overlay backdrop itself, not
+  // something inside a genuinely scrollable child (e.g. #tally-scroll,
+  // #settings-modal's own content area) — those need touchmove to reach
+  // their own scroll handling untouched.
+  if (e.target.dataset.scrollLockBackdrop !== undefined) e.preventDefault();
+}
+export function lockBodyScroll(overlayIds) {
   _lockCount++;
-  if (_lockCount > 1) return; // already locked by another overlay
-  _scrollLockY = window.scrollY || window.pageYOffset || 0;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${_scrollLockY}px`;
-  document.body.style.left = '0';
-  document.body.style.right = '0';
-  document.body.style.width = '100%';
+  (overlayIds || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !_lockedOverlays.includes(id)) {
+      el.dataset.scrollLockBackdrop = '1';
+      el.addEventListener('touchmove', blockScroll, { passive: false });
+      _lockedOverlays.push(id);
+    }
+  });
 }
 export function unlockBodyScroll() {
   _lockCount = Math.max(0, _lockCount - 1);
   if (_lockCount > 0) return; // still locked by another overlay
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.width = '';
-  window.scrollTo(0, _scrollLockY);
+  _lockedOverlays.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.removeEventListener('touchmove', blockScroll); delete el.dataset.scrollLockBackdrop; }
+  });
+  _lockedOverlays = [];
 }

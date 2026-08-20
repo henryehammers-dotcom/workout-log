@@ -52,7 +52,7 @@ function trendUpIconSvg() {
 export function openTallySheet() {
   renderTallySheet();
   document.getElementById('tally-overlay')?.classList.add('show');
-  lockBodyScroll();
+  lockBodyScroll(['tally-overlay']);
 }
 export function closeTallySheet() {
   document.getElementById('tally-overlay')?.classList.remove('show');
@@ -460,60 +460,59 @@ const BOX_RENDERERS = {
       <div class="tally-box-sub" onclick="openTallySessionTimesPopup()" style="cursor:pointer;text-decoration:underline">See full week</div>`;
   },
   totalWeight(stats) {
-    // Single gauge/thermometer, not a row list — matches the reference
-    // design exactly: one pill-shaped fill track, evenly-spaced tick marks
-    // along the side, no labels shown by default. Tapping a tick reveals
-    // that milestone's name + weight in a small readout above the gauge.
-    const pillH = 280;
+    // Single gauge/thermometer — one pill-shaped fill track, tick marks
+    // along the side, tap a tick to reveal its label/weight in a readout
+    // above the gauge (not permanently visible — with 17 ticks, always-on
+    // labels got visually crowded). Sized up from the original so there's
+    // real gap between ticks and a genuinely tappable hit area per tick,
+    // same aspect ratio as before just scaled up (~1:4.4).
+    const pillH = 400;
+    const pillW = 90;
     // Ticks are spaced evenly by RANK (like a ruler), not by true value —
     // real milestone values span 10,000 to 2,000,000, so positioning them
     // at their true proportional value would crush the lower dozen ticks
     // into an unreadable few pixels. Given ticks are rank-based, the fill
     // MUST also be computed against that same rank scale, not the true
     // linear value — otherwise the fill and the ticks disagree about where
-    // "50,000 lbs" is, which is exactly the bug this replaces: interpolate
-    // the fill's position between whichever two ticks totalLbs falls
-    // between, proportional to progress within that specific gap, so the
-    // fill and the tick marks are always mutually consistent.
+    // "50,000 lbs" is: interpolate the fill's position between whichever
+    // two ticks totalLbs falls between, proportional to progress within
+    // that specific gap, so the fill and the tick marks are always
+    // mutually consistent.
     const ticks = WEIGHT_MILESTONES.slice().reverse(); // heaviest at top (index 0)
     const tickGap = pillH / (ticks.length - 1);
-    // ticksAsc: lightest first, for finding which real range totalLbs falls in
     const ticksAsc = WEIGHT_MILESTONES; // already lightest-first
     let fillPx;
     const passedCount = ticksAsc.filter(m => stats.totalLbs >= m.lbs).length;
     if (passedCount >= ticksAsc.length) {
       fillPx = pillH; // past every milestone
     } else if (passedCount === 0) {
-      // Below the first (lightest) milestone — partial fill toward it,
-      // scaled against that first tick's own gap rather than 0, so small
-      // real amounts still show as correctly tiny, not artificially large.
       const frac = stats.totalLbs / ticksAsc[0].lbs;
       fillPx = frac * tickGap;
     } else {
       const floorLbs = ticksAsc[passedCount - 1].lbs;
       const ceilLbs = ticksAsc[passedCount].lbs;
       const frac = (stats.totalLbs - floorLbs) / (ceilLbs - floorLbs);
-      // passedCount milestones passed means the current position is at
-      // rank (passedCount-1) — the last tick actually reached — plus
-      // partial progress through the gap to the next one.
       fillPx = ((passedCount - 1) * tickGap) + (frac * tickGap);
     }
     fillPx = Math.round(Math.min(pillH, fillPx));
-    // Labels sit directly beside their tick, always visible (not
-    // tap-to-reveal — with 17 ticks only ~16.5px apart, tapping the right
-    // one reliably wasn't practical on a real touch target).
+    // Tick hit target is taller than the visible mark itself (a thin line
+    // is easy to see but hard to tap) — the clickable area spans half the
+    // gap to each neighboring tick, so adjacent targets meet edge-to-edge
+    // without overlapping.
+    const hitH = Math.max(18, Math.round(tickGap - 4));
     const tickMarks = ticks.map((m, i) => {
       const yFromTop = Math.round(i * tickGap);
-      return `<div style="position:absolute;left:100%;top:${yFromTop}px;transform:translateY(-50%);display:flex;align-items:center;gap:4px;white-space:nowrap;padding-left:14px">
-        <span style="width:10px;height:2px;background:#333;flex-shrink:0"></span>
-        <span style="font-size:9px;color:#333;line-height:1">${escHtml(m.label)} <span style="color:#777">(${fmtWeight(m.lbs)})</span></span>
+      return `<div data-lbs="${m.lbs}" data-label="${escAttr(m.label)}" onclick="showTallyWeightTickLabel(this)"
+        style="position:absolute;right:-4px;top:${yFromTop - hitH/2}px;width:26px;height:${hitH}px;display:flex;align-items:center;justify-content:flex-end;cursor:pointer">
+        <span style="width:14px;height:3px;background:#333;border-radius:2px;pointer-events:none"></span>
       </div>`;
     }).join('');
-    return `<div class="tally-box-label" style="text-align:center;margin-bottom:10px">Total weight lifted</div>
-      <div style="display:flex;justify-content:center;padding-left:8px">
-        <div style="position:relative;width:64px;height:${pillH}px;background:#ccc;border-radius:32px;padding:4px;flex-shrink:0">
-          <div style="position:relative;width:100%;height:100%;background:#e5e5e5;border-radius:28px;overflow:hidden">
-            <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:28px"></div>
+    return `<div class="tally-box-label" style="text-align:center;margin-bottom:6px">Total weight lifted</div>
+      <div id="tally-weight-readout" style="text-align:center;font-size:12px;color:#333;min-height:16px;margin-bottom:8px">Tap a mark to see that milestone</div>
+      <div style="display:flex;justify-content:center">
+        <div style="position:relative;width:${pillW}px;height:${pillH}px;background:#ccc;border-radius:${pillW/2}px;padding:5px">
+          <div style="position:relative;width:100%;height:100%;background:#e5e5e5;border-radius:${pillW/2 - 5}px;overflow:hidden">
+            <div style="position:absolute;left:0;right:0;bottom:0;height:${fillPx}px;background:#ff5757;transition:height .3s;border-radius:${pillW/2 - 5}px"></div>
           </div>
           ${tickMarks}
         </div>
@@ -573,6 +572,13 @@ function buildBoxRows(visibleIds) {
   return rows;
 }
 
+export function showTallyWeightTickLabel(el) {
+  const readout = document.getElementById('tally-weight-readout');
+  if (!readout) return;
+  const lbs = Number(el.dataset.lbs) || 0;
+  const label = el.dataset.label || '';
+  readout.textContent = `${fmtWeight(lbs)} — ${label}`;
+}
 export function openTallyTrendDay(dateKey) {
   const detailEl = document.getElementById('tally-trend-detail');
   if (!detailEl) return;

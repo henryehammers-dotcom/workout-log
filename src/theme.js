@@ -166,7 +166,7 @@ export function openSettings(isFirstLaunch) {
   const modal = document.getElementById('settings-modal');
   if (!modal) { console.error('openSettings: #settings-modal not found in DOM'); return; }
   modal.classList.add('show');
-  lockBodyScroll();
+  lockBodyScroll(['settings-modal']);
   // Belt-and-suspenders: force the overlay's geometry inline so it can never
   // render collapsed even if a browser mishandles the CSS `inset` shorthand.
   modal.style.position = 'fixed';
