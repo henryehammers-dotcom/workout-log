@@ -277,6 +277,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .accent-swatch.active{border-color:var(--text)}
 .accent-swatch.active::after{content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,0.15)}
 .theme-base-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:capitalize;letter-spacing:0}
+.theme-tap-hint{font-size:11px;font-weight:400;color:var(--text3);font-style:italic}
 
 /* ──────────────────────────────────────────────────────────
    CALENDAR — Day / Week / Month / Year
@@ -1389,7 +1390,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="welcome-error" id="welcome-error">Please enter your name to continue.</div>
     </div>
     <div>
-      <label class="welcome-field-label">Theme <span class="theme-base-label" id="welcome-base-label"></span></label>
+      <label class="welcome-field-label">Theme <span class="theme-base-label" id="welcome-base-label"></span> <span class="theme-tap-hint">tap to toggle</span></label>
       <div class="segmented welcome-segmented" id="welcome-theme">
         <button class="seg-opt active" data-val="light" onclick="setTheme('light');syncWelcomeTheme('light')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
