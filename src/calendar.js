@@ -260,6 +260,9 @@ function renderDayView() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
       <button class="cal-custom-log-btn" onclick="openCustomLogForViewedDate()" aria-label="Custom log">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </button>
+      <button class="cal-add-exercise-btn" onclick="openLibV2ForDay('${dn}')" aria-label="Add exercise">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="day-menu-dropdown" id="day-menu-dropdown">
@@ -297,9 +300,7 @@ function renderDayView() {
   }
 
   const exCards = day.exercises.length === 0
-    ? (dayEditMode
-        ? '<div class="empty">No exercises yet — tap “+ Add exercise” below to pick one from your library.</div>'
-        : '<div class="empty">No exercises yet — tap the ••• menu above and choose “Edit workout” to add some.</div>')
+    ? '<div class="empty">No exercises yet — tap the + above to add one from your library.</div>'
     : day.exercises.map((rawEx, i) => {
         const ex = resolveScheduledExercise(rawEx);
         const data = getSetData(dn, i);
@@ -373,8 +374,7 @@ function renderDayView() {
         </div>`;
       }).join('');
 
-  const addBtn = dayEditMode ? `<button class="add-exercise-btn" onclick="openLibV2ForDay('${dn}')">+ Add exercise</button>` : '';
-  return top + actionsRow + `<div id="drag-zone">${exCards}</div>` + addBtn;
+  return top + actionsRow + `<div id="drag-zone">${exCards}</div>`;
 }
 
 // Writes history under an arbitrary date instead of always "today".
@@ -544,6 +544,15 @@ function renderYearView() {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#cal-month-title') && !e.target.closest('#cal-month-dropdown')) {
     document.getElementById('cal-month-dropdown')?.classList.remove('show');
+  }
+});
+
+/* Dismiss day options dropdown on outside click — previously required
+   pressing the menu button again to close; this matches the standard
+   tap-outside-to-dismiss behavior the month dropdown already has. */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#day-menu-btn') && !e.target.closest('#day-menu-dropdown')) {
+    document.getElementById('day-menu-dropdown')?.classList.remove('show');
   }
 });
 
